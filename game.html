@@ -237,8 +237,7 @@ function showGameScreen(g) {
 }
 
 function launchGame() {
-  // open the actual game with team param
-  const url = `escape-room-competition.html?team=${myTeamIdx}&code=${gameCode}&diff=${0}&timer=${120}`;
+  const url = `escape-room-competition.html?code=${gameCode}&teamIdx=${myTeamIdx}`;
   location.href = url;
 }
 </script>
