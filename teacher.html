@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>לוח ניהול — מסע המתמטיקאים</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:#0f0f1a;color:#e8d5ff;min-height:100vh;direction:rtl;}
+
+/* LOGIN */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0f0f1a;}
+.login-box{background:#1a1a2e;border:1px solid #3d3d60;border-radius:16px;padding:40px;width:340px;text-align:center;}
+.login-box h1{font-size:1.4rem;color:#e8d5ff;margin-bottom:8px;}
+.login-box p{font-size:0.82rem;color:#8480a8;margin-bottom:24px;}
+.login-box input{width:100%;padding:12px 16px;border:1px solid #3d3d60;border-radius:10px;background:#0f0f1a;color:#e8d5ff;font-size:1rem;text-align:center;letter-spacing:4px;margin-bottom:12px;}
+.login-box input:focus{outline:none;border-color:#7c6fcd;}
+.btn-primary{width:100%;padding:12px;border:none;border-radius:10px;background:#7c6fcd;color:white;font-size:0.95rem;font-weight:600;cursor:pointer;transition:all 0.15s;}
+.btn-primary:hover{background:#6a5dba;}
+.err{color:#ff6b6b;font-size:0.8rem;margin-top:8px;min-height:20px;}
+
+/* DASHBOARD */
+#dashboard{display:none;max-width:600px;margin:0 auto;padding:24px 16px;}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;}
+.topbar h1{font-size:1.2rem;color:#e8d5ff;}
+.topbar-badge{background:#1a1a2e;color:#8480a8;font-size:0.72rem;padding:4px 12px;border-radius:999px;border:1px solid #3d3d60;}
+
+.section{background:#1a1a2e;border:1px solid #2d2d4e;border-radius:14px;padding:20px;margin-bottom:14px;}
+.section h2{font-size:0.78rem;font-weight:600;color:#8480a8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:16px;}
+
+.param-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.param-label{font-size:0.88rem;color:#b8b4d0;}
+.param-val{font-size:1rem;font-weight:600;color:#e8d5ff;min-width:40px;text-align:center;}
+
+.slider-wrap{display:flex;align-items:center;gap:10px;flex:1;margin-right:16px;}
+input[type=range]{flex:1;accent-color:#7c6fcd;height:4px;}
+
+.seg-btns{display:flex;gap:6px;}
+.seg-btn{padding:6px 14px;border:1px solid #3d3d60;border-radius:999px;background:transparent;color:#8480a8;font-size:0.78rem;font-weight:500;cursor:pointer;transition:all 0.15s;}
+.seg-btn.active{background:#7c6fcd;color:white;border-color:#7c6fcd;}
+.seg-btn:hover:not(.active){border-color:#7c6fcd;color:#e8d5ff;}
+
+/* game code */
+.code-box{background:#0f0f1a;border:1px solid #3d3d60;border-radius:10px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.code-val{font-size:1.8rem;font-weight:700;letter-spacing:6px;color:#7c6fcd;font-family:monospace;}
+.code-sub{font-size:0.72rem;color:#8480a8;}
+.copy-btn{background:#2d2d4e;border:1px solid #3d3d60;border-radius:8px;color:#b8b4d0;font-size:0.78rem;padding:6px 12px;cursor:pointer;}
+.copy-btn:hover{background:#3d3d60;}
+
+/* teams display */
+.teams-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;}
+.team-chip{background:#0f0f1a;border:1px solid #3d3d60;border-radius:8px;padding:8px 10px;text-align:center;font-size:0.8rem;}
+.team-chip .t-emoji{font-size:1.2rem;display:block;margin-bottom:2px;}
+.team-chip .t-name{color:#b8b4d0;font-size:0.72rem;}
+.team-chip.joined{border-color:#2a9d7c;background:#0a1f1a;}
+.team-chip .t-joined{font-size:0.65rem;color:#2a9d7c;margin-top:2px;}
+
+/* status */
+.status-row{display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#8480a8;}
+.status-dot.waiting{background:#d4752a;box-shadow:0 0 8px #d4752a80;}
+.status-dot.live{background:#2a9d7c;box-shadow:0 0 8px #2a9d7c80;}
+.status-txt{font-size:0.82rem;color:#b8b4d0;}
+
+/* action buttons */
+.btn-create{width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#7c6fcd,#5b4fa8);color:white;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:10px;transition:all 0.15s;}
+.btn-create:hover{opacity:0.9;transform:translateY(-1px);}
+.btn-start{width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#2a9d7c,#1a7a5f);color:white;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:10px;transition:all 0.15s;display:none;}
+.btn-start:hover{opacity:0.9;}
+.btn-start.visible{display:block;}
+.btn-stop{width:100%;padding:12px;border:1px solid #c0392b;border-radius:12px;background:transparent;color:#ff6b6b;font-size:0.88rem;font-weight:500;cursor:pointer;display:none;}
+.btn-stop.visible{display:block;}
+
+/* results */
+.results-table{width:100%;border-collapse:collapse;font-size:0.84rem;margin-top:8px;}
+.results-table th{padding:8px 10px;text-align:right;font-size:0.72rem;font-weight:600;color:#8480a8;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid #2d2d4e;}
+.results-table td{padding:8px 10px;border-bottom:1px solid #1a1a2e;color:#b8b4d0;}
+.results-table tr:first-child td{color:#e8d5ff;font-weight:600;}
+
+.timer-live{font-size:2rem;font-weight:700;color:#7c6fcd;text-align:center;font-family:monospace;margin:8px 0;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div style="font-size:2.5rem;margin-bottom:12px;">🧭</div>
+    <h1>לוח ניהול</h1>
+    <p>מסע המתמטיקאים · גישת מורה בלבד</p>
+    <input type="password" id="pwd-input" placeholder="סיסמה" onkeydown="if(event.key==='Enter')checkPwd()">
+    <button class="btn-primary" onclick="checkPwd()">כניסה</button>
+    <div class="err" id="pwd-err"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="topbar">
+    <h1>🧭 לוח ניהול</h1>
+    <span class="topbar-badge" id="game-status-badge">ללא משחק פעיל</span>
+  </div>
+
+  <!-- הגדרות -->
+  <div class="section">
+    <h2>⚙️ הגדרות משחק</h2>
+
+    <div class="param-row">
+      <div class="param-label">זמן לתחנה</div>
+      <div style="display:flex;align-items:center;gap:10px;flex:1;margin-right:16px;">
+        <input type="range" id="timer-slider" min="60" max="300" step="30" value="120" oninput="updateTimer(this.value)">
+        <div class="param-val" id="timer-val">2:00</div>
+      </div>
+    </div>
+
+    <div class="param-row">
+      <div class="param-label">רמת קושי</div>
+      <div class="seg-btns">
+        <button class="seg-btn" onclick="setDiff(0,this)">קל</button>
+        <button class="seg-btn active" onclick="setDiff(1,this)">בינוני</button>
+        <button class="seg-btn" onclick="setDiff(2,this)">קשה</button>
+      </div>
+    </div>
+
+    <div class="param-row">
+      <div class="param-label">מספר צוותים</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button onclick="changeTeams(-1)" style="width:32px;height:32px;border:1px solid #3d3d60;border-radius:50%;background:#0f0f1a;color:#e8d5ff;font-size:1.1rem;cursor:pointer;">−</button>
+        <div class="param-val" id="teams-val">4</div>
+        <button onclick="changeTeams(1)" style="width:32px;height:32px;border:1px solid #3d3d60;border-radius:50%;background:#0f0f1a;color:#e8d5ff;font-size:1.1rem;cursor:pointer;">+</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- יצירת משחק -->
+  <div class="section">
+    <h2>🎮 קוד משחק</h2>
+    <div class="code-box" id="code-box" style="display:none;">
+      <div>
+        <div class="code-val" id="game-code-display">------</div>
+        <div class="code-sub">התלמידים מכניסים קוד זה</div>
+      </div>
+      <button class="copy-btn" onclick="copyCode()">העתק קישור</button>
+    </div>
+    <button class="btn-create" id="btn-create" onclick="createGame()">🎲 צור משחק חדש</button>
+  </div>
+
+  <!-- סטטוס צוותים -->
+  <div class="section" id="teams-section" style="display:none;">
+    <h2>👥 סטטוס צוותים</h2>
+    <div class="status-row">
+      <div class="status-dot waiting" id="status-dot"></div>
+      <div class="status-txt" id="status-txt">ממתין לכניסת שחקנים...</div>
+    </div>
+    <div class="teams-grid" id="teams-grid"></div>
+  </div>
+
+  <!-- שליטה -->
+  <div class="section" id="control-section" style="display:none;">
+    <h2>▶️ שליטה</h2>
+    <div class="timer-live" id="timer-display">--:--</div>
+    <button class="btn-start visible" id="btn-start" onclick="startGame()">🏁 התחל משחק</button>
+    <button class="btn-stop" id="btn-stop" onclick="stopGame()">⏹ עצור משחק</button>
+  </div>
+
+  <!-- תוצאות -->
+  <div class="section" id="results-section" style="display:none;">
+    <h2>🏆 תוצאות</h2>
+    <table class="results-table" id="results-table">
+      <tr><th>מיקום</th><th>צוות</th><th>ניקוד</th><th>זמן</th></tr>
+    </table>
+  </div>
+
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+const TEACHER_PWD = '1234'; // שנה לסיסמה שלך!
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA60BlH7q-HoZyeBT5Ka5_pjvRsiqvyNLo",
+  authDomain: "atid-arnon-mat.firebaseapp.com",
+  databaseURL: "https://atid-arnon-mat-default-rtdb.firebaseio.com",
+  projectId: "atid-arnon-mat",
+  storageBucket: "atid-arnon-mat.firebasestorage.app",
+  messagingSenderId: "84988728345",
+  appId: "1:84988728345:web:6cf37911151a4953c0c688"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ── STATE ──
+let gameCode = null;
+let gameRef = null;
+let timerInterval = null;
+let settings = { timer: 120, diff: 1, teams: 4 };
+
+const TEAM_DATA = [
+  {name:'צוות אדום',    emoji:'🔴', color:'#c0392b'},
+  {name:'צוות כחול',   emoji:'🔵', color:'#2980b9'},
+  {name:'צוות ירוק',   emoji:'🟢', color:'#27ae60'},
+  {name:'צוות צהוב',   emoji:'🟡', color:'#f1c40f'},
+  {name:'צוות סגול',   emoji:'🟣', color:'#8e44ad'},
+  {name:'צוות כתום',   emoji:'🟠', color:'#e67e22'},
+];
+
+// ── LOGIN ──
+function checkPwd() {
+  const val = document.getElementById('pwd-input').value;
+  if (val === TEACHER_PWD) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    listenForActiveGame();
+  } else {
+    document.getElementById('pwd-err').textContent = 'סיסמה שגויה';
+  }
+}
+
+// ── SETTINGS ──
+function updateTimer(v) {
+  settings.timer = parseInt(v);
+  const m = Math.floor(v/60), s = v%60;
+  document.getElementById('timer-val').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  if (gameRef) gameRef.update({timerPerStation: settings.timer});
+}
+function setDiff(d, btn) {
+  settings.diff = d;
+  document.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if (gameRef) gameRef.update({difficulty: d});
+}
+function changeTeams(d) {
+  settings.teams = Math.max(2, Math.min(6, settings.teams + d));
+  document.getElementById('teams-val').textContent = settings.teams;
+}
+
+// ── CREATE GAME ──
+function createGame() {
+  gameCode = Math.random().toString(36).substr(2,6).toUpperCase();
+  const teams = TEAM_DATA.slice(0, settings.teams).map((t,i) => ({
+    id: i, name: t.name, emoji: t.emoji, color: t.color,
+    joined: false, score: 0, stationsDone: 0
+  }));
+
+  gameRef = db.ref('games/' + gameCode);
+  gameRef.set({
+    code: gameCode,
+    status: 'waiting',
+    difficulty: settings.diff,
+    timerPerStation: settings.timer,
+    teams: teams,
+    currentStation: 0,
+    createdAt: Date.now()
+  });
+
+  document.getElementById('game-code-display').textContent = gameCode;
+  document.getElementById('code-box').style.display = 'flex';
+  document.getElementById('teams-section').style.display = 'block';
+  document.getElementById('control-section').style.display = 'block';
+  document.getElementById('game-status-badge').textContent = 'ממתין...';
+
+  renderTeamsGrid(teams);
+  listenToGame();
+}
+
+function copyCode() {
+  const url = `${location.origin}${location.pathname.replace('teacher.html','game.html')}?code=${gameCode}`;
+  navigator.clipboard.writeText(url).then(()=>{
+    document.querySelector('.copy-btn').textContent = '✓ הועתק!';
+    setTimeout(()=>document.querySelector('.copy-btn').textContent='העתק קישור', 2000);
+  });
+}
+
+// ── LISTEN ──
+function listenToGame() {
+  if (!gameRef) return;
+  gameRef.on('value', snap => {
+    const g = snap.val();
+    if (!g) return;
+    renderTeamsGrid(g.teams || []);
+    updateStatusUI(g);
+  });
+}
+
+function listenForActiveGame() {
+  // check if there's already an active game
+  db.ref('games').orderByChild('status').equalTo('waiting').limitToLast(1).once('value', snap => {
+    if (snap.exists()) {
+      const data = snap.val();
+      const key = Object.keys(data)[0];
+      gameCode = key;
+      gameRef = db.ref('games/' + gameCode);
+      document.getElementById('game-code-display').textContent = gameCode;
+      document.getElementById('code-box').style.display = 'flex';
+      document.getElementById('teams-section').style.display = 'block';
+      document.getElementById('control-section').style.display = 'block';
+      listenToGame();
+    }
+  });
+}
+
+function renderTeamsGrid(teams) {
+  const grid = document.getElementById('teams-grid');
+  if (!Array.isArray(teams)) return;
+  grid.innerHTML = teams.map(t => `
+    <div class="team-chip ${t.joined?'joined':''}">
+      <span class="t-emoji">${t.emoji}</span>
+      <div class="t-name">${t.name}</div>
+      ${t.joined ? '<div class="t-joined">✓ נכנס</div>' : '<div style="font-size:0.65rem;color:#3d3d60">ממתין</div>'}
+    </div>`).join('');
+
+  const joinedCount = teams.filter(t=>t.joined).length;
+  const total = teams.length;
+  document.getElementById('status-txt').textContent =
+    joinedCount === total ? `כל ${total} הצוותים נכנסו — מוכן להתחיל!` :
+    `${joinedCount} מתוך ${total} צוותים נכנסו`;
+
+  if (joinedCount > 0) {
+    document.getElementById('status-dot').className = 'status-dot live';
+    document.getElementById('btn-start').style.background = 'linear-gradient(135deg,#2a9d7c,#1a7a5f)';
+  }
+}
+
+function updateStatusUI(g) {
+  const badge = document.getElementById('game-status-badge');
+  if (g.status === 'waiting') badge.textContent = 'ממתין...';
+  else if (g.status === 'active') { badge.textContent = 'משחק פעיל ▶'; badge.style.color = '#2a9d7c'; }
+  else if (g.status === 'finished') { badge.textContent = 'הסתיים'; }
+
+  if (g.status === 'active') {
+    document.getElementById('btn-start').style.display = 'none';
+    document.getElementById('btn-stop').classList.add('visible');
+    startTimerDisplay(g.timerPerStation);
+    showResults(g.teams);
+  }
+  if (g.status === 'finished') {
+    clearInterval(timerInterval);
+    document.getElementById('results-section').style.display = 'block';
+    showResults(g.teams);
+  }
+}
+
+// ── GAME CONTROL ──
+function startGame() {
+  if (!gameRef) return;
+  gameRef.update({ status: 'active', startedAt: Date.now() });
+  document.getElementById('btn-start').style.display = 'none';
+  document.getElementById('btn-stop').classList.add('visible');
+}
+
+function stopGame() {
+  if (!gameRef) return;
+  gameRef.update({ status: 'finished' });
+  clearInterval(timerInterval);
+}
+
+function startTimerDisplay(seconds) {
+  clearInterval(timerInterval);
+  let remaining = seconds;
+  function tick() {
+    const m = Math.floor(remaining/60);
+    const s = remaining % 60;
+    document.getElementById('timer-display').textContent =
+      `${m}:${s.toString().padStart(2,'0')}`;
+    if (remaining <= 0) { clearInterval(timerInterval); return; }
+    remaining--;
+  }
+  tick();
+  timerInterval = setInterval(tick, 1000);
+}
+
+function showResults(teams) {
+  if (!Array.isArray(teams)) return;
+  const sorted = [...teams].sort((a,b) => (b.score||0) - (a.score||0));
+  const medals = ['🥇','🥈','🥉'];
+  const rows = sorted.map((t,i) => `
+    <tr>
+      <td>${medals[i] || (i+1)}</td>
+      <td>${t.emoji} ${t.name}</td>
+      <td>${t.score || 0}</td>
+      <td>${t.stationsDone || 0} תחנות</td>
+    </tr>`).join('');
+  document.getElementById('results-table').innerHTML =
+    `<tr><th>מיקום</th><th>צוות</th><th>ניקוד</th><th>תחנות</th></tr>` + rows;
+  document.getElementById('results-section').style.display = 'block';
+}
+</script>
+</body>
+</html>

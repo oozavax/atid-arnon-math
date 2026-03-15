@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מסע המתמטיקאים</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Inter:wght@400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:#0f0f1a;color:#e8d5ff;min-height:100vh;direction:rtl;}
+
+.screen{display:none;min-height:100vh;align-items:center;justify-content:center;flex-direction:column;padding:24px;}
+.screen.active{display:flex;}
+
+/* stars bg */
+.stars{position:fixed;inset:0;pointer-events:none;z-index:0;}
+.star{position:absolute;width:2px;height:2px;background:#e8d5ff;border-radius:50%;opacity:0.3;animation:twinkle var(--d,3s) infinite ease-in-out;}
+@keyframes twinkle{0%,100%{opacity:0.1}50%{opacity:0.6}}
+
+.card{background:#1a1a2e;border:1px solid #2d2d4e;border-radius:20px;padding:32px;width:100%;max-width:400px;text-align:center;position:relative;z-index:1;}
+.game-title{font-family:'Cinzel',serif;font-size:1.6rem;color:#c9a84c;margin-bottom:6px;letter-spacing:0.04em;}
+.game-sub{font-size:0.82rem;color:#8480a8;margin-bottom:24px;}
+
+/* code entry */
+.code-input{width:100%;padding:14px;border:1.5px solid #3d3d60;border-radius:12px;background:#0f0f1a;color:#e8d5ff;font-size:1.4rem;text-align:center;letter-spacing:6px;font-weight:700;text-transform:uppercase;margin-bottom:12px;}
+.code-input:focus{outline:none;border-color:#7c6fcd;}
+.btn-enter{width:100%;padding:13px;border:none;border-radius:12px;background:#7c6fcd;color:white;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:10px;transition:all 0.15s;}
+.btn-enter:hover{background:#6a5dba;}
+.err-msg{color:#ff6b6b;font-size:0.8rem;min-height:20px;}
+
+/* team select */
+.teams-list{display:flex;flex-direction:column;gap:8px;width:100%;margin-bottom:16px;}
+.team-btn{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid #2d2d4e;border-radius:12px;background:#0f0f1a;color:#e8d5ff;font-size:0.95rem;cursor:pointer;transition:all 0.15s;text-align:right;}
+.team-btn:hover{border-color:#7c6fcd;background:#1a1a2e;}
+.team-btn.taken{opacity:0.4;cursor:not-allowed;}
+.team-btn.taken:hover{border-color:#2d2d4e;background:#0f0f1a;}
+.team-emoji{font-size:1.4rem;}
+.team-info{flex:1;}
+.team-name{font-weight:600;}
+.team-status{font-size:0.72rem;color:#8480a8;}
+
+/* waiting screen */
+.waiting-icon{font-size:4rem;margin-bottom:16px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.waiting-title{font-family:'Cinzel',serif;font-size:1.3rem;color:#c9a84c;margin-bottom:8px;}
+.waiting-sub{font-size:0.85rem;color:#8480a8;line-height:1.6;margin-bottom:20px;}
+.waiting-dots{display:flex;gap:6px;justify-content:center;margin-bottom:24px;}
+.dot{width:8px;height:8px;border-radius:50%;background:#7c6fcd;animation:bounce 1.2s infinite;}
+.dot:nth-child(2){animation-delay:0.2s;}
+.dot:nth-child(3){animation-delay:0.4s;}
+@keyframes bounce{0%,100%{transform:translateY(0);opacity:0.4}50%{transform:translateY(-6px);opacity:1}}
+
+.team-tag{display:inline-flex;align-items:center;gap:6px;background:#2d2d4e;border:1px solid #3d3d60;border-radius:999px;padding:6px 14px;font-size:0.85rem;margin-bottom:16px;}
+
+/* game link button */
+.btn-play{width:100%;padding:16px;border:none;border-radius:14px;background:linear-gradient(135deg,#c9a84c,#a07830);color:#0f0f1a;font-size:1.05rem;font-weight:700;cursor:pointer;transition:all 0.2s;font-family:'Cinzel',serif;letter-spacing:0.02em;}
+.btn-play:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(201,168,76,0.3);}
+
+.params-box{background:#0f0f1a;border:1px solid #2d2d4e;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:0.82rem;color:#8480a8;display:flex;gap:16px;justify-content:center;}
+.param-item{display:flex;align-items:center;gap:6px;}
+</style>
+</head>
+<body>
+
+<!-- STARS -->
+<div class="stars" id="stars"></div>
+
+<!-- SCREEN 1: הכנסת קוד -->
+<div class="screen active" id="screen-code">
+  <div class="card">
+    <div style="font-size:2.5rem;margin-bottom:12px;">🧭</div>
+    <div class="game-title">מסע המתמטיקאים</div>
+    <div class="game-sub">הכנס קוד משחק</div>
+    <input class="code-input" id="code-input" maxlength="6" placeholder="קוד" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')enterCode()">
+    <button class="btn-enter" onclick="enterCode()">המשך ←</button>
+    <div class="err-msg" id="code-err"></div>
+  </div>
+</div>
+
+<!-- SCREEN 2: בחירת צוות -->
+<div class="screen" id="screen-team">
+  <div class="card">
+    <div class="game-title">בחר צוות</div>
+    <div class="game-sub" id="team-screen-sub">באיזה צוות אתה?</div>
+    <div class="teams-list" id="teams-list"></div>
+    <div class="err-msg" id="team-err"></div>
+  </div>
+</div>
+
+<!-- SCREEN 3: המתנה -->
+<div class="screen" id="screen-waiting">
+  <div class="card">
+    <div class="waiting-icon">⏳</div>
+    <div class="team-tag" id="my-team-tag">🔵 הצוות שלי</div>
+    <div class="waiting-title">מחכים למורה...</div>
+    <div class="waiting-sub">המורה עומד להתחיל את המשחק<br>הישאר בדף זה</div>
+    <div class="waiting-dots">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+    <div class="params-box" id="params-box">
+      <div class="param-item">⏱ <span id="timer-param">2:00</span> לתחנה</div>
+      <div class="param-item">🎯 <span id="diff-param">בינוני</span></div>
+      <div class="param-item">👥 <span id="teams-param">4</span> צוותים</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 4: משחק -->
+<div class="screen" id="screen-game">
+  <div class="card">
+    <div class="waiting-icon">🚀</div>
+    <div class="waiting-title">המשחק התחיל!</div>
+    <div class="waiting-sub" id="game-instructions">לחץ על הכפתור למטה כדי להצטרף למשחק עם הצוות שלך</div>
+    <button class="btn-play" id="btn-play" onclick="launchGame()">🏁 כנס למשחק</button>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyA60BlH7q-HoZyeBT5Ka5_pjvRsiqvyNLo",
+  authDomain: "atid-arnon-mat.firebaseapp.com",
+  databaseURL: "https://atid-arnon-mat-default-rtdb.firebaseio.com",
+  projectId: "atid-arnon-mat",
+  storageBucket: "atid-arnon-mat.firebasestorage.app",
+  messagingSenderId: "84988728345",
+  appId: "1:84988728345:web:6cf37911151a4953c0c688"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// stars
+const starsEl = document.getElementById('stars');
+for(let i=0;i<40;i++){
+  const s=document.createElement('div');
+  s.className='star';
+  s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s`;
+  starsEl.appendChild(s);
+}
+
+let gameCode = null, myTeamIdx = null, gameRef = null, gameListener = null;
+const DIFF_NAMES = ['קל','בינוני','קשה'];
+
+// check URL param
+window.onload = () => {
+  const p = new URLSearchParams(location.search);
+  const code = p.get('code');
+  if (code) {
+    document.getElementById('code-input').value = code.toUpperCase();
+    enterCode();
+  }
+};
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── STEP 1: קוד ──
+function enterCode() {
+  const code = document.getElementById('code-input').value.trim().toUpperCase();
+  if (code.length < 4) { document.getElementById('code-err').textContent='קוד קצר מדי'; return; }
+  document.getElementById('code-err').textContent = 'בודק...';
+
+  db.ref('games/' + code).once('value', snap => {
+    const g = snap.val();
+    if (!g) { document.getElementById('code-err').textContent='קוד לא נמצא'; return; }
+    if (g.status === 'finished') { document.getElementById('code-err').textContent='המשחק הזה הסתיים'; return; }
+
+    gameCode = code;
+    gameRef = db.ref('games/' + gameCode);
+    showTeamSelect(g);
+  });
+}
+
+// ── STEP 2: צוות ──
+function showTeamSelect(g) {
+  showScreen('screen-team');
+  const teams = g.teams || [];
+  const list = document.getElementById('teams-list');
+  list.innerHTML = teams.map((t,i) => `
+    <button class="team-btn ${t.joined?'taken':''}" onclick="${t.joined?'':('joinTeam('+i+')')}" id="team-btn-${i}">
+      <span class="team-emoji">${t.emoji}</span>
+      <div class="team-info">
+        <div class="team-name">${t.name}</div>
+        <div class="team-status">${t.joined ? '✓ תפוס' : 'פנוי'}</div>
+      </div>
+    </button>`).join('');
+}
+
+function joinTeam(idx) {
+  gameRef.once('value', snap => {
+    const g = snap.val();
+    const teams = g.teams || [];
+    if (teams[idx] && teams[idx].joined) {
+      document.getElementById('team-err').textContent = 'הצוות כבר תפוס, בחר אחר';
+      return;
+    }
+    // mark joined
+    gameRef.child(`teams/${idx}/joined`).set(true);
+    myTeamIdx = idx;
+    showWaiting(g, idx);
+  });
+}
+
+// ── STEP 3: המתנה ──
+function showWaiting(g, teamIdx) {
+  showScreen('screen-waiting');
+  const team = g.teams[teamIdx];
+  document.getElementById('my-team-tag').innerHTML = `${team.emoji} ${team.name}`;
+
+  const m = Math.floor(g.timerPerStation/60), s = g.timerPerStation%60;
+  document.getElementById('timer-param').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  document.getElementById('diff-param').textContent = DIFF_NAMES[g.difficulty||1];
+  document.getElementById('teams-param').textContent = g.teams.length;
+
+  // listen for game start
+  if (gameListener) gameRef.off('value', gameListener);
+  gameListener = gameRef.on('value', snap => {
+    const data = snap.val();
+    if (!data) return;
+    if (data.status === 'active') {
+      gameRef.off('value', gameListener);
+      showGameScreen(data);
+    }
+  });
+}
+
+// ── STEP 4: משחק ──
+function showGameScreen(g) {
+  showScreen('screen-game');
+  const team = g.teams[myTeamIdx];
+  document.getElementById('game-instructions').textContent =
+    `${team.emoji} ${team.name} — לחץ כדי להתחיל!`;
+}
+
+function launchGame() {
+  // open the actual game with team param
+  const url = `escape-room-competition.html?team=${myTeamIdx}&code=${gameCode}&diff=${0}&timer=${120}`;
+  location.href = url;
+}
+</script>
+</body>
+</html>
