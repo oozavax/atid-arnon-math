@@ -246,12 +246,19 @@ function createGame() {
   }));
 
   gameRef = db.ref('games/' + gameCode);
+  // Generate team codes for competition game
+  const teamCodesForGame = teams.map((t,i) => ({
+    name: t.name, emoji: t.emoji, color: t.color,
+    code: t.name.replace(/[^a-zA-Z0-9]/g,'').substring(0,4).toUpperCase() + i
+  }));
+
   gameRef.set({
     code: gameCode,
     status: 'waiting',
     difficulty: settings.diff,
     timerPerStation: settings.timer,
     teams: teams,
+    mma_teams: teamCodesForGame,
     currentStation: 0,
     createdAt: Date.now()
   });
