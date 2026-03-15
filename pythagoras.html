@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>משפט פיתגורס — כיתה ח׳</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.triangle-vis {
+  width: 100%;
+  background: var(--white);
+  border: 2.5px solid var(--text);
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow: 4px 4px 0 var(--text);
+}
+canvas.tri { width: 100%; display: block; border-radius: 10px; }
+
+.calc-wrap {
+  width: 100%;
+  background: var(--white);
+  border: 2.5px solid var(--text);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 4px 4px 0 var(--text);
+}
+.calc-head {
+  background: var(--text);
+  color: var(--yellow);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1rem;
+  padding: 12px 18px;
+}
+.calc-body { padding: 16px; }
+
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.input-row label {
+  font-size: 0.88rem;
+  font-weight: 800;
+  min-width: 70px;
+}
+.math-input {
+  border: 2px solid var(--text);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 700;
+  width: 90px;
+  background: var(--yellow-pale);
+  color: var(--text);
+  text-align: center;
+  box-shadow: 2px 2px 0 var(--text);
+}
+.math-input:focus { outline: none; border-color: var(--orange); box-shadow: 3px 3px 0 var(--orange); }
+.unknown-select {
+  border: 2px solid var(--text);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 800;
+  background: var(--yellow);
+  cursor: pointer;
+  box-shadow: 2px 2px 0 var(--text);
+}
+.calc-btn {
+  width: 100%;
+  padding: 12px;
+  border: 2.5px solid var(--text);
+  border-radius: var(--radius-pill);
+  background: var(--orange);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--text);
+  transition: all 0.15s;
+  margin-top: 4px;
+}
+.calc-btn:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--text); }
+
+.result-box {
+  margin-top: 14px;
+  background: var(--yellow-pale);
+  border: 2.5px solid var(--text);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: none;
+  box-shadow: 3px 3px 0 var(--text);
+}
+.result-box.show { display: block; }
+.result-val { font-family: var(--font-display); font-size: 1.4rem; font-weight: 900; color: var(--text); margin-bottom: 10px; }
+.step-line { padding: 5px 10px; background: var(--white); border-radius: 8px; border: 1.5px solid var(--border); margin-bottom: 5px; font-size: 0.84rem; font-weight: 600; }
+
+/* proof boxes */
+.proof-box {
+  width: 100%;
+  background: var(--white);
+  border: 2.5px solid var(--purple);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 4px 4px 0 var(--purple);
+}
+.proof-head {
+  background: var(--purple);
+  color: var(--white);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 0.95rem;
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+.proof-body {
+  display: none;
+  padding: 14px 16px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.7;
+  border-top: 1.5px solid var(--purple-border);
+  background: var(--purple-light);
+}
+.proof-body.open { display: block; }
+.proof-step {
+  display: flex;
+  gap: 10px;
+  padding: 7px 10px;
+  background: var(--white);
+  border-radius: 8px;
+  border: 1.5px solid var(--purple-border);
+  margin-bottom: 5px;
+  align-items: flex-start;
+}
+.proof-num {
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: var(--purple);
+  min-width: 20px;
+  margin-top: 2px;
+  text-transform: uppercase;
+}
+
+/* triples grid */
+.triples-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+.triple-card {
+  background: var(--white);
+  border: 2px solid var(--text);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  text-align: center;
+  box-shadow: 3px 3px 0 var(--text);
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+.triple-card .triple-nums {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--orange);
+  margin-bottom: 2px;
+}
+
+/* generator */
+.gen-wrap {
+  width: 100%;
+  background: var(--white);
+  border: 2.5px solid var(--text);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 4px 4px 0 var(--text);
+}
+.gen-header { background: var(--text); color: var(--yellow); padding: 12px 18px; font-family: var(--font-display); font-weight: 900; font-size: 1rem; }
+.gen-body { padding: 16px; }
+.diff-row { display: flex; gap: 8px; margin-bottom: 14px; }
+.diff-btn { flex:1; padding:8px; border:2px solid var(--text); border-radius:var(--radius-pill); font-family:var(--font-body); font-size:0.8rem; font-weight:800; cursor:pointer; background:var(--white); color:var(--text); box-shadow:2px 2px 0 var(--text); transition:all 0.15s; }
+.diff-btn.active { background:var(--yellow); transform:translate(-1px,-1px); box-shadow:3px 3px 0 var(--text); }
+.gen-q { background:var(--yellow-pale); border:2px solid var(--text); border-radius:var(--radius-sm); padding:14px 16px; font-size:0.9rem; font-weight:700; line-height:1.6; margin-bottom:10px; display:none; }
+.gen-q.show { display:block; }
+.gen-ans { background:var(--green-light); border:2px solid var(--green); border-radius:var(--radius-sm); padding:12px 16px; font-size:0.85rem; font-weight:600; line-height:1.7; display:none; }
+.gen-ans.show { display:block; }
+.gen-btns { display:flex; gap:8px; }
+.gen-go { flex:2; padding:11px; border:2.5px solid var(--text); border-radius:var(--radius-pill); background:var(--orange); color:var(--text); font-family:var(--font-body); font-size:0.9rem; font-weight:900; cursor:pointer; box-shadow:3px 3px 0 var(--text); transition:all 0.15s; }
+.gen-go:hover { transform:translate(-1px,-1px); box-shadow:4px 4px 0 var(--text); }
+.gen-show { flex:1; padding:11px; border:2.5px solid var(--text); border-radius:var(--radius-pill); background:var(--white); color:var(--text); font-family:var(--font-body); font-size:0.9rem; font-weight:800; cursor:pointer; box-shadow:3px 3px 0 var(--text); transition:all 0.15s; }
+.gen-show:hover { transform:translate(-1px,-1px); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="topbar-logo">
+    <div class="logo-mark">∫</div>
+    <span class="logo-text">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge">כיתה ח׳ · גיאומטריה</span>
+    <a href="index.html" class="topbar-home">← בית</a>
+  </div>
+</div>
+    <span class="logo-text">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge">כיתה ח׳ · גיאומטריה</span>
+    <a href="index.html" class="topbar-home">← בית</a>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-breadcrumb">כיתה ח׳ · גיאומטריה</div>
+  <h1>📐 משפט פיתגורס</h1>
+  <p class="hero-sub">משפט · הוכחה · חישוב · שלשות פיתגוריות · מחולל</p>
+  <div class="main-nav">
+    <button class="main-btn active" onclick="showPanel('theorem',this)">📖 המשפט</button>
+    <button class="main-btn" onclick="showPanel('proof',this)">✏️ הוכחה</button>
+    <button class="main-btn" onclick="showPanel('calc',this)">🔢 חישוב</button>
+    <button class="main-btn" onclick="showPanel('triples',this)">⭐ שלשות</button>
+    <button class="main-btn" onclick="showPanel('gen',this)">🎲 מחולל</button>
+  </div>
+</div>
+
+<main>
+
+<!-- ══════════ המשפט ══════════ -->
+<div class="panel active" id="panel-theorem">
+
+  <div class="node start">במשולש ישר זווית: a² + b² = c²</div>
+
+  <div class="triangle-vis">
+    <canvas class="tri" id="triCanvas" height="220"></canvas>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">המשפט</div>
+    <div class="rule-item">
+      <span class="rname">ניסוח</span>
+      במשולש ישר זווית, <strong>סכום ריבועי הניצבים שווה לריבוע היתר</strong>.
+    </div>
+    <div class="rule-item">
+      <span class="rname">סימונים</span>
+      <strong>a, b</strong> = הניצבים (הצלעות שיוצרות את הזווית הישרה)<br>
+      <strong>c</strong> = היתר (הצלע הגדולה ביותר, מול הזווית הישרה)
+    </div>
+    <div class="rule-item">
+      <span class="rname">הנוסחה</span>
+      a² + b² = c²
+    </div>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">איך מזהים את היתר?</div>
+    <div class="rule-item">היתר הוא תמיד הצלע <strong>מול הזווית הישרה (90°)</strong></div>
+    <div class="rule-item">היתר הוא תמיד <strong>הצלע הארוכה ביותר</strong> במשולש</div>
+    <div class="rule-item">אם הזווית הישרה ב-C — אז c = AB (הצלע שמחברת A ו-B)</div>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">כיוון הפוך — בדיקת משולש ישר זווית</div>
+    <div class="rule-item">
+      <span class="rname">המשפט ההפוך</span>
+      אם במשולש a² + b² = c², אז המשולש <strong>ישר זווית</strong>!
+    </div>
+    <div class="rule-item" style="background:var(--yellow-pale);">
+      <span class="rname">דוגמה: צלעות 3, 4, 5</span>
+      3² + 4² = 9 + 16 = 25 = 5² ✓ → <strong>ישר זווית!</strong>
+    </div>
+  </div>
+
+  <div class="tip">💡 <strong>טעות נפוצה:</strong> a² + b² = c² ולא a + b = c. תמיד ריבועים!</div>
+</div>
+
+<!-- ══════════ הוכחה ══════════ -->
+<div class="panel" id="panel-proof">
+  <div class="section-title">הוכחת משפט פיתגורס</div>
+
+  <div class="proof-box">
+    <div class="proof-head" onclick="toggleProof(this)">
+      <span>הוכחה 1 — שטח ריבוע חיצוני (הוכחה גיאומטרית)</span>
+      <span>▼</span>
+    </div>
+    <div class="proof-body">
+      <p style="margin-bottom:10px;"><strong>רעיון:</strong> נבנה ריבוע עם צלע (a+b). בתוכו נשים 4 משולשים זהים ישרי זווית.</p>
+      <div class="proof-step"><div class="proof-num">נתון</div>משולש ישר זווית עם ניצבים a, b ויתר c</div>
+      <div class="proof-step"><div class="proof-num">בנייה</div>בנה ריבוע גדול עם צלע (a+b). בפינות הריבוע — 4 משולשים זהים ישרי זווית</div>
+      <div class="proof-step"><div class="proof-num">שטח</div>שטח הריבוע הגדול = (a+b)² = a² + 2ab + b²</div>
+      <div class="proof-step"><div class="proof-num">ניתוח</div>שטח הריבוע הגדול = שטח 4 המשולשים + שטח הריבוע הפנימי (צלע c)<br>= 4·(½ab) + c² = 2ab + c²</div>
+      <div class="proof-step"><div class="proof-num">שוויון</div>a² + 2ab + b² = 2ab + c²</div>
+      <div class="proof-step" style="background:var(--yellow-pale);border-color:var(--purple);"><div class="proof-num">מסקנה</div><strong>a² + b² = c²</strong> ✓</div>
+    </div>
+  </div>
+
+  <div class="proof-box" style="margin-top:4px;">
+    <div class="proof-head" onclick="toggleProof(this)">
+      <span>הוכחה 2 — שטחים (הוכחה אלגברית)</span>
+      <span>▼</span>
+    </div>
+    <div class="proof-body">
+      <p style="margin-bottom:10px;"><strong>רעיון:</strong> נשתמש בגובה מהזווית הישרה לשטח המשולש.</p>
+      <div class="proof-step"><div class="proof-num">נתון</div>משולש ABC ישר זווית ב-C. נסמן: BC=a, AC=b, AB=c</div>
+      <div class="proof-step"><div class="proof-num">גובה</div>נוריד גובה CH ל-AB. נסמן: AH=m, HB=n, CH=h</div>
+      <div class="proof-step"><div class="proof-num">דמיון</div>משולש ACH דומה למשולש ABC → <span class="frac" style="display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-size:0.85em;"><span style="border-bottom:1.5px solid currentColor;padding:0 2px;">b</span><span style="padding:0 2px;">c</span></span> = <span class="frac" style="display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-size:0.85em;"><span style="border-bottom:1.5px solid currentColor;padding:0 2px;">m</span><span style="padding:0 2px;">b</span></span> → b² = mc</div>
+      <div class="proof-step"><div class="proof-num">דמיון 2</div>משולש BCH דומה למשולש ABC → a² = nc</div>
+      <div class="proof-step" style="background:var(--yellow-pale);border-color:var(--purple);"><div class="proof-num">סיכום</div>a² + b² = nc + mc = c(n+m) = c·c = <strong>c²</strong> ✓</div>
+    </div>
+  </div>
+
+  <div class="proof-box" style="margin-top:4px;">
+    <div class="proof-head" onclick="toggleProof(this)">
+      <span>הוכחת ההפך — בדיקת ישר זווית</span>
+      <span>▼</span>
+    </div>
+    <div class="proof-body">
+      <p style="margin-bottom:10px;"><strong>טענה:</strong> אם a² + b² = c², אז המשולש ישר זווית.</p>
+      <div class="proof-step"><div class="proof-num">נתון</div>משולש עם צלעות a, b, c כך ש-a² + b² = c²</div>
+      <div class="proof-step"><div class="proof-num">בנייה</div>בנה משולש ישר זווית עם ניצבים a, b. יתרו הוא d, ולכן a² + b² = d²</div>
+      <div class="proof-step"><div class="proof-num">השוואה</div>מהנתון: c² = a² + b² = d² → c = d</div>
+      <div class="proof-step"><div class="proof-num">מסקנה</div>שני המשולשים קונגרואנטים (צ.צ.צ) → גם המשולש המקורי <strong>ישר זווית</strong> ✓</div>
+    </div>
+  </div>
+
+  <div class="tip">💡 <strong>לבגרות:</strong> בהוכחה — כל טענה צריכה נימוק! "נתון", "הגדרה", "משפט שלמדנו". אל תדלג על שלבים.</div>
+</div>
+
+<!-- ══════════ חישוב ══════════ -->
+<div class="panel" id="panel-calc">
+
+  <div class="calc-wrap">
+    <div class="calc-head">🔢 מחשבון פיתגורס</div>
+    <div class="calc-body">
+      <p style="font-size:0.82rem;font-weight:700;color:var(--text-muted);margin-bottom:12px;">הכנס שתי צלעות ידועות, בחר מה לחשב:</p>
+
+      <div class="input-row">
+        <label>ניצב a =</label>
+        <input class="math-input" id="ca" type="number" min="0" step="0.1" placeholder="?">
+      </div>
+      <div class="input-row">
+        <label>ניצב b =</label>
+        <input class="math-input" id="cb" type="number" min="0" step="0.1" placeholder="?">
+      </div>
+      <div class="input-row">
+        <label>יתר c =</label>
+        <input class="math-input" id="cc" type="number" min="0" step="0.1" placeholder="?">
+      </div>
+      <div class="input-row">
+        <label>מצא:</label>
+        <select class="unknown-select" id="cunknown">
+          <option value="c">יתר c</option>
+          <option value="a">ניצב a</option>
+          <option value="b">ניצב b</option>
+          <option value="check">בדוק ישר זווית</option>
+        </select>
+      </div>
+      <button class="calc-btn" onclick="calcPyth()">✨ חשב</button>
+      <div class="result-box" id="res-pyth"></div>
+    </div>
+  </div>
+
+  <div class="section-title">דוגמאות פתורות</div>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🟢 חישוב יתר — a=3, b=4</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <div class="sol-step"><div class="s-num">נוסחה</div>a² + b² = c²</div>
+      <div class="sol-step"><div class="s-num">הצב</div>3² + 4² = c² → 9 + 16 = c² → 25 = c²</div>
+      <div class="sol-step"><div class="s-num">פתרון</div>c = √25 = <strong>5</strong></div>
+    </div>
+  </div>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🟢 חישוב ניצב — a=?, b=12, c=13</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <div class="sol-step"><div class="s-num">נוסחה</div>a² + b² = c²</div>
+      <div class="sol-step"><div class="s-num">הצב</div>a² + 144 = 169</div>
+      <div class="sol-step"><div class="s-num">פתרון</div>a² = 169 − 144 = 25 → a = <strong>5</strong></div>
+    </div>
+  </div>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🟠 בעיית מילים — סולם על קיר (בינוני)</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <strong>שאלה:</strong> סולם באורך 10 מטר נשען על קיר. תחתית הסולם רחוקה 6 מ׳ מהקיר. באיזה גובה הסולם נוגע בקיר?
+      <br><br>
+      <div class="sol-step"><div class="s-num">ציור</div>משולש ישר זווית: ניצב = גובה (h), ניצב = 6, יתר = 10</div>
+      <div class="sol-step"><div class="s-num">פיתגורס</div>h² + 6² = 10² → h² + 36 = 100</div>
+      <div class="sol-step"><div class="s-num">פתרון</div>h² = 64 → h = <strong>8 מ׳</strong></div>
+    </div>
+  </div>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🔴 אלכסון מלבן + בדיקת ישר זווית (קשה)</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <strong>שאלה:</strong> מלבן עם אורך 8 ורוחב 6. א. מצא אלכסון. ב. האם משולש עם צלעות 7, 24, 25 ישר זווית?
+      <br><br>
+      <div class="sol-step"><div class="s-num">א — אלכסון</div>d² = 8² + 6² = 64 + 36 = 100 → d = <strong>10</strong></div>
+      <div class="sol-step"><div class="s-num">ב — בדיקה</div>7² + 24² = 49 + 576 = 625 = 25² ✓ → <strong>כן, ישר זווית!</strong></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ שלשות ══════════ -->
+<div class="panel" id="panel-triples">
+  <div class="section-title">שלשות פיתגוריות — מספרים שלמים!</div>
+
+  <div class="node warn">⚠️ שלשה פיתגורית = שלוש מספרים שלמים שמקיימים a² + b² = c²<br>שווה לזכור אותן — חוסכים הרבה חישוב!</div>
+
+  <div class="triples-grid">
+    <div class="triple-card" style="border-color:var(--orange);box-shadow:3px 3px 0 var(--orange);">
+      <div class="triple-nums">3, 4, 5</div>
+      <div style="font-size:0.72rem;color:var(--text-muted);">9+16=25 ✓</div>
+    </div>
+    <div class="triple-card" style="border-color:var(--purple);box-shadow:3px 3px 0 var(--purple);">
+      <div class="triple-nums">5, 12, 13</div>
+      <div style="font-size:0.72rem;color:var(--text-muted);">25+144=169 ✓</div>
+    </div>
+    <div class="triple-card" style="border-color:var(--green);box-shadow:3px 3px 0 var(--green);">
+      <div class="triple-nums">8, 15, 17</div>
+      <div style="font-size:0.72rem;color:var(--text-muted);">64+225=289 ✓</div>
+    </div>
+    <div class="triple-card" style="border-color:var(--blue);box-shadow:3px 3px 0 var(--blue);">
+      <div class="triple-nums">7, 24, 25</div>
+      <div style="font-size:0.72rem;color:var(--text-muted);">49+576=625 ✓</div>
+    </div>
+    <div class="triple-card" style="border-color:var(--orange);box-shadow:3px 3px 0 var(--orange);">
+      <div class="triple-nums">6, 8, 10</div>
+      <div style="font-size:0.72rem;color:var(--text-muted);">3,4,5 × 2</div>
+    </div>
+    <div class="triple-card" style="border-color:var(--purple);box-shadow:3px 3px 0 var(--purple);">
+      <div class="triple-nums">9, 12, 15</div>
+      <div style="font-size:0.72rem;color:var(--text-muted);">3,4,5 × 3</div>
+    </div>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">כפולות של שלשות</div>
+    <div class="rule-item">
+      <span class="rname">עיקרון</span>
+      אם (a,b,c) שלשה פיתגורית — אז גם (ka, kb, kc) לכל k חיובי!
+    </div>
+    <div class="rule-item" style="background:var(--yellow-pale);">
+      <span class="rname">דוגמה</span>
+      (3,4,5) → (6,8,10) → (9,12,15) → (12,16,20)...
+    </div>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">משולשים מיוחדים</div>
+    <div class="rule-item">
+      <span class="rname">משולש שווה-שוקיים ישר זווית (45°-45°-90°)</span>
+      a = b → c = a√2<br>
+      דוגמה: a=1, b=1, c=√2
+    </div>
+    <div class="rule-item">
+      <span class="rname">משולש 30°-60°-90°</span>
+      אם הצלע הקטנה = a → הצלע האמצעית = a√3, היתר = 2a
+    </div>
+  </div>
+
+  <div class="tip">💡 <strong>טיפ לבחינה:</strong> כשמקבלים מספרים כמו 3,4,? או 5,12,? — מיד בדוק אם זו שלשה פיתגורית מוכרת!</div>
+</div>
+
+<!-- ══════════ מחולל ══════════ -->
+<div class="panel" id="panel-gen">
+  <div class="gen-wrap">
+    <div class="gen-header">🎲 מחולל שאלות — פיתגורס</div>
+    <div class="gen-body">
+      <div class="diff-row">
+        <button class="diff-btn active" id="d-easy" onclick="setDiff('easy',this)">🟢 קל</button>
+        <button class="diff-btn" id="d-med" onclick="setDiff('med',this)">🟠 בינוני</button>
+        <button class="diff-btn" id="d-hard" onclick="setDiff('hard',this)">🔴 קשה</button>
+      </div>
+      <div class="gen-btns" style="margin-bottom:10px;">
+        <button class="gen-go" onclick="generateQ()">🎲 שאלה חדשה</button>
+        <button class="gen-show" onclick="showAns()">👁 פתרון</button>
+      </div>
+      <div class="gen-q" id="gen-q"></div>
+      <div class="gen-ans" id="gen-ans"></div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ── panel switching ──
+function showPanel(type,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.main-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+type).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleEx(h){ const b=h.nextElementSibling,t=h.querySelector('.ex-toggle'); b.classList.toggle('open');t.classList.toggle('open'); }
+function toggleProof(h){ const b=h.nextElementSibling; b.classList.toggle('open'); h.querySelector('span:last-child').textContent=b.classList.contains('open')?'▲':'▼'; }
+
+// ── triangle canvas ──
+window.addEventListener('load',()=>{
+  const c=document.getElementById('triCanvas');
+  if(!c) return;
+  c.width=c.offsetWidth*2; c.height=440;
+  const W=c.width,H=c.height,ctx=c.getContext('2d');
+  ctx.fillStyle='#FFFBE0'; ctx.fillRect(0,0,W,H);
+  const pad=60, bx=pad, by=H-pad, tx=pad, ty=pad+30, rx=W-pad, ry=H-pad;
+  // triangle
+  ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(tx,ty); ctx.lineTo(rx,ry); ctx.closePath();
+  ctx.fillStyle='#EDE6F7'; ctx.fill();
+  ctx.strokeStyle='#1A1612'; ctx.lineWidth=4; ctx.stroke();
+  // right angle mark
+  const sz=22;
+  ctx.strokeStyle='#6B3FA0'; ctx.lineWidth=3;
+  ctx.strokeRect(bx,by-sz,sz,sz);
+  // labels
+  ctx.font=`bold ${W*0.055}px Fraunces,serif`;
+  ctx.fillStyle='#FF8C42'; ctx.textAlign='center';
+  // a (left side)
+  ctx.fillText('a',(bx+tx)/2-28,(by+ty)/2);
+  // b (bottom)
+  ctx.fillText('b',(bx+rx)/2,(by)+34);
+  // c (hypotenuse)
+  ctx.fillStyle='#6B3FA0';
+  ctx.fillText('c',(tx+rx)/2+20,(ty+ry)/2-10);
+  // formula
+  ctx.fillStyle='#1A1612'; ctx.font=`bold ${W*0.06}px Fraunces,serif`;
+  ctx.fillText('a² + b² = c²', W/2, H*0.18);
+  // right angle label
+  ctx.font=`bold ${W*0.032}px Nunito,sans-serif`;
+  ctx.fillStyle='#6B3FA0'; ctx.textAlign='left';
+  ctx.fillText('90°',bx+sz+6,by-6);
+});
+
+// ── calculator ──
+function fmt(n){ return Math.round(n*100)/100; }
+function calcPyth(){
+  const a=parseFloat(document.getElementById('ca').value);
+  const b=parseFloat(document.getElementById('cb').value);
+  const c=parseFloat(document.getElementById('cc').value);
+  const u=document.getElementById('cunknown').value;
+  const res=document.getElementById('res-pyth');
+  res.classList.add('show');
+
+  if(u==='c'){
+    if(isNaN(a)||isNaN(b)){res.innerHTML='<div style="color:var(--red);font-weight:800;">⚠️ הכנס a ו-b</div>';return;}
+    const cv=Math.sqrt(a*a+b*b);
+    res.innerHTML=`<div class="result-val">c = ${fmt(cv)}</div>
+      <div class="step-line">c² = ${a}² + ${b}² = ${a*a} + ${b*b} = ${a*a+b*b}</div>
+      <div class="step-line">c = √${a*a+b*b} = <strong>${fmt(cv)}</strong></div>`;
+  } else if(u==='a'){
+    if(isNaN(b)||isNaN(c)){res.innerHTML='<div style="color:var(--red);font-weight:800;">⚠️ הכנס b ו-c</div>';return;}
+    if(c<=b){res.innerHTML='<div style="color:var(--red);font-weight:800;">⚠️ היתר חייב להיות גדול מהניצב!</div>';return;}
+    const av=Math.sqrt(c*c-b*b);
+    res.innerHTML=`<div class="result-val">a = ${fmt(av)}</div>
+      <div class="step-line">a² = c² − b² = ${c}² − ${b}² = ${c*c} − ${b*b} = ${c*c-b*b}</div>
+      <div class="step-line">a = √${c*c-b*b} = <strong>${fmt(av)}</strong></div>`;
+  } else if(u==='b'){
+    if(isNaN(a)||isNaN(c)){res.innerHTML='<div style="color:var(--red);font-weight:800;">⚠️ הכנס a ו-c</div>';return;}
+    if(c<=a){res.innerHTML='<div style="color:var(--red);font-weight:800;">⚠️ היתר חייב להיות גדול מהניצב!</div>';return;}
+    const bv=Math.sqrt(c*c-a*a);
+    res.innerHTML=`<div class="result-val">b = ${fmt(bv)}</div>
+      <div class="step-line">b² = c² − a² = ${c}² − ${a}² = ${c*c} − ${a*a} = ${c*c-a*a}</div>
+      <div class="step-line">b = √${c*c-a*a} = <strong>${fmt(bv)}</strong></div>`;
+  } else {
+    if(isNaN(a)||isNaN(b)||isNaN(c)){res.innerHTML='<div style="color:var(--red);font-weight:800;">⚠️ הכנס את שלוש הצלעות</div>';return;}
+    const sides=[a,b,c].sort((x,y)=>x-y);
+    const isRight=Math.abs(sides[0]*sides[0]+sides[1]*sides[1]-sides[2]*sides[2])<0.01;
+    res.innerHTML=`<div class="result-val">${isRight?'✅ כן! ישר זווית':'❌ לא ישר זווית'}</div>
+      <div class="step-line">${sides[0]}² + ${sides[1]}² = ${fmt(sides[0]**2)} + ${fmt(sides[1]**2)} = ${fmt(sides[0]**2+sides[1]**2)}</div>
+      <div class="step-line">${sides[2]}² = ${fmt(sides[2]**2)}</div>
+      <div class="step-line">${fmt(sides[0]**2+sides[1]**2)} ${isRight?'=':'≠'} ${fmt(sides[2]**2)} → ${isRight?'<strong>ישר זווית ✓</strong>':'<strong>לא ישר זווית ✗</strong>'}</div>`;
+  }
+}
+
+// ── generator ──
+let genDiff='easy', currentQ=null;
+function setDiff(d,btn){ genDiff=d; document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+function rnd(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+const TRIPLES=[[3,4,5],[5,12,13],[8,15,17],[7,24,25],[9,40,41]];
+
+function generateQ(){
+  document.getElementById('gen-ans').classList.remove('show');
+  const q=document.getElementById('gen-q');
+  q.classList.add('show');
+
+  const triple=TRIPLES[rnd(0,TRIPLES.length-1)];
+  const k=genDiff==='easy'?1:genDiff==='med'?rnd(2,3):rnd(1,4);
+  const [a,b,c]=[triple[0]*k,triple[1]*k,triple[2]*k];
+
+  if(genDiff==='easy'){
+    const type=rnd(0,1);
+    if(type===0){
+      currentQ={type:'find-c',a,b,c};
+      q.innerHTML=`<strong>מצא את היתר:</strong><br>משולש ישר זווית עם ניצבים ${a} ו-${b}.<br>מה אורך היתר?`;
+    } else {
+      currentQ={type:'find-a',a,b,c};
+      q.innerHTML=`<strong>מצא את הניצב:</strong><br>משולש ישר זווית עם ניצב ${b} ויתר ${c}.<br>מה אורך הניצב השני?`;
+    }
+  } else if(genDiff==='med'){
+    const type=rnd(0,2);
+    if(type===0){
+      currentQ={type:'ladder',a,b:b,c};
+      q.innerHTML=`<strong>🪜 שאלת סולם:</strong><br>סולם באורך ${c} מ׳ נשען על קיר אנכי. תחתית הסולם רחוקה ${a} מ׳ מהקיר.<br>באיזה גובה הסולם נוגע בקיר?`;
+    } else if(type===1){
+      currentQ={type:'diagonal',a:a,b:b,c};
+      q.innerHTML=`<strong>📐 אלכסון מלבן:</strong><br>מלבן עם אורך ${a} ורוחב ${b}.<br>מה אורך האלכסון שלו?`;
+    } else {
+      const sides=[a,b,c].sort(()=>Math.random()-0.5);
+      currentQ={type:'check',a:sides[0],b:sides[1],c:sides[2],isRight:true};
+      q.innerHTML=`<strong>בדיקת ישר זווית:</strong><br>האם משולש עם צלעות ${sides[0]}, ${sides[1]}, ${sides[2]} הוא ישר זווית?<br>נמק את תשובתך.`;
+    }
+  } else {
+    const type=rnd(0,1);
+    const fakeTriple=[rnd(3,10),rnd(3,10),rnd(5,15)];
+    if(type===0){
+      currentQ={type:'word',a,b,c};
+      q.innerHTML=`<strong>🏠 בעיית מילים:</strong><br>בשדה מלבני באורך ${a} מ׳ ורוחב ${b} מ׳ רוצים להניח גדר באלכסון.<br>א. מה אורך הגדר?<br>ב. כמה יעלה הגדר אם מטר עולה 45 ₪?`;
+    } else {
+      const notRight=fakeTriple[0]**2+fakeTriple[1]**2!==fakeTriple[2]**2;
+      currentQ={type:'check',a:fakeTriple[0],b:fakeTriple[1],c:fakeTriple[2],isRight:false};
+      q.innerHTML=`<strong>בדיקת ישר זווית:</strong><br>האם משולש עם צלעות ${fakeTriple[0]}, ${fakeTriple[1]}, ${fakeTriple[2]} הוא ישר זווית?<br>נמק!`;
+    }
+  }
+}
+
+function showAns(){
+  if(!currentQ){generateQ();return;}
+  const a=document.getElementById('gen-ans');
+  a.classList.add('show');
+  const q=currentQ;
+  let html='';
+
+  if(q.type==='find-c'){
+    html=`<strong>פתרון:</strong><br>
+      c² = ${q.a}² + ${q.b}² = ${q.a**2} + ${q.b**2} = ${q.a**2+q.b**2}<br>
+      c = √${q.a**2+q.b**2} = <strong>${q.c}</strong>`;
+  } else if(q.type==='find-a'){
+    html=`<strong>פתרון:</strong><br>
+      a² = c² − b² = ${q.c**2} − ${q.b**2} = ${q.c**2-q.b**2}<br>
+      a = √${q.c**2-q.b**2} = <strong>${q.a}</strong>`;
+  } else if(q.type==='ladder'||q.type==='diagonal'){
+    html=`<strong>פתרון:</strong><br>
+      c² = ${q.a}² + ${q.b}² = ${q.a**2+q.b**2}<br>
+      c = <strong>${q.c} מ׳</strong>`;
+  } else if(q.type==='check'){
+    const sides=[q.a,q.b,q.c].sort((a,b)=>a-b);
+    const sum=sides[0]**2+sides[1]**2;
+    const hyp=sides[2]**2;
+    const is=Math.abs(sum-hyp)<1;
+    html=`<strong>פתרון:</strong><br>
+      ${sides[0]}² + ${sides[1]}² = ${sum}<br>
+      ${sides[2]}² = ${hyp}<br>
+      ${sum} ${is?'=':'≠'} ${hyp} → <strong>${is?'כן! ישר זווית ✓':'לא ישר זווית ✗'}</strong>`;
+  } else if(q.type==='word'){
+    const d=fmt(Math.sqrt(q.a**2+q.b**2));
+    html=`<strong>פתרון:</strong><br>
+      א. d² = ${q.a}² + ${q.b}² = ${q.a**2+q.b**2} → d = <strong>${d} מ׳</strong><br>
+      ב. ${d} × 45 = <strong>${fmt(parseFloat(d)*45)} ₪</strong>`;
+  }
+  a.innerHTML=html;
+}
+</script>
+</body>
+</html>

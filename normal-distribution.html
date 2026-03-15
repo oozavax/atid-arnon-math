@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>התפלגות נורמלית — מתמטיקה 4 יח"ל</title>
+<link rel="stylesheet" href="style.css">
+<style>
+:root{
+  --yellow:#FFE135;--yellow-pale:#FFFBE0;--yellow-dark:#F5C800;
+  --ink:#1A1A1A;--ink-soft:#4B4B4B;--bg:#FFFDF0;
+}
+:root{
+  --purple:#5b21b6;--purple-light:#ede9fe;--purple-border:#c4b5fd;
+  --blue:#1d4ed8;--blue-light:#eff6ff;--blue-border:#bfdbfe;
+  --green:#166534;--green-light:#dcfce7;
+  --red:#b91c1c;--red-light:#fee2e2;
+  --orange:#c2410c;--orange-light:#fff7ed;
+  --gray:#78716c;--shadow:0 2px 12px rgba(0,0,0,0.08);
+  --bg:#f8f7f4;--white:#fff;--border:#e4e0d8;--text:#1c1917;
+}
+.main-nav{display:flex;justify-content:center;max-width:700px;margin:22px auto 0;background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.2);border-radius:14px;overflow:hidden;}
+.main-btn{flex:1;padding:12px 6px;border:none;background:transparent;font-family:'Nunito',sans-serif;font-size:0.83rem;font-weight:800;cursor:pointer;color:rgba(255,255,255,0.6);transition:all 0.2s;border-left:1px solid rgba(255,255,255,0.15);}
+.main-btn:last-child{border-left:none;}
+.main-btn.active{background:rgba(255,255,255,0.2);color:#fff;}
+.main-btn:hover:not(.active){background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.9);}
+main{max-width:700px;margin:0 auto;padding:28px 14px 90px;}
+.panel{display:none;}.panel.active{display:flex;flex-direction:column;align-items:center;gap:10px;}
+.section-title{width:100%;font-family:'Fredoka One',cursive;font-size:1.1rem;font-weight:700;color:var(--blue);padding:14px 0 8px;border-bottom:2px solid var(--blue-border);margin-bottom:4px;}
+
+.node{width:100%;border-radius:14px;padding:15px 20px;font-size:0.95rem;font-weight:700;line-height:1.5;border:1.5px solid var(--border);background:var(--white);box-shadow:var(--shadow);}
+.node.start{background:linear-gradient(135deg,#1e3a8a,#1d4ed8 60%,#0891b2);color:#fff;text-align:center;font-size:1.1rem;font-weight:900;border-radius:50px;padding:14px 36px;box-shadow:0 6px 20px rgba(29,78,216,.3);border:none;}
+.node.step{border:2px solid;display:flex;align-items:flex-start;gap:12px;}
+.node.step .num{font-size:1.4rem;min-width:28px;line-height:1;margin-top:2px;}
+.node.step .content .title{font-size:1rem;font-weight:800;margin-bottom:3px;}
+.node.step .content .detail{font-size:0.87rem;font-weight:600;color:var(--gray);line-height:1.5;}
+.node.blue{border-color:var(--blue);}.node.blue .num{color:var(--blue);}
+.node.green{border-color:var(--green);}.node.green .num{color:var(--green);}
+.node.orange{border-color:var(--orange);}.node.orange .num{color:var(--orange);}
+.node.warn{background:#fefce8;border:2px solid #fde047;color:#713f12;}
+.node.formula{background:var(--blue-light);border:2px solid var(--blue-border);text-align:center;font-size:1.1rem;}
+.arrow{display:flex;justify-content:center;padding:3px 0;}
+.tip{width:100%;background:#fefce8;border:1.5px solid #fde047;border-radius:14px;padding:12px 16px;font-size:0.85rem;font-weight:700;color:#713f12;line-height:1.5;}
+
+.rule-box{width:100%;border-radius:14px;overflow:hidden;box-shadow:var(--shadow);border:1.5px solid var(--border);}
+.rb-title{padding:10px 16px;font-size:0.88rem;font-weight:800;background:var(--blue-light);color:var(--blue);border-bottom:1px solid var(--blue-border);}
+.rule-item{padding:10px 16px;font-size:0.87rem;font-weight:600;border-bottom:1px solid var(--border);background:var(--white);line-height:1.5;}
+.rule-item:last-child{border-bottom:none;}
+.rname{font-weight:800;display:block;margin-bottom:2px;color:var(--blue);}
+
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 2px;font-size:0.9em;}
+.frac .num{border-bottom:1.5px solid currentColor;padding:0 3px;line-height:1.3;}
+.frac .den{padding:0 3px;line-height:1.3;}
+
+/* bell curve */
+.bell-wrap{width:100%;background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow);}
+canvas.bell{width:100%;height:180px;}
+
+/* z-table */
+.ztable-wrap{width:100%;overflow-x:auto;}
+.ztable{border-collapse:collapse;font-size:0.78rem;background:var(--white);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);width:100%;}
+.ztable th{background:var(--blue);color:#fff;padding:7px 10px;font-weight:800;text-align:center;}
+.ztable td{padding:6px 10px;border-bottom:1px solid var(--border);text-align:center;font-weight:600;}
+.ztable tr:last-child td{border-bottom:none;}
+.ztable tr:nth-child(even) td{background:#f0f7ff;}
+.ztable td:first-child{font-weight:800;background:var(--blue-light);color:var(--blue);}
+.ztable .highlight{background:#fef08a !important;font-weight:800;}
+
+/* exercises */
+.ex-card{background:var(--white);border-radius:14px;border:1.5px solid var(--border);overflow:hidden;box-shadow:var(--shadow);width:100%;}
+.ex-header{padding:13px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:0.9rem;}
+.ex-toggle{font-size:0.75rem;color:var(--gray);transition:transform 0.2s;}
+.ex-toggle.open{transform:rotate(180deg);}
+.ex-body{display:none;padding:14px 16px;border-top:1px solid var(--border);background:#f8f7f4;font-size:0.87rem;font-weight:600;line-height:1.7;}
+.ex-body.open{display:block;}
+.sol-step{padding:8px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);margin-bottom:6px;}
+.sol-step .s-num{font-size:0.75rem;font-weight:800;color:var(--blue);margin-bottom:2px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="topbar-logo">
+    <div class="logo-mark">∫</div>
+    <span class="logo-text">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge">פרק א׳ · סטטיסטיקה</span>
+    <a href="index.html" class="topbar-home">← בית</a>
+  </div>
+</div>
+    <span class="logo-text">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge">📊 פרק א׳ · סטטיסטיקה</span>
+    <a href="index.html" class="topbar-home">← בית</a>
+  </div>
+</div>
+    <span class="logo-text" style="color:var(--ink,#1a1a1a);font-family:'Fredoka One',cursive;">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge" style="background:var(--ink,#1a1a1a);color:var(--yellow,#FFE135);font-family:'Fredoka One',cursive;">פרק א׳ · סטטיסטיקה</span>
+    <a href="index.html" class="topbar-home" style="border:2.5px solid var(--ink,#1a1a1a);color:var(--ink,#1a1a1a);font-family:'Fredoka One',cursive;background:#fff;border-radius:999px;padding:5px 14px;text-decoration:none;font-size:0.82rem;">← דף הבית</a>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-breadcrumb">פרק א׳ · סטטיסטיקה והסתברות</div>
+  <h1>🔔 התפלגות נורמלית</h1>
+  <p class="hero-sub">ציון תקן · טבלת z · שאלות בגרות</p>
+  <div class="main-nav">
+    <button class="main-btn active" onclick="showPanel('theory',this)">📖 תיאוריה</button>
+    <button class="main-btn" onclick="showPanel('zscore',this)">z ציון תקן</button>
+    <button class="main-btn" onclick="showPanel('ztable',this)">📊 טבלת z</button>
+    <button class="main-btn" onclick="showPanel('practice',this)">✏️ תרגול</button>
+  </div>
+</div>
+
+<main>
+
+<!-- ═══ תיאוריה ═══ -->
+<div class="panel active" id="panel-theory">
+
+  <div class="section-title">מה זו התפלגות נורמלית?</div>
+
+  <div class="bell-wrap">
+    <canvas class="bell" id="bellCanvas"></canvas>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">תכונות ההתפלגות הנורמלית</div>
+    <div class="rule-item"><span class="rname">סימטריה</span>הגרף סימטרי סביב הממוצע μ — חצי מהערכים משמאל, חצי מימין</div>
+    <div class="rule-item"><span class="rname">ממוצע = חציון = שכיח</span>כולם נמצאים במרכז הגרף</div>
+    <div class="rule-item"><span class="rname">שטח כולל = 1 (100%)</span>השטח מתחת לעקומה שווה 100% מהנתונים</div>
+    <div class="rule-item"><span class="rname">סטיית תקן קובעת את הרוחב</span>σ גדולה → עקומה שטוחה ורחבה · σ קטנה → עקומה צרה וגבוהה</div>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">כלל ה-68-95-99.7</div>
+    <div class="rule-item"><span class="rname">μ ± σ (סטייה אחת)</span>≈ 68% מהנתונים נמצאים בטווח זה</div>
+    <div class="rule-item"><span class="rname">μ ± 2σ (שתי סטיות)</span>≈ 95% מהנתונים נמצאים בטווח זה</div>
+    <div class="rule-item"><span class="rname">μ ± 3σ (שלוש סטיות)</span>≈ 99.7% מהנתונים נמצאים בטווח זה</div>
+  </div>
+
+  <div class="tip">💡 <strong>טיפ לבגרות:</strong> ממוצע וסטיית תקן הם שני הפרמטרים שמגדירים לחלוטין התפלגות נורמלית. ברוב שאלות הבגרות — אחד מהם ידוע ואת השני צריך למצוא.</div>
+
+</div>
+
+<!-- ═══ ציון תקן ═══ -->
+<div class="panel" id="panel-zscore">
+
+  <div class="section-title">ציון תקן — z score</div>
+
+  <div class="node formula">
+    z = <span style="margin:0 8px;"><span class="frac"><span class="num">x − μ</span><span class="den">σ</span></span></span>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">מה אומר ציון התקן?</div>
+    <div class="rule-item"><span class="rname">z = 0</span>הערך שווה בדיוק לממוצע</div>
+    <div class="rule-item"><span class="rname">z = 1</span>הערך גבוה מהממוצע בסטייה אחת</div>
+    <div class="rule-item"><span class="rname">z = −1</span>הערך נמוך מהממוצע בסטייה אחת</div>
+    <div class="rule-item"><span class="rname">z חיובי</span>הערך מעל הממוצע — יותר מ-50% קיבלו פחות</div>
+    <div class="rule-item"><span class="rname">z שלילי</span>הערך מתחת לממוצע — פחות מ-50% קיבלו פחות</div>
+  </div>
+
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="section-title">שלבים — מציאת ציון תקן</div>
+
+  <div class="node step blue">
+    <div class="num">1️⃣</div>
+    <div class="content">
+      <div class="title">זהה את x, μ, σ</div>
+      <div class="detail">x = הערך הנתון · μ = הממוצע · σ = סטיית התקן</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+  <div class="node step blue">
+    <div class="num">2️⃣</div>
+    <div class="content">
+      <div class="title">הצב בנוסחה</div>
+      <div class="detail">z = (x − μ) ÷ σ · חשב את התוצאה</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+  <div class="node step blue">
+    <div class="num">3️⃣</div>
+    <div class="content">
+      <div class="title">חפש בטבלת z</div>
+      <div class="detail">ציון z → אחוז האנשים שקיבלו פחות מ-x</div>
+    </div>
+  </div>
+
+  <div class="tip">💡 <strong>שימו לב:</strong> טבלת z נותנת את השטח משמאל (אחוז הנמוכים מ-x). אם צריך את האחוז מעל x — חסרו מ-100%!</div>
+
+  <div class="section-title">דוגמה — בגרות חורף 2026 שאלה 1</div>
+  <div class="node warn">
+    ציונים מתפלגים נורמלית, ממוצע 570. ציונה של לימור 698, ציון תקן 1.6. מצאו את סטיית התקן.
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+  <div class="node step green">
+    <div class="num">✅</div>
+    <div class="content">
+      <div class="title">פתרון</div>
+      <div class="detail">
+        z = (x − μ) ÷ σ<br>
+        1.6 = (698 − 570) ÷ σ<br>
+        1.6 = 128 ÷ σ<br>
+        σ = 128 ÷ 1.6 = <strong>80</strong>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ טבלת z ═══ -->
+<div class="panel" id="panel-ztable">
+
+  <div class="section-title">טבלת ההתפלגות הנורמלית</div>
+
+  <div class="node warn">
+    📌 הטבלה נותנת את <strong>האחוז של הנתונים שנמצאים מתחת לציון תקן z</strong>.<br>
+    כלומר: P(X &lt; x) = הערך בטבלה.
+  </div>
+
+  <div class="ztable-wrap">
+    <table class="ztable">
+      <tr><th>z</th><th>0.00</th><th>0.02</th><th>0.04</th><th>0.06</th><th>0.08</th></tr>
+      <tr><td>0.0</td><td>50.0%</td><td>50.8%</td><td>51.6%</td><td>52.4%</td><td>53.2%</td></tr>
+      <tr><td>0.2</td><td>57.9%</td><td>58.7%</td><td>59.5%</td><td>60.3%</td><td>61.1%</td></tr>
+      <tr><td>0.4</td><td>65.5%</td><td>66.3%</td><td>67.0%</td><td>67.7%</td><td>68.4%</td></tr>
+      <tr><td>0.6</td><td>72.6%</td><td>73.2%</td><td>73.9%</td><td>74.5%</td><td>75.2%</td></tr>
+      <tr><td>0.8</td><td>78.8%</td><td>79.4%</td><td>80.0%</td><td>80.5%</td><td>81.1%</td></tr>
+      <tr><td>1.0</td><td>84.1%</td><td>84.6%</td><td>85.1%</td><td>85.5%</td><td>85.9%</td></tr>
+      <tr><td>1.2</td><td>88.5%</td><td>88.8%</td><td>89.3%</td><td>89.6%</td><td>89.9%</td></tr>
+      <tr><td>1.4</td><td>91.9%</td><td>92.2%</td><td>92.5%</td><td>92.8%</td><td>93.1%</td></tr>
+      <tr><td>1.6</td><td>94.5%</td><td>94.7%</td><td>95.0%</td><td>95.2%</td><td>95.4%</td></tr>
+      <tr><td>1.8</td><td>96.4%</td><td>96.6%</td><td>96.7%</td><td>96.9%</td><td>97.1%</td></tr>
+      <tr><td>2.0</td><td>97.7%</td><td>97.8%</td><td>97.9%</td><td>98.0%</td><td>98.1%</td></tr>
+      <tr><td>2.2</td><td>98.6%</td><td>98.7%</td><td>98.7%</td><td>98.8%</td><td>98.9%</td></tr>
+      <tr><td>2.4</td><td>99.2%</td><td>99.2%</td><td>99.3%</td><td>99.3%</td><td>99.4%</td></tr>
+      <tr><td>2.6</td><td>99.5%</td><td>99.5%</td><td>99.6%</td><td>99.6%</td><td>99.6%</td></tr>
+      <tr><td>2.8</td><td>99.7%</td><td>99.7%</td><td>99.7%</td><td>99.8%</td><td>99.8%</td></tr>
+      <tr><td>3.0</td><td>99.9%</td><td>99.9%</td><td>99.9%</td><td>99.9%</td><td>99.9%</td></tr>
+    </table>
+  </div>
+
+  <div class="rule-box" style="margin-top:14px;">
+    <div class="rb-title">איך משתמשים בטבלה — 4 מצבים</div>
+    <div class="rule-item"><span class="rname">P(X &lt; x) — אחוז הנמוכים מ-x</span>חשב z → חפש בטבלה → זו התשובה ישירות</div>
+    <div class="rule-item"><span class="rname">P(X &gt; x) — אחוז הגבוהים מ-x</span>חשב z → חפש בטבלה → 100% פחות הערך</div>
+    <div class="rule-item"><span class="rname">P(a &lt; X &lt; b) — אחוז בין שני ערכים</span>חשב z₁ וz₂ → P(z₂) פחות P(z₁) מהטבלה</div>
+    <div class="rule-item"><span class="rname">ידוע האחוז, מצא x</span>חפש האחוז בטבלה → מצא z → x = μ + z·σ</div>
+  </div>
+
+  <div class="tip">💡 <strong>טיפ:</strong> בגרות — הטבלה המצורפת לבחינה מדויקת יותר. השתמש בה! הטבלה כאן היא לתרגול בלבד.</div>
+
+</div>
+
+<!-- ═══ תרגול ═══ -->
+<div class="panel" id="panel-practice">
+
+  <div class="section-title">תרגילים מבגרויות אמיתיות</div>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🟢 חורף תשפ"ה 2025 — טלפונים</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <strong>נתון:</strong> אורך חיי טלפונים מתפלג נורמלית. מהגרף: 22.7% חיים פחות מ-12 חודשים, ו-22.7% חיים יותר מ-18 חודשים.<br><br>
+      <strong>א. מצאו ממוצע וסטיית תקן.</strong>
+      <div class="sol-step"><div class="s-num">ממוצע</div>סימטריה: μ = (12+18)÷2 = <strong>15 חודשים</strong></div>
+      <div class="sol-step"><div class="s-num">סטיית תקן</div>22.7% מתחת ל-12 → z ≈ −0.75 → σ = (15−12)÷0.75 = <strong>4 חודשים</strong></div>
+      <br><strong>ב. 3.5% הטלפונים "פגומים". מהו אורך החיים הגדול ביותר של טלפון פגום?</strong>
+      <div class="sol-step"><div class="s-num">z לאחוז 3.5%</div>z ≈ −1.8 → x = 15 + (−1.8)×4 = <strong>7.8 חודשים</strong></div>
+      <br><strong>ג. ייצרו 2,000 טלפונים. כמה חיים יותר מ-20 חודשים?</strong>
+      <div class="sol-step"><div class="s-num">z</div>(20−15)÷4 = 1.25 → P(&gt;20) = 100%−89.4% = 10.6% → <strong>212 טלפונים</strong></div>
+    </div>
+  </div>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🟢 קיץ תשפ"ה 2025 מועד א׳ — קפיצה</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <strong>נתון:</strong> תחרות קפיצה לרוחק, ממוצע 4.2 מ׳. 69.2% קפצו פחות מ-4.5 מ׳.<br><br>
+      <strong>א. מצאו σ.</strong>
+      <div class="sol-step"><div class="s-num">מצא z</div>69.2% → z = 0.5 → σ = (4.5−4.2)÷0.5 = <strong>0.6 מ׳</strong></div>
+      <br><strong>ב. יותר מ-5.16 מ׳ זוכה מדליה. כמה אחוז?</strong>
+      <div class="sol-step"><div class="s-num">z</div>(5.16−4.2)÷0.6 = 1.6 → <strong>5.5%</strong></div>
+      <br><strong>ג. 11 זכו במדליה. כמה השתתפו?</strong>
+      <div class="sol-step"><div class="s-num">חישוב</div>5.5% = 11 → סה"כ = <strong>200 משתתפים</strong></div>
+      <br><strong>ד. אלון: רוחק 4.8 מ׳, גובה 1.75 מ׳ (ממוצע 1.5, σ=0.2). איפה דורג גבוה יותר?</strong>
+      <div class="sol-step"><div class="s-num">z רוחק</div>(4.8−4.2)÷0.6 = 1.0</div>
+      <div class="sol-step"><div class="s-num">z גובה</div>(1.75−1.5)÷0.2 = 1.25 → <strong>דורג גבוה יותר בגובה</strong></div>
+    </div>
+  </div>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🟠 קיץ תשפ"ה 2025 מועד ב׳ — מבחן כניסה</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <strong>נתון:</strong> σ=8, 93.3% קיבלו פחות מ-92.<br><br>
+      <strong>א. מצאו μ.</strong>
+      <div class="sol-step"><div class="s-num">z</div>93.3% → z=1.5 → 1.5=(92−μ)÷8 → μ = <strong>80</strong></div>
+      <br><strong>ב. 44% הגבוהים התקבלו. נבחן עם ציון 82 — התקבל?</strong>
+      <div class="sol-step"><div class="s-num">ציון סף</div>44% מעל → z=0.15 → ציון סף = 80+0.15×8 = 81.2</div>
+      <div class="sol-step"><div class="s-num">מסקנה</div>82 &gt; 81.2 → <strong>כן, התקבל</strong></div>
+      <br><strong>ג. מצטיין = ציון&gt;90. כמה % התקבלו ואינם מצטיינים?</strong>
+      <div class="sol-step"><div class="s-num">מצטיינים</div>z=(90−80)÷8=1.25 → 10.6% מצטיינים</div>
+      <div class="sol-step"><div class="s-num">תשובה</div>44% − 10.6% = <strong>33.4%</strong></div>
+      <br><strong>ד. 2,338 התקבלו ולא מצטיינים. כמה ניגשו בסך הכל?</strong>
+      <div class="sol-step"><div class="s-num">חישוב</div>33.4% = 2,338 → סה"כ = <strong>7,000 נבחנים</strong></div>
+    </div>
+  </div>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🔴 חורף תשפ"ו 2026 — פסיכומטרית (שאלה 1 מלאה)</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <strong>נתון:</strong> ממוצע 570, לימור ציון 698, z=1.6. ציון סף ספרות=602, פסיכולוגיה=682.<br><br>
+      <strong>א. מצאו σ.</strong>
+      <div class="sol-step"><div class="s-num">נוסחת z</div>1.6=(698−570)÷σ → σ=128÷1.6 = <strong>80</strong></div>
+      <br><strong>ב. יעל — 57.9% קיבלו פחות ממנה. האם תתקבל לספרות?</strong>
+      <div class="sol-step"><div class="s-num">ציון יעל</div>57.9%→z=0.2 → ציון=570+0.2×80=586</div>
+      <div class="sol-step"><div class="s-num">מסקנה</div>586 &lt; 602 → <strong>לא תתקבל</strong></div>
+      <br><strong>ג. כמה % יכולים להתקבל לפסיכולוגיה? לספרות אך לא פסיכולוגיה?</strong>
+      <div class="sol-step"><div class="s-num">פסיכולוגיה (682)</div>z=(682−570)÷80=1.4 → 100%−91.9% = <strong>8.1%</strong></div>
+      <div class="sol-step"><div class="s-num">ספרות אך לא פסיכולוגיה (602)</div>z=0.4 → 34.5%−8.1% = <strong>26.4%</strong></div>
+      <br><strong>ד. 7,392 יכולים לספרות אך לא פסיכולוגיה. כמה לפסיכולוגיה?</strong>
+      <div class="sol-step"><div class="s-num">סה"כ נבחנים</div>26.4%=7,392 → סה"כ=28,000</div>
+      <div class="sol-step"><div class="s-num">לפסיכולוגיה</div>8.1%×28,000 = <strong>2,268 נבחנים</strong></div>
+    </div>
+  </div>
+
+  <div class="tip">💡 <strong>דפוס חוזר בבגרות:</strong> מוצאים σ או μ → מחשבים אחוז → מוצאים מספר. תמיד שלושה שלבים.</div>
+
+</div>
+</main>
+
+<script>
+function showPanel(type,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.main-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+type).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleEx(header){
+  const body=header.nextElementSibling;
+  const toggle=header.querySelector('.ex-toggle');
+  body.classList.toggle('open');
+  toggle.classList.toggle('open');
+}
+
+// Bell curve canvas
+window.addEventListener('load', function(){
+  const canvas = document.getElementById('bellCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * 2;
+  canvas.height = 360;
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  function norm(x){ return Math.exp(-0.5*x*x)/Math.sqrt(2*Math.PI); }
+
+  const mu=0, sig=1;
+  const xMin=-3.5, xMax=3.5;
+  function toCanvasX(x){ return (x-xMin)/(xMax-xMin)*W; }
+  function toCanvasY(y){ return H - y*(H*0.72) - 30; }
+
+  // fill zones
+  const zones=[
+    {from:-1,to:1,color:'rgba(29,78,216,0.15)'},
+    {from:-2,to:-1,color:'rgba(29,78,216,0.09)'},
+    {from:1,to:2,color:'rgba(29,78,216,0.09)'},
+    {from:-3,to:-2,color:'rgba(29,78,216,0.05)'},
+    {from:2,to:3,color:'rgba(29,78,216,0.05)'},
+  ];
+  zones.forEach(z=>{
+    ctx.beginPath();
+    ctx.moveTo(toCanvasX(z.from), toCanvasY(0));
+    for(let x=z.from;x<=z.to;x+=0.02){
+      ctx.lineTo(toCanvasX(x), toCanvasY(norm(x)));
+    }
+    ctx.lineTo(toCanvasX(z.to), toCanvasY(0));
+    ctx.closePath();
+    ctx.fillStyle=z.color;
+    ctx.fill();
+  });
+
+  // axis
+  ctx.strokeStyle='#d6d3d1';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,toCanvasY(0));ctx.lineTo(W,toCanvasY(0));ctx.stroke();
+
+  // curve
+  ctx.beginPath();
+  for(let x=xMin;x<=xMax;x+=0.02){
+    const cx=toCanvasX(x), cy=toCanvasY(norm(x));
+    x===xMin?ctx.moveTo(cx,cy):ctx.lineTo(cx,cy);
+  }
+  ctx.strokeStyle='#1d4ed8';ctx.lineWidth=3;ctx.stroke();
+
+  // labels
+  ctx.fillStyle='#1d4ed8';ctx.font=`bold ${W*0.022}px Heebo,sans-serif`;ctx.textAlign='center';
+  [[-3,'μ−3σ'],[-2,'μ−2σ'],[-1,'μ−σ'],[0,'μ'],[1,'μ+σ'],[2,'μ+2σ'],[3,'μ+3σ']].forEach(([z,l])=>{
+    ctx.fillText(l, toCanvasX(z), toCanvasY(0)+28);
+  });
+  ctx.fillStyle='#374151';ctx.font=`bold ${W*0.025}px Heebo,sans-serif`;
+  ctx.fillText('68%',toCanvasX(0),toCanvasY(norm(0)*0.5));
+  ctx.fillStyle='#6b7280';ctx.font=`${W*0.02}px Heebo,sans-serif`;
+  ctx.fillText('13.6%',toCanvasX(-1.5),toCanvasY(norm(1.5)*1.4));
+  ctx.fillText('13.6%',toCanvasX(1.5),toCanvasY(norm(1.5)*1.4));
+});
+</script>
+</body>
+</html>

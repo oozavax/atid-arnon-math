@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>פונקציה רציונלית — מתמטיקה 4 יח"ל</title>
+<link rel="stylesheet" href="style.css">
+<style>
+:root{
+  --yellow:#FFE135;--yellow-pale:#FFFBE0;--yellow-dark:#F5C800;
+  --ink:#1A1A1A;--ink-soft:#4B4B4B;--bg:#FFFDF0;
+}
+:root{
+  --purple:#5b21b6;--purple-light:#ede9fe;--purple-border:#c4b5fd;
+  --green:#166534;--green-light:#dcfce7;--green-border:#bbf7d0;
+  --blue:#1d4ed8;--blue-light:#eff6ff;--blue-border:#bfdbfe;
+  --orange:#c2410c;--orange-light:#fff7ed;
+  --red:#b91c1c;--red-light:#fee2e2;
+  --teal:#0f766e;--teal-light:#ccfbf1;
+  --gray:#78716c;--shadow:0 2px 12px rgba(0,0,0,0.08);
+  --bg:#f8f7f4;--white:#fff;--border:#e4e0d8;--text:#1c1917;
+}
+.main-nav{display:flex;justify-content:center;max-width:700px;margin:22px auto 0;background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.2);border-radius:14px;overflow:hidden;}
+.main-btn{flex:1;padding:11px 4px;border:none;background:transparent;font-family:'Nunito',sans-serif;font-size:0.8rem;font-weight:800;cursor:pointer;color:rgba(255,255,255,0.6);transition:all 0.2s;border-left:1px solid rgba(255,255,255,0.15);}
+.main-btn:last-child{border-left:none;}
+.main-btn.active{background:rgba(255,255,255,0.2);color:#fff;}
+.main-btn:hover:not(.active){background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.9);}
+.main-btn:disabled{color:rgba(255,255,255,0.25);cursor:default;}
+main{max-width:700px;margin:0 auto;padding:28px 14px 90px;}
+.panel{display:none;}.panel.active{display:flex;flex-direction:column;align-items:center;gap:10px;}
+.section-title{width:100%;font-family:'Fredoka One',cursive;font-size:1.1rem;font-weight:700;color:var(--purple);padding:14px 0 8px;border-bottom:2px solid var(--purple-border);margin-bottom:4px;}
+.node{width:100%;border-radius:14px;padding:15px 20px;font-size:0.95rem;font-weight:700;line-height:1.5;border:1.5px solid var(--border);background:var(--white);box-shadow:var(--shadow);}
+.node.start{background:linear-gradient(135deg,#3b0764,#5b21b6 60%,#9d174d);color:#fff;text-align:center;font-size:1.1rem;font-weight:900;border-radius:50px;padding:14px 36px;box-shadow:0 6px 20px rgba(91,33,182,.3);border:none;}
+.node.end{background:var(--green);color:#fff;text-align:center;border-radius:50px;padding:14px 36px;box-shadow:0 6px 20px rgba(22,101,52,.3);border:none;}
+.node.step{border:2px solid;display:flex;align-items:flex-start;gap:12px;}
+.node.step .num{font-size:1.4rem;min-width:28px;line-height:1;margin-top:2px;}
+.node.step .content .title{font-size:1rem;font-weight:800;margin-bottom:3px;}
+.node.step .content .detail{font-size:0.87rem;font-weight:600;color:var(--gray);line-height:1.5;}
+.node.formula{background:var(--purple-light);border:2px solid var(--purple-border);text-align:center;font-size:1.05rem;padding:18px;}
+.node.warn{background:#fefce8;border:2px solid #fde047;color:#713f12;}
+.node.purple{border-color:var(--purple);}.node.purple .num{color:var(--purple);}
+.node.teal{border-color:var(--teal);}.node.teal .num{color:var(--teal);}
+.node.green{border-color:var(--green);}.node.green .num{color:var(--green);}
+.node.orange{border-color:var(--orange);}.node.orange .num{color:var(--orange);}
+.node.blue{border-color:var(--blue);}.node.blue .num{color:var(--blue);}
+.node.red{border-color:var(--red);}.node.red .num{color:var(--red);}
+.arrow{display:flex;justify-content:center;padding:3px 0;}
+.tip{width:100%;background:#fefce8;border:1.5px solid #fde047;border-radius:14px;padding:12px 16px;font-size:0.85rem;font-weight:700;color:#713f12;line-height:1.5;}
+.rule-box{width:100%;border-radius:14px;overflow:hidden;box-shadow:var(--shadow);border:1.5px solid var(--border);}
+.rb-title{padding:10px 16px;font-size:0.88rem;font-weight:800;background:var(--purple-light);color:var(--purple);border-bottom:1px solid var(--purple-border);}
+.rule-item{padding:10px 16px;font-size:0.87rem;font-weight:600;border-bottom:1px solid var(--border);background:var(--white);line-height:1.5;}
+.rule-item:last-child{border-bottom:none;}
+.rname{font-weight:800;display:block;margin-bottom:2px;color:var(--purple);}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 3px;font-size:0.9em;}
+.frac .num{border-bottom:1.5px solid currentColor;padding:0 3px;line-height:1.3;}
+.frac .den{padding:0 3px;line-height:1.3;}
+.ex-card{background:var(--white);border-radius:14px;border:1.5px solid var(--border);overflow:hidden;box-shadow:var(--shadow);width:100%;}
+.ex-header{padding:13px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:0.9rem;}
+.ex-toggle{font-size:0.75rem;color:var(--gray);transition:transform 0.2s;}
+.ex-toggle.open{transform:rotate(180deg);}
+.ex-body{display:none;padding:14px 16px;border-top:1px solid var(--border);background:#f8f7f4;font-size:0.87rem;font-weight:600;line-height:1.7;}
+.ex-body.open{display:block;}
+.sol-step{padding:8px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);margin-bottom:6px;}
+.sol-step .s-num{font-size:0.75rem;font-weight:800;color:var(--purple);margin-bottom:2px;}
+/* asymptote diagram */
+.asym-box{width:100%;background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow);}
+canvas.asym{width:100%;height:200px;display:block;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="topbar-logo">
+    <div class="logo-mark">∫</div>
+    <span class="logo-text">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge">פרק ג׳ · חדו"א</span>
+    <a href="index.html" class="topbar-home">← בית</a>
+  </div>
+</div>
+    <span class="logo-text">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge">∫ פרק ג׳ · חדו"א</span>
+    <a href="index.html" class="topbar-home">← בית</a>
+  </div>
+</div>
+    <span class="logo-text" style="color:var(--ink,#1a1a1a);font-family:'Fredoka One',cursive;">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge" style="background:var(--ink,#1a1a1a);color:var(--yellow,#FFE135);font-family:'Fredoka One',cursive;">פרק ג׳ · חדו"א</span>
+    <a href="index.html" class="topbar-home" style="border:2.5px solid var(--ink,#1a1a1a);color:var(--ink,#1a1a1a);font-family:'Fredoka One',cursive;background:#fff;border-radius:999px;padding:5px 14px;text-decoration:none;font-size:0.82rem;">← דף הבית</a>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-breadcrumb">פרק ג׳ · חשבון דיפרנציאלי</div>
+  <h1>÷ פונקציה רציונלית</h1>
+  <p class="hero-sub">אסימפטוטות · חקירה · קיצון · פרמטרים</p>
+  <div class="main-nav">
+    <button class="main-btn active" onclick="showPanel('flow',this)">📋 חקירה</button>
+    <button class="main-btn" onclick="showPanel('asymptotes',this)">↗ אסימפטוטות</button>
+    <button class="main-btn" onclick="showPanel('deriv',this)">∂ נגזרת</button>
+    <button class="main-btn" onclick="showPanel('param',this)">🔢 פרמטרים</button>
+    <button class="main-btn" onclick="showPanel('practice',this)">✏️ תרגול</button>
+    <button class="main-btn" style="color:rgba(255,255,255,0.3);cursor:default;" disabled>🔒 שלב ב׳</button>
+  </div>
+</div>
+
+<main>
+
+<!-- ══════════ חקירה ══════════ -->
+<div class="panel active" id="panel-flow">
+  <div class="node start">÷ קיבלנו פונקציה רציונלית לחקור</div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="node step purple">
+    <div class="num">1️⃣</div>
+    <div class="content">
+      <div class="title">תחום הגדרה</div>
+      <div class="detail">מצא לאילו ערכי x המכנה = 0 → אלה הערכים שאסורים<br>
+      תחום = כל x <strong>פרט</strong> לערכים שמאפסים את המכנה</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="node step teal">
+    <div class="num">2️⃣</div>
+    <div class="content">
+      <div class="title">אסימפטוטות</div>
+      <div class="detail">
+        אסימפטוטה אנכית: x = ערכים שמאפסים מכנה<br>
+        אסימפטוטה אופקית: מה קורה כש-x → ∞ (לרוב y = 0 או y = מספר)
+      </div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="node step blue">
+    <div class="num">3️⃣</div>
+    <div class="content">
+      <div class="title">נקודות חיתוך עם הצירים</div>
+      <div class="detail">
+        ציר x: f(x) = 0 → המונה = 0 (בדוק שהמכנה ≠ 0)<br>
+        ציר y: הצב x = 0 (רק אם 0 בתחום!)
+      </div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="node step orange">
+    <div class="num">4️⃣</div>
+    <div class="content">
+      <div class="title">נגזרת וקיצון</div>
+      <div class="detail">
+        גזור עם כלל המנה → f′(x) = 0 → נקודות קיצון<br>
+        טבלת סימנים → קבע מקסימום / מינימום<br>
+        קבע תחומי עלייה וירידה
+      </div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="node step green">
+    <div class="num">5️⃣</div>
+    <div class="content">
+      <div class="title">סקיצה</div>
+      <div class="detail">
+        סמן את האסימפטוטות כקווים מקווקוים<br>
+        סמן חיתוכים וקיצונות<br>
+        שים לב: הגרף לא חוצה אסימפטוטה אנכית!
+      </div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+  <div class="node end">✓ חקירה הושלמה</div>
+
+  <div class="tip">💡 <strong>הבדל מפולינום:</strong> ברציונלית — תמיד יש אסימפטוטה אנכית! זה הדבר הראשון שחייבים למצוא.</div>
+</div>
+
+<!-- ══════════ אסימפטוטות ══════════ -->
+<div class="panel" id="panel-asymptotes">
+  <div class="section-title">אסימפטוטות — מה זה ואיך מוצאים</div>
+
+  <div class="asym-box">
+    <canvas class="asym" id="asymCanvas"></canvas>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">אסימפטוטה אנכית (מאונכת לציר x)</div>
+    <div class="rule-item"><span class="rname">מה זה?</span>קו אנכי שהגרף מתקרב אליו אך לעולם לא מגיע</div>
+    <div class="rule-item"><span class="rname">איך מוצאים?</span>פתור: מכנה = 0 → התשובה היא x = ...</div>
+    <div class="rule-item"><span class="rname">דוגמה: f(x) = <span class="frac"><span class="num">3</span><span class="den">x−5</span></span></span>x − 5 = 0 → x = 5 → אסימפטוטה: x = 5</div>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">אסימפטוטה אופקית (מקבילה לציר x)</div>
+    <div class="rule-item"><span class="rname">מה זה?</span>קו אופקי שהגרף מתקרב אליו כש-x גדל מאוד</div>
+    <div class="rule-item"><span class="rname">כשהמונה קבוע (למשל a/(x−b))</span>כש-x → ∞, המחיר המונה קטן → f → 0 → y = 0</div>
+    <div class="rule-item"><span class="rname">כשהמונה ומכנה אותה דרגה</span>האסימפטוטה האופקית = מקדם מוביל של מונה ÷ מקדם מוביל של מכנה</div>
+    <div class="rule-item"><span class="rname">דוגמה: f(x) = <span class="frac"><span class="num">2x+1</span><span class="den">x−3</span></span></span>שניהם דרגה 1 → אסימפטוטה: y = 2/1 = 2</div>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">טיפוסי פונקציות רציונליות בבגרות</div>
+    <div class="rule-item"><span class="rname">f(x) = <span class="frac"><span class="num">a</span><span class="den">x−b</span></span></span>אסימפטוטה אנכית: x=b · אסימפטוטה אופקית: y=0</div>
+    <div class="rule-item"><span class="rname">f(x) = <span class="frac"><span class="num">a</span><span class="den">x²+bx</span></span></span>שתי אסימפטוטות אנכיות! · אסימפטוטה אופקית: y=0</div>
+    <div class="rule-item"><span class="rname">f(x) = <span class="frac"><span class="num">ax+b</span><span class="den">x+c</span></span></span>אסימפטוטה אנכית: x=−c · אסימפטוטה אופקית: y=a</div>
+    <div class="rule-item"><span class="rname">f(x) = x + <span class="frac"><span class="num">a</span><span class="den">x</span></span></span>אסימפטוטה אנכית: x=0 · אין אסימפטוטה אופקית (יש אלכסונית)</div>
+  </div>
+
+  <div class="tip">💡 <strong>טיפ:</strong> בסקיצה — תמיד ציירי קודם את האסימפטוטות כקווים מקווקוים, ורק אחר כך את הגרף. זה עוזר לא לעשות טעויות!</div>
+</div>
+
+<!-- ══════════ נגזרת ══════════ -->
+<div class="panel" id="panel-deriv">
+  <div class="section-title">כלל המנה</div>
+
+  <div class="node formula">
+    אם f(x) = <span class="frac"><span class="num">u(x)</span><span class="den">v(x)</span></span>
+    אז f′(x) = <span class="frac"><span class="num">u′·v − u·v′</span><span class="den">v²</span></span>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">איך זוכרים? — "מונה גורז מכנה, מכנה גורז מונה"</div>
+    <div class="rule-item"><span class="rname">שלב 1</span>זהה מי u (מונה) ומי v (מכנה)</div>
+    <div class="rule-item"><span class="rname">שלב 2</span>גזור כל אחד: u′ ו-v′</div>
+    <div class="rule-item"><span class="rname">שלב 3</span>הצב בנוסחה: (u′v − uv′) ÷ v²</div>
+    <div class="rule-item"><span class="rname">שלב 4</span>פשט את המונה אם אפשר</div>
+  </div>
+
+  <div class="section-title">דוגמאות</div>
+
+  <div class="rule-box">
+    <div class="rb-title">דוגמה 1 — f(x) = <span class="frac"><span class="num">8</span><span class="den">x−5</span></span></div>
+    <div class="rule-item"><span class="rname">u = 8, v = x−5</span>u′ = 0, v′ = 1</div>
+    <div class="rule-item"><span class="rname">f′(x)</span>= <span class="frac"><span class="num">0·(x−5) − 8·1</span><span class="den">(x−5)²</span></span> = <span class="frac"><span class="num">−8</span><span class="den">(x−5)²</span></span></div>
+    <div class="rule-item" style="background:var(--green-light);"><span class="rname" style="color:var(--green);">שים לב!</span>נגזרת של <span class="frac"><span class="num">a</span><span class="den">x−b</span></span> תמיד שלילית (a&gt;0) → פונקציה יורדת תמיד!</div>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">דוגמה 2 — f(x) = <span class="frac"><span class="num">x²</span><span class="den">x²+1</span></span></div>
+    <div class="rule-item"><span class="rname">u = x², v = x²+1</span>u′ = 2x, v′ = 2x</div>
+    <div class="rule-item"><span class="rname">f′(x)</span>= <span class="frac"><span class="num">2x(x²+1) − x²·2x</span><span class="den">(x²+1)²</span></span> = <span class="frac"><span class="num">2x³+2x−2x³</span><span class="den">(x²+1)²</span></span> = <span class="frac"><span class="num">2x</span><span class="den">(x²+1)²</span></span></div>
+  </div>
+
+  <div class="tip">💡 <strong>טיפ:</strong> נגזרת של רציונלית — המכנה <strong>תמיד v²</strong>, אף פעם לא שורש. אל תבלבל עם נגזרת שורש!</div>
+</div>
+
+<!-- ══════════ פרמטרים ══════════ -->
+<div class="panel" id="panel-param">
+  <div class="section-title">שאלות פרמטר — סוגים מהבגרות</div>
+  <div class="node warn">⚠️ בכל בגרות יש לפחות סעיף אחד עם פרמטר ברציונלית. שלושת הסוגים:</div>
+
+  <div class="rule-box">
+    <div class="rb-title">סוג 1 — נתון שיפוע משיק ב-x₀</div>
+    <div class="rule-item"><span class="rname">שיטה</span>גזור עם כלל המנה → הצב x₀ → שווה לשיפוע הנתון → פתור</div>
+    <div class="rule-item" style="background:var(--purple-light);">
+      <span class="rname">דוגמה (חורף 2026 שאלה 6)</span>
+      f(x) = <span class="frac"><span class="num">a</span><span class="den">x−5</span></span>, שיפוע משיק ב-x=7 הוא −2<br>
+      f′(x) = <span class="frac"><span class="num">−a</span><span class="den">(x−5)²</span></span> → f′(7) = <span class="frac"><span class="num">−a</span><span class="den">4</span></span> = −2 → <strong>a = 8</strong>
+    </div>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">סוג 2 — נתון שהגרף עובר בנקודה (x₀, y₀)</div>
+    <div class="rule-item"><span class="rname">שיטה</span>הצב x₀ ו-y₀ ישירות ב-f(x) → פתור</div>
+    <div class="rule-item" style="background:var(--purple-light);">
+      <span class="rname">דוגמה (חורף תשפ"ה שאלה 6)</span>
+      f(x) = <span class="frac"><span class="num">x</span><span class="den">x²+x+a</span></span>, הגרף עובר ב-(2, 9.5/...)<br>
+      הצב x=2 ואת ה-y הנתון → פתור ל-a
+    </div>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">סוג 3 — נתון שיש קיצון ב-x₀</div>
+    <div class="rule-item"><span class="rname">שיטה</span>גזור → הצב x₀ → שווה 0 → פתור</div>
+    <div class="rule-item" style="background:var(--purple-light);">
+      <span class="rname">דוגמה</span>
+      f(x) = <span class="frac"><span class="num">x²+a</span><span class="den">x</span></span>, יש מינימום ב-x=2<br>
+      f′(x) = <span class="frac"><span class="num">x²−a</span><span class="den">x²</span></span> → f′(2) = 0 → 4−a=0 → <strong>a=4</strong>
+    </div>
+  </div>
+
+  <div class="tip">💡 <strong>כלל:</strong> מידע על קיצון → גזור ואפס. מידע על נקודה → הצב ישירות. מידע על שיפוע → גזור והשווה.</div>
+</div>
+
+<!-- ══════════ תרגול ══════════ -->
+<div class="panel" id="panel-practice">
+
+  <div class="section-title">תרגילים מבגרויות אמיתיות</div>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🟢 חורף תשפ"ה 2025 — f(x) = x/(x²+x+a) (קל)</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <strong>שאלה 6 חורף תשפ"ה:</strong> f(x) = x/(x²+x+a), הגרף עובר ב-(2, 0.5). מצאו a.<br><br>
+      <div class="sol-step"><div class="s-num">הצב (2, 0.5)</div>0.5 = 2/(4+2+a) → 0.5(6+a) = 2 → 3+0.5a = 2 → <strong>a = −2</strong></div>
+      <br><strong>עבור a=−2: f(x) = x/(x²+x−2). מצאו תחום ואסימפטוטות.</strong>
+      <div class="sol-step"><div class="s-num">תחום</div>x²+x−2 = 0 → (x+2)(x−1) = 0 → x≠−2 וx≠1</div>
+      <div class="sol-step"><div class="s-num">אסימפטוטות אנכיות</div>x = −2 ו-x = 1</div>
+      <div class="sol-step"><div class="s-num">אסימפטוטה אופקית</div>מונה דרגה 1, מכנה דרגה 2 → y = 0</div>
+    </div>
+  </div>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🟢 קיץ תשפ"ה 2025 מועד ב׳ — f(x) = 12/(x²+4x) (קל-בינוני)</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <strong>שאלה 6 קיץ תשפ"ה מועד ב׳.</strong><br><br>
+      <strong>א. תחום, אסימפטוטות, חיתוך ציר x.</strong>
+      <div class="sol-step"><div class="s-num">תחום</div>x²+4x=0 → x(x+4)=0 → x≠0 וx≠−4</div>
+      <div class="sol-step"><div class="s-num">אסימפטוטות אנכיות</div>x=0 ו-x=−4</div>
+      <div class="sol-step"><div class="s-num">אסימפטוטה אופקית</div>y=0 (מונה קבוע, מכנה דרגה 2)</div>
+      <div class="sol-step"><div class="s-num">חיתוך ציר x</div>מונה=12≠0 → <strong>אין חיתוך עם ציר x</strong></div>
+      <br><strong>ב. נגזרת וקיצון.</strong>
+      <div class="sol-step"><div class="s-num">כלל המנה</div>f′ = (0·(x²+4x) − 12·(2x+4)) / (x²+4x)² = −12(2x+4)/(x²+4x)²</div>
+      <div class="sol-step"><div class="s-num">f′=0: מונה=0</div>2x+4=0 → x=−2 → f(−2)=12/(4−8)= <strong>−3 → מינימום (−2,−3)</strong></div>
+      <br><strong>ג. הישר y=k נפגש עם הגרף בנקודה אחת, 0&lt;k. מצאו k.</strong>
+      <div class="sol-step"><div class="s-num">רק קיצון מתאים</div>מינימום הוא הנקודה הנמוכה ביותר → k = <strong>−3</strong> (אבל k&gt;0, לכן בדוק מקסימום בתחום x&gt;0)</div>
+    </div>
+  </div>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🟠 קיץ תשפ"ה 2025 מועד א׳ — חקירה מלאה (בינוני)</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <strong>שאלה 6 קיץ תשפ"ה מועד א׳:</strong> f(x) = (x²+9x−½)/(x²+1)<br><br>
+      <strong>א. אסימפטוטה אופקית.</strong>
+      <div class="sol-step"><div class="s-num">שניהם דרגה 2</div>y = מקדם מוביל מונה ÷ מקדם מוביל מכנה = 1/1 = <strong>y=1</strong></div>
+      <br><strong>ב. נגזרת וקיצון.</strong>
+      <div class="sol-step"><div class="s-num">u=x²+9x−½, v=x²+1</div>u′=2x+9, v′=2x</div>
+      <div class="sol-step"><div class="s-num">f′</div>= ((2x+9)(x²+1) − (x²+9x−½)·2x) / (x²+1)²</div>
+      <div class="sol-step"><div class="s-num">פשט מונה</div>2x³+2x+9x²+9 − 2x³−18x²+x = −9x²+3x+9 = −3(3x²−x−3)</div>
+      <div class="sol-step"><div class="s-num">f′=0</div>3x²−x−3=0 → x=(1±√37)/6</div>
+    </div>
+  </div>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🔴 חורף תשפ"ו 2026 — פרמטר + חקירה מלאה (קשה)</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <strong>שאלה 6 חורף תשפ"ו:</strong> f(x) = a/(x−5), x≠5. בx=7 שיפוע המשיק הוא −2.<br><br>
+      <strong>א. מצאו a.</strong>
+      <div class="sol-step"><div class="s-num">נגזרת</div>f′(x) = −a/(x−5)²</div>
+      <div class="sol-step"><div class="s-num">הצב x=7</div>f′(7) = −a/(7−5)² = −a/4 = −2 → <strong>a = 8</strong></div>
+      <br><strong>עבור a=8: f(x) = 8/(x−5). חקירה מלאה.</strong>
+      <div class="sol-step"><div class="s-num">תחום</div>כל x, פרט ל-x=5</div>
+      <div class="sol-step"><div class="s-num">אסימפטוטות</div>אנכית: x=5 · אופקית: y=0</div>
+      <div class="sol-step"><div class="s-num">חיתוך ציר y</div>f(0) = 8/(−5) = −1.6 → נקודה (0, −1.6)</div>
+      <div class="sol-step"><div class="s-num">חיתוך ציר x</div>מונה=8≠0 → אין</div>
+      <div class="sol-step"><div class="s-num">נגזרת</div>f′ = −8/(x−5)² &lt; 0 תמיד → יורדת בכל תחום, <strong>אין קיצון</strong></div>
+    </div>
+  </div>
+
+  <div class="tip">💡 <strong>טיפ לבגרות:</strong> כשמקבלים f(x) = a/(x−b) — הנגזרת תמיד שלילית (a&gt;0). הפונקציה יורדת בכל תחום ואין קיצון. זו תשובה שלמה ולגיטימית!</div>
+
+</div>
+</main>
+<script>
+function showPanel(type,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.main-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+type).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleEx(header){
+  const body=header.nextElementSibling;
+  const toggle=header.querySelector('.ex-toggle');
+  body.classList.toggle('open');
+  toggle.classList.toggle('open');
+}
+
+// Asymptote demo canvas
+window.addEventListener('load',function(){
+  const c=document.getElementById('asymCanvas');
+  if(!c) return;
+  c.width=c.offsetWidth*2; c.height=400;
+  const W=c.width,H=c.height,ctx=c.getContext('2d');
+  const cx=W/2,cy=H/2,scale=W/14;
+
+  // axes
+  ctx.strokeStyle='#d6d3d1';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(W,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,H);ctx.stroke();
+
+  // asymptotes
+  const ax=cx+2*scale;
+  ctx.strokeStyle='#c4b5fd';ctx.lineWidth=2;ctx.setLineDash([8,6]);
+  ctx.beginPath();ctx.moveTo(ax,0);ctx.lineTo(ax,H);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(W,cy);ctx.stroke();
+  ctx.setLineDash([]);
+
+  // curve f(x) = 8/(x-2)
+  function f(x){return 8/(x-2);}
+  ctx.strokeStyle='#5b21b6';ctx.lineWidth=3;
+
+  // right branch
+  ctx.beginPath();
+  let first=true;
+  for(let px=ax+4;px<W;px+=2){
+    const x=(px-cx)/scale;
+    const y=f(x);
+    const py=cy-y*scale;
+    if(py<-H||py>2*H){first=true;continue;}
+    first?ctx.moveTo(px,py):ctx.lineTo(px,py);
+    first=false;
+  }
+  ctx.stroke();
+
+  // left branch
+  ctx.beginPath();first=true;
+  for(let px=0;px<ax-4;px+=2){
+    const x=(px-cx)/scale;
+    const y=f(x);
+    const py=cy-y*scale;
+    if(py<-H||py>2*H){first=true;continue;}
+    first?ctx.moveTo(px,py):ctx.lineTo(px,py);
+    first=false;
+  }
+  ctx.stroke();
+
+  // labels
+  ctx.fillStyle='#5b21b6';ctx.font=`bold ${W*0.028}px Heebo,sans-serif`;ctx.textAlign='center';
+  ctx.fillText('f(x) = 8/(x−2)',W*0.75,H*0.15);
+  ctx.fillStyle='#7c3aed';ctx.font=`${W*0.024}px Heebo,sans-serif`;
+  ctx.fillText('x = 2',ax,H*0.06);
+  ctx.fillText('y = 0 (אסימפטוטה אופקית)',cx,cy-12);
+});
+</script>
+</body>
+</html>

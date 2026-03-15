@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>פונקציה קווית — כיתה ח׳</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* ── page-specific ── */
+.rep-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+.rep-card {
+  background: var(--white);
+  border: 2.5px solid var(--text);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: 4px 4px 0 var(--text);
+  text-align: center;
+}
+.rep-card .rep-icon { font-size: 2rem; margin-bottom: 6px; }
+.rep-card .rep-title { font-family: var(--font-display); font-size: 0.95rem; font-weight: 900; margin-bottom: 4px; }
+.rep-card .rep-example { font-size: 0.82rem; font-weight: 700; color: var(--text-muted); background: var(--yellow-pale); border-radius: 8px; padding: 6px 10px; margin-top: 8px; }
+
+/* converter */
+.converter {
+  width: 100%;
+  background: var(--white);
+  border: 2.5px solid var(--text);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 4px 4px 0 var(--text);
+}
+.conv-title {
+  background: var(--text);
+  color: var(--yellow);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1rem;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.conv-body { padding: 18px; }
+.conv-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.conv-tab {
+  padding: 7px 14px;
+  border: 2px solid var(--text);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  background: var(--white);
+  color: var(--text);
+  box-shadow: 2px 2px 0 var(--text);
+  transition: all 0.15s;
+}
+.conv-tab.active { background: var(--orange); }
+.conv-tab:hover:not(.active) { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--text); }
+
+.conv-panel { display: none; }
+.conv-panel.active { display: block; }
+
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.input-row label {
+  font-size: 0.85rem;
+  font-weight: 800;
+  min-width: 80px;
+  color: var(--text);
+}
+.math-input {
+  border: 2px solid var(--text);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 700;
+  width: 90px;
+  background: var(--yellow-pale);
+  color: var(--text);
+  text-align: center;
+  box-shadow: 2px 2px 0 var(--text);
+}
+.math-input:focus { outline: none; border-color: var(--orange); box-shadow: 3px 3px 0 var(--orange); }
+
+.conv-btn {
+  width: 100%;
+  padding: 12px;
+  border: 2.5px solid var(--text);
+  border-radius: var(--radius-pill);
+  background: var(--orange);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--text);
+  transition: all 0.15s;
+  margin-top: 4px;
+}
+.conv-btn:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--text); }
+
+.result-box {
+  margin-top: 14px;
+  background: var(--yellow-pale);
+  border: 2.5px solid var(--text);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: none;
+  box-shadow: 3px 3px 0 var(--text);
+}
+.result-box.show { display: block; }
+.result-label { font-size: 0.72rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+.result-val { font-family: var(--font-display); font-size: 1.3rem; font-weight: 900; color: var(--text); margin-bottom: 10px; }
+.result-steps { font-size: 0.82rem; font-weight: 600; color: var(--text); line-height: 1.7; }
+.step-line { padding: 4px 8px; background: var(--white); border-radius: 8px; border: 1.5px solid var(--border); margin-bottom: 4px; }
+
+/* graph canvas */
+.graph-wrap {
+  width: 100%;
+  background: var(--white);
+  border: 2.5px solid var(--text);
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow: 4px 4px 0 var(--text);
+}
+canvas.graph { width: 100%; display: block; border-radius: 10px; }
+
+/* generator */
+.gen-wrap {
+  width: 100%;
+  background: var(--white);
+  border: 2.5px solid var(--text);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 4px 4px 0 var(--text);
+}
+.gen-header {
+  background: var(--text);
+  color: var(--yellow);
+  padding: 12px 18px;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1rem;
+}
+.gen-body { padding: 16px; }
+.diff-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.diff-btn {
+  flex: 1;
+  padding: 8px;
+  border: 2px solid var(--text);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  background: var(--white);
+  color: var(--text);
+  box-shadow: 2px 2px 0 var(--text);
+  transition: all 0.15s;
+}
+.diff-btn.active { background: var(--yellow); transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--text); }
+.gen-q {
+  background: var(--yellow-pale);
+  border: 2px solid var(--text);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.6;
+  margin-bottom: 10px;
+  min-height: 60px;
+  display: none;
+}
+.gen-q.show { display: block; }
+.gen-ans {
+  background: var(--green-light);
+  border: 2px solid var(--green);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.7;
+  display: none;
+}
+.gen-ans.show { display: block; }
+.gen-btns { display: flex; gap: 8px; }
+.gen-go {
+  flex: 2;
+  padding: 11px;
+  border: 2.5px solid var(--text);
+  border-radius: var(--radius-pill);
+  background: var(--orange);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--text);
+  transition: all 0.15s;
+}
+.gen-go:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--text); }
+.gen-show {
+  flex: 1;
+  padding: 11px;
+  border: 2.5px solid var(--text);
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--text);
+  transition: all 0.15s;
+}
+.gen-show:hover { transform: translate(-1px,-1px); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="topbar-logo">
+    <div class="logo-mark">∫</div>
+    <span class="logo-text">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge">כיתה ח׳ · אלגברה</span>
+    <a href="index.html" class="topbar-home">← בית</a>
+  </div>
+</div>
+    <span class="logo-text">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge">כיתה ח׳</span>
+    <a href="index.html" class="topbar-home">← בית</a>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-breadcrumb">כיתה ח׳ · אלגברה</div>
+  <h1>📈 פונקציה קווית</h1>
+  <p class="hero-sub">שיפוע · חותך · ייצוגים · מעבר בין ייצוגים</p>
+  <div class="main-nav">
+    <button class="main-btn active" onclick="showPanel('theory',this)">📖 תיאוריה</button>
+    <button class="main-btn" onclick="showPanel('reps',this)">🔄 ייצוגים</button>
+    <button class="main-btn" onclick="showPanel('convert',this)">⇄ מעבר</button>
+    <button class="main-btn" onclick="showPanel('graph',this)">📊 גרף</button>
+    <button class="main-btn" onclick="showPanel('gen',this)">🎲 מחולל</button>
+  </div>
+</div>
+
+<main>
+
+<!-- ══════════ תיאוריה ══════════ -->
+<div class="panel active" id="panel-theory">
+
+  <div class="node start">y = mx + b</div>
+
+  <div class="rule-box">
+    <div class="rb-title">מה זו פונקציה קווית?</div>
+    <div class="rule-item">
+      <span class="rname">הגדרה</span>
+      פונקציה שגרפה הוא <strong>ישר</strong>. לכל x יש בדיוק y אחד.
+    </div>
+    <div class="rule-item">
+      <span class="rname">הנוסחה הכללית</span>
+      y = mx + b, כאשר:<br>
+      <strong>m</strong> = שיפוע (כמה הפונקציה עולה/יורדת)<br>
+      <strong>b</strong> = חותך עם ציר y (ערך y כש-x=0)
+    </div>
+  </div>
+
+  <div class="section-title">השיפוע m</div>
+
+  <div class="rule-box">
+    <div class="rb-title">מה השיפוע אומר?</div>
+    <div class="rule-item">
+      <span class="rname">m > 0 (שיפוע חיובי)</span>
+      הפונקציה <strong>עולה</strong> — ככל שx גדל, y גדל
+    </div>
+    <div class="rule-item">
+      <span class="rname">m < 0 (שיפוע שלילי)</span>
+      הפונקציה <strong>יורדת</strong> — ככל שx גדל, y קטן
+    </div>
+    <div class="rule-item">
+      <span class="rname">m = 0</span>
+      ישר <strong>אופקי</strong> — y קבוע, לא עולה ולא יורדת
+    </div>
+    <div class="rule-item">
+      <span class="rname">|m| גדול יותר</span>
+      הישר <strong>תלול יותר</strong> (y=5x תלול מ-y=2x)
+    </div>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">חישוב שיפוע משתי נקודות</div>
+    <div class="rule-item">
+      <span class="rname">נוסחה</span>
+      m = <span class="frac"><span class="num">y₂ − y₁</span><span class="den">x₂ − x₁</span></span>
+    </div>
+    <div class="rule-item" style="background:var(--yellow-pale);">
+      <span class="rname">דוגמה: נקודות (1, 3) ו-(3, 7)</span>
+      m = <span class="frac"><span class="num">7 − 3</span><span class="den">3 − 1</span></span> = <span class="frac"><span class="num">4</span><span class="den">2</span></span> = <strong>2</strong>
+    </div>
+  </div>
+
+  <div class="section-title">נקודות חיתוך</div>
+
+  <div class="rule-box">
+    <div class="rb-title">איך מוצאים?</div>
+    <div class="rule-item">
+      <span class="rname">חיתוך עם ציר y</span>
+      הצב x = 0 → y = b. <strong>תמיד הנקודה (0, b)</strong>
+    </div>
+    <div class="rule-item">
+      <span class="rname">חיתוך עם ציר x</span>
+      הצב y = 0 → 0 = mx + b → x = −b ÷ m. <strong>הנקודה (−b/m, 0)</strong>
+    </div>
+    <div class="rule-item" style="background:var(--yellow-pale);">
+      <span class="rname">דוגמה: y = 2x + 4</span>
+      ציר y: x=0 → y=4 → נקודה (0, 4)<br>
+      ציר x: 0=2x+4 → x=−2 → נקודה (−2, 0)
+    </div>
+  </div>
+
+  <div class="tip">💡 <strong>טיפ:</strong> b הוא תמיד החיתוך עם ציר y — לא צריך לחשב! אפשר לקרוא אותו ישר מהנוסחה.</div>
+
+  <div class="section-title">ישרים מקבילים ומאונכים</div>
+
+  <div class="rule-box">
+    <div class="rb-title">קשרים בין שיפועים</div>
+    <div class="rule-item">
+      <span class="rname">ישרים מקבילים</span>
+      שיפועים שווים: m₁ = m₂<br>
+      דוגמה: y=3x+1 ו-y=3x−5 מקבילים
+    </div>
+    <div class="rule-item">
+      <span class="rname">ישרים מאונכים</span>
+      m₁ × m₂ = −1 (שיפועים הופכיים ומנוגדים בסימן)<br>
+      דוגמה: y=2x+1 ו-y=−½x+3 מאונכים
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════ ייצוגים ══════════ -->
+<div class="panel" id="panel-reps">
+  <div class="section-title">4 ייצוגים של פונקציה קווית</div>
+
+  <div class="rep-grid">
+    <div class="rep-card" style="border-color:var(--purple);box-shadow:4px 4px 0 var(--purple);">
+      <div class="rep-icon">📝</div>
+      <div class="rep-title">נוסחה</div>
+      <div style="font-size:0.8rem;font-weight:600;color:var(--text-muted);">ביטוי אלגברי</div>
+      <div class="rep-example">y = 2x + 3</div>
+    </div>
+    <div class="rep-card" style="border-color:var(--orange);box-shadow:4px 4px 0 var(--orange);">
+      <div class="rep-icon">📋</div>
+      <div class="rep-title">טבלה</div>
+      <div style="font-size:0.8rem;font-weight:600;color:var(--text-muted);">ערכי x ו-y</div>
+      <div class="rep-example">x: 0, 1, 2<br>y: 3, 5, 7</div>
+    </div>
+    <div class="rep-card" style="border-color:var(--green);box-shadow:4px 4px 0 var(--green);">
+      <div class="rep-icon">📊</div>
+      <div class="rep-title">גרף</div>
+      <div style="font-size:0.8rem;font-weight:600;color:var(--text-muted);">ציור בצירים</div>
+      <div class="rep-example">ישר דרך (0,3) בשיפוע 2</div>
+    </div>
+    <div class="rep-card" style="border-color:var(--blue);box-shadow:4px 4px 0 var(--blue);">
+      <div class="rep-icon">💬</div>
+      <div class="rep-title">תיאור מילולי</div>
+      <div style="font-size:0.8rem;font-weight:600;color:var(--text-muted);">במשפטים</div>
+      <div class="rep-example">"עולה ב-2 לכל יחידה, מתחיל ב-3"</div>
+    </div>
+  </div>
+
+  <div class="section-title">ממה קוראים מה?</div>
+
+  <table>
+    <tr>
+      <th>ייצוג</th><th>m (שיפוע)</th><th>b (חותך y)</th>
+    </tr>
+    <tr>
+      <td><strong>נוסחה y=mx+b</strong></td>
+      <td>המקדם של x</td>
+      <td>המספר החופשי</td>
+    </tr>
+    <tr>
+      <td><strong>טבלה</strong></td>
+      <td>ההפרש בין y-ים כש-x עולה ב-1</td>
+      <td>הערך של y כש-x=0</td>
+    </tr>
+    <tr>
+      <td><strong>גרף</strong></td>
+      <td>כמה עולים/יורדים בכל צעד ימינה</td>
+      <td>איפה הישר חותך ציר y</td>
+    </tr>
+    <tr>
+      <td><strong>מילולי</strong></td>
+      <td>"עולה ב..." / "יורד ב..."</td>
+      <td>"מתחיל ב..." / "כשx=0..."</td>
+    </tr>
+  </table>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🟢 דוגמה — אוטובוס טעינה של אוטובוס חשמלי</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <strong>תיאור מילולי:</strong> "כשמחברים אוטובוס לטעינה, יש לו 20% סוללה. בכל שעה הוא טוען 15%."<br><br>
+      <div class="sol-step"><div class="s-num">נוסחה</div>y = 15x + 20 (x=שעות, y=אחוז סוללה)</div>
+      <div class="sol-step"><div class="s-num">טבלה</div>
+        x: 0, 1, 2, 3, 4<br>
+        y: 20, 35, 50, 65, 80
+      </div>
+      <div class="sol-step"><div class="s-num">מה m ומה b?</div>m = 15 (קצב טעינה), b = 20 (טעינה התחלתית)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ מעבר בין ייצוגים ══════════ -->
+<div class="panel" id="panel-convert">
+
+  <div class="converter">
+    <div class="conv-title">⇄ מחשבון מעבר בין ייצוגים</div>
+    <div class="conv-body">
+
+      <div class="conv-tabs">
+        <button class="conv-tab active" onclick="showConv('nf',this)">נוסחה → הכל</button>
+        <button class="conv-tab" onclick="showConv('pts',this)">2 נקודות → נוסחה</button>
+        <button class="conv-tab" onclick="showConv('tab',this)">טבלה → נוסחה</button>
+        <button class="conv-tab" onclick="showConv('verb',this)">מילולי → נוסחה</button>
+      </div>
+
+      <!-- נוסחה → הכל -->
+      <div class="conv-panel active" id="conv-nf">
+        <div class="input-row">
+          <label>y = </label>
+          <input class="math-input" id="nf-m" placeholder="m" type="number" step="0.5" value="2">
+          <span style="font-weight:900;font-size:1rem;">x +</span>
+          <input class="math-input" id="nf-b" placeholder="b" type="number" step="0.5" value="3">
+        </div>
+        <button class="conv-btn" onclick="calcNF()">✨ חשב הכל</button>
+        <div class="result-box" id="res-nf"></div>
+      </div>
+
+      <!-- 2 נקודות -->
+      <div class="conv-panel" id="conv-pts">
+        <div class="input-row">
+          <label>נקודה 1:</label>
+          <span style="font-weight:800;">(</span>
+          <input class="math-input" id="p1x" placeholder="x₁" type="number" value="1">
+          <span style="font-weight:800;">,</span>
+          <input class="math-input" id="p1y" placeholder="y₁" type="number" value="5">
+          <span style="font-weight:800;">)</span>
+        </div>
+        <div class="input-row">
+          <label>נקודה 2:</label>
+          <span style="font-weight:800;">(</span>
+          <input class="math-input" id="p2x" placeholder="x₂" type="number" value="3">
+          <span style="font-weight:800;">,</span>
+          <input class="math-input" id="p2y" placeholder="y₂" type="number" value="9">
+          <span style="font-weight:800;">)</span>
+        </div>
+        <button class="conv-btn" onclick="calcPTS()">✨ מצא נוסחה</button>
+        <div class="result-box" id="res-pts"></div>
+      </div>
+
+      <!-- טבלה -->
+      <div class="conv-panel" id="conv-tab">
+        <p style="font-size:0.82rem;font-weight:700;color:var(--text-muted);margin-bottom:10px;">הכנס ערכי x ו-y (לפחות 2 זוגות, x עולה ב-1 בכל שורה)</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+          <div style="text-align:center;font-weight:900;padding:6px;background:var(--text);color:var(--yellow);border-radius:8px 8px 0 0;">x</div>
+          <div style="text-align:center;font-weight:900;padding:6px;background:var(--text);color:var(--yellow);border-radius:8px 8px 0 0;">y</div>
+          <input class="math-input" id="tx0" type="number" value="0" style="width:100%;">
+          <input class="math-input" id="ty0" type="number" value="3" style="width:100%;">
+          <input class="math-input" id="tx1" type="number" value="1" style="width:100%;">
+          <input class="math-input" id="ty1" type="number" value="5" style="width:100%;">
+          <input class="math-input" id="tx2" type="number" value="2" style="width:100%;">
+          <input class="math-input" id="ty2" type="number" value="7" style="width:100%;">
+        </div>
+        <button class="conv-btn" onclick="calcTAB()">✨ מצא נוסחה</button>
+        <div class="result-box" id="res-tab"></div>
+      </div>
+
+      <!-- מילולי -->
+      <div class="conv-panel" id="conv-verb">
+        <div class="input-row">
+          <label>שיפוע:</label>
+          <input class="math-input" id="vb-m" placeholder="m" type="number" step="0.5" value="3">
+          <span style="font-size:0.8rem;font-weight:700;color:var(--text-muted);">עולה/יורד ב...</span>
+        </div>
+        <div class="input-row">
+          <label>כשx=0, y=</label>
+          <input class="math-input" id="vb-b" placeholder="b" type="number" step="0.5" value="1">
+        </div>
+        <button class="conv-btn" onclick="calcVERB()">✨ המר לנוסחה</button>
+        <div class="result-box" id="res-verb"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="section-title">תרשים — איך עוברים?</div>
+
+  <div class="rule-box">
+    <div class="rb-title">נוסחה ← → טבלה</div>
+    <div class="rule-item"><span class="rname">נוסחה → טבלה</span>בחר ערכי x (0,1,2,...) → הצב בנוסחה → חשב y</div>
+    <div class="rule-item"><span class="rname">טבלה → נוסחה</span>שלב 1: m = הפרש y ÷ הפרש x · שלב 2: הצב נקודה אחת → מצא b</div>
+  </div>
+  <div class="rule-box">
+    <div class="rb-title">נוסחה ← → גרף</div>
+    <div class="rule-item"><span class="rname">נוסחה → גרף</span>סמן (0,b) על ציר y → מהנקודה הזו "צעד" לפי m: ימינה 1, למעלה/מטה m</div>
+    <div class="rule-item"><span class="rname">גרף → נוסחה</span>קרא את b (חיתוך y) → בחר 2 נקודות → חשב m</div>
+  </div>
+
+</div>
+
+<!-- ══════════ גרף ══════════ -->
+<div class="panel" id="panel-graph">
+  <div class="section-title">גרף אינטראקטיבי</div>
+
+  <div class="converter">
+    <div class="conv-title">📊 ציירי את הישר</div>
+    <div class="conv-body">
+      <div class="input-row">
+        <label>y = </label>
+        <input class="math-input" id="gm" type="number" step="0.5" value="2">
+        <span style="font-weight:900;">x +</span>
+        <input class="math-input" id="gb" type="number" step="0.5" value="1">
+      </div>
+      <button class="conv-btn" onclick="drawGraph()">📊 צייר</button>
+    </div>
+  </div>
+
+  <div class="graph-wrap">
+    <canvas class="graph" id="graphCanvas" height="300"></canvas>
+  </div>
+
+  <div class="rule-box" id="graph-info" style="display:none;">
+    <div class="rb-title">פרטי הגרף</div>
+    <div class="rule-item" id="graph-details"></div>
+  </div>
+
+  <div class="tip">💡 <strong>שנה את m ו-b</strong> ולחץ "צייר" כדי לראות איך הישר משתנה. שיפוע שלילי = ישר יורד משמאל לימין.</div>
+</div>
+
+<!-- ══════════ מחולל ══════════ -->
+<div class="panel" id="panel-gen">
+  <div class="gen-wrap">
+    <div class="gen-header">🎲 מחולל שאלות — פונקציה קווית</div>
+    <div class="gen-body">
+      <div class="diff-row">
+        <button class="diff-btn active" id="d-easy" onclick="setDiff('easy',this)">🟢 קל</button>
+        <button class="diff-btn" id="d-med" onclick="setDiff('med',this)">🟠 בינוני</button>
+        <button class="diff-btn" id="d-hard" onclick="setDiff('hard',this)">🔴 קשה</button>
+      </div>
+      <div class="gen-btns" style="margin-bottom:10px;">
+        <button class="gen-go" onclick="generateQ()">🎲 שאלה חדשה</button>
+        <button class="gen-show" onclick="showAns()">👁 פתרון</button>
+      </div>
+      <div class="gen-q" id="gen-q"></div>
+      <div class="gen-ans" id="gen-ans"></div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ── panel switching ──────────────────────
+function showPanel(type,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.main-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+type).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(type==='graph') setTimeout(drawGraph,100);
+}
+function toggleEx(h){
+  const b=h.nextElementSibling,t=h.querySelector('.ex-toggle');
+  b.classList.toggle('open');t.classList.toggle('open');
+}
+
+// ── converter tabs ──────────────────────
+function showConv(id,btn){
+  document.querySelectorAll('.conv-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.conv-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('conv-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function fmt(n){ return Number.isInteger(n)?n:Math.round(n*100)/100; }
+
+function showResult(id,html){
+  const el=document.getElementById(id);
+  el.innerHTML=html; el.classList.add('show');
+}
+
+// ── נוסחה → הכל ──────────────────────
+function calcNF(){
+  const m=parseFloat(document.getElementById('nf-m').value);
+  const b=parseFloat(document.getElementById('nf-b').value);
+  if(isNaN(m)||isNaN(b)) return;
+  const xint = m!==0 ? fmt(-b/m) : 'אין (ישר אופקי)';
+  const dir = m>0?'עולה':m<0?'יורדת':'קבועה (ישר אופקי)';
+  let tab='<table style="margin:8px 0;font-size:0.82rem;"><tr style="background:var(--text);color:var(--yellow);"><th>x</th>';
+  for(let x=-2;x<=4;x++) tab+=`<th>${x}</th>`;
+  tab+='</tr><tr><td style="font-weight:900;">y</td>';
+  for(let x=-2;x<=4;x++) tab+=`<td>${fmt(m*x+b)}</td>`;
+  tab+='</tr></table>';
+  showResult('res-nf',`
+    <div class="result-label">הנוסחה שלך</div>
+    <div class="result-val">y = ${fmt(m)}x ${b>=0?'+':''} ${fmt(b)}</div>
+    <div class="result-steps">
+      <div class="step-line">📐 שיפוע: m = ${fmt(m)} → הפונקציה <strong>${dir}</strong></div>
+      <div class="step-line">📍 חיתוך ציר y: הנקודה (0, ${fmt(b)})</div>
+      <div class="step-line">📍 חיתוך ציר x: הנקודה (${xint}, 0)</div>
+      <div class="step-line">📋 טבלה:</div>
+      ${tab}
+      <div class="step-line">💬 מילולי: "${m>0?'עולה':'יורדת'} ב-${Math.abs(m)} לכל יחידה, מתחיל${b>=0?' ב-'+b:' ב-'+b} כשx=0"</div>
+    </div>`);
+}
+
+// ── 2 נקודות → נוסחה ──────────────────
+function calcPTS(){
+  const x1=parseFloat(document.getElementById('p1x').value);
+  const y1=parseFloat(document.getElementById('p1y').value);
+  const x2=parseFloat(document.getElementById('p2x').value);
+  const y2=parseFloat(document.getElementById('p2y').value);
+  if(x2===x1){showResult('res-pts','<div class="result-val" style="color:var(--red);">⚠️ x הזהה — זה לא פונקציה קווית!</div>');return;}
+  const m=(y2-y1)/(x2-x1);
+  const b=y1-m*x1;
+  showResult('res-pts',`
+    <div class="result-label">הנוסחה שנמצאה</div>
+    <div class="result-val">y = ${fmt(m)}x ${b>=0?'+':''} ${fmt(b)}</div>
+    <div class="result-steps">
+      <div class="step-line">שלב 1 — שיפוע: m = (${y2}−${y1}) ÷ (${x2}−${x1}) = ${fmt(y2-y1)} ÷ ${fmt(x2-x1)} = <strong>${fmt(m)}</strong></div>
+      <div class="step-line">שלב 2 — חותך: הצב (${x1}, ${y1}) ← ${y1} = ${fmt(m)}·${x1} + b → b = <strong>${fmt(b)}</strong></div>
+    </div>`);
+}
+
+// ── טבלה → נוסחה ──────────────────────
+function calcTAB(){
+  const xs=[0,1,2].map(i=>parseFloat(document.getElementById('tx'+i).value));
+  const ys=[0,1,2].map(i=>parseFloat(document.getElementById('ty'+i).value));
+  const m=ys[1]-ys[0];
+  const m2=ys[2]-ys[1];
+  if(Math.abs(m-m2)>0.01){showResult('res-tab','<div class="result-val" style="color:var(--red);">⚠️ ההפרשים לא קבועים — זו לא פונקציה קווית!</div>');return;}
+  const b=ys[0]-m*xs[0];
+  showResult('res-tab',`
+    <div class="result-label">הנוסחה שנמצאה</div>
+    <div class="result-val">y = ${fmt(m)}x ${b>=0?'+':''} ${fmt(b)}</div>
+    <div class="result-steps">
+      <div class="step-line">שלב 1 — שיפוע: ההפרש בין y-ים = ${ys[1]}−${ys[0]} = <strong>${fmt(m)}</strong></div>
+      <div class="step-line">שלב 2 — חותך: הצב (${xs[0]}, ${ys[0]}) ← ${ys[0]} = ${fmt(m)}·${xs[0]} + b → b = <strong>${fmt(b)}</strong></div>
+    </div>`);
+}
+
+// ── מילולי → נוסחה ──────────────────────
+function calcVERB(){
+  const m=parseFloat(document.getElementById('vb-m').value);
+  const b=parseFloat(document.getElementById('vb-b').value);
+  if(isNaN(m)||isNaN(b)) return;
+  showResult('res-verb',`
+    <div class="result-label">הנוסחה</div>
+    <div class="result-val">y = ${fmt(m)}x ${b>=0?'+':''} ${fmt(b)}</div>
+    <div class="result-steps">
+      <div class="step-line">שיפוע m = ${fmt(m)} (${m>0?'עולה':'יורד'} ב-${Math.abs(m)} לכל יחידה)</div>
+      <div class="step-line">חותך y: b = ${fmt(b)} → נקודה (0, ${fmt(b)})</div>
+    </div>`);
+}
+
+// ── גרף ──────────────────────────────────
+function drawGraph(){
+  const canvas=document.getElementById('graphCanvas');
+  if(!canvas) return;
+  const W=canvas.offsetWidth||340;
+  canvas.width=W*2; canvas.height=600;
+  const ctx=canvas.getContext('2d');
+  const m=parseFloat(document.getElementById('gm').value)||0;
+  const b=parseFloat(document.getElementById('gb').value)||0;
+  const W2=canvas.width, H=canvas.height;
+  const cx=W2/2, cy=H/2, scale=W2/14;
+
+  ctx.clearRect(0,0,W2,H);
+  ctx.fillStyle='#FFFBE0'; ctx.fillRect(0,0,W2,H);
+
+  // grid
+  ctx.strokeStyle='#E8E4DA'; ctx.lineWidth=1;
+  for(let i=-7;i<=7;i++){
+    ctx.beginPath();ctx.moveTo(cx+i*scale,0);ctx.lineTo(cx+i*scale,H);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,cy+i*scale);ctx.lineTo(W2,cy+i*scale);ctx.stroke();
+  }
+
+  // axes
+  ctx.strokeStyle='#1A1612'; ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(W2,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,H);ctx.stroke();
+
+  // axis labels
+  ctx.fillStyle='#1A1612'; ctx.font=`bold ${W2*0.022}px Nunito,sans-serif`; ctx.textAlign='center';
+  for(let i=-6;i<=6;i++){
+    if(i===0) continue;
+    ctx.fillText(i, cx+i*scale, cy+28);
+    ctx.fillText(-i, cx-18, cy+i*scale+6);
+  }
+
+  // line
+  ctx.strokeStyle='#6B3FA0'; ctx.lineWidth=4;
+  ctx.beginPath();
+  for(let px=0;px<=W2;px+=2){
+    const x=(px-cx)/scale;
+    const y=m*x+b;
+    const py=cy-y*scale;
+    px===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+
+  // intercept points
+  const yInt=b;
+  const xInt=m!==0?-b/m:null;
+
+  // y-intercept dot
+  ctx.fillStyle='#FF8C42';
+  ctx.beginPath();ctx.arc(cx,cy-yInt*scale,9,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#1A1612';ctx.lineWidth=2.5;ctx.stroke();
+  ctx.fillStyle='#1A1612';ctx.font=`bold ${W2*0.022}px Nunito`;
+  ctx.textAlign='right';
+  ctx.fillText(`(0, ${fmt(yInt)})`, cx-12, cy-yInt*scale-12);
+
+  // x-intercept dot
+  if(xInt!==null && Math.abs(xInt)<=6.5){
+    ctx.fillStyle='#2DD4A0';
+    ctx.beginPath();ctx.arc(cx+xInt*scale,cy,9,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#1A1612';ctx.lineWidth=2.5;ctx.stroke();
+    ctx.fillStyle='#1A1612';ctx.font=`bold ${W2*0.022}px Nunito`;
+    ctx.textAlign='center';
+    ctx.fillText(`(${fmt(xInt)}, 0)`, cx+xInt*scale, cy+28);
+  }
+
+  // equation label
+  ctx.fillStyle='#6B3FA0';
+  ctx.font=`bold ${W2*0.03}px Fraunces,serif`;
+  ctx.textAlign='right';
+  ctx.fillText(`y = ${fmt(m)}x ${b>=0?'+ ':'− '}${fmt(Math.abs(b))}`, W2-20, 40);
+
+  // update info
+  const info=document.getElementById('graph-info');
+  const det=document.getElementById('graph-details');
+  info.style.display='block';
+  det.innerHTML=`
+    <span class="rname">פרטים</span>
+    שיפוע: <strong>m = ${fmt(m)}</strong> · 
+    חיתוך y: <strong>(0, ${fmt(b)})</strong> · 
+    חיתוך x: <strong>${xInt!==null?'('+fmt(xInt)+', 0)':'אין (ישר אופקי)'}</strong> · 
+    הפונקציה: <strong>${m>0?'עולה':m<0?'יורדת':'קבועה'}</strong>`;
+}
+
+// ── מחולל ──────────────────────────────
+let genDiff='easy', currentQ=null;
+
+function setDiff(d,btn){
+  genDiff=d;
+  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function rnd(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function rndNZ(min,max){ let v; do{v=rnd(min,max);}while(v===0); return v; }
+
+function generateQ(){
+  document.getElementById('gen-ans').classList.remove('show');
+  const q=document.getElementById('gen-q');
+  q.classList.add('show');
+
+  if(genDiff==='easy'){
+    const types=['formula2table','formula2intercepts','slope-from-points'];
+    const t=types[rnd(0,types.length-1)];
+    const m=rndNZ(-4,4), b=rnd(-5,5);
+
+    if(t==='formula2table'){
+      currentQ={type:t,m,b};
+      q.innerHTML=`<strong>נתונה הפונקציה: y = ${m}x ${b>=0?'+':''} ${b}</strong><br><br>
+        מלא את הטבלה:<br>
+        <table style="margin:8px 0;font-size:0.85rem;">
+          <tr style="background:var(--text);color:var(--yellow);"><th>x</th><th>0</th><th>1</th><th>2</th><th>3</th></tr>
+          <tr><td style="font-weight:900;">y</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+        </table>`;
+    } else if(t==='formula2intercepts'){
+      currentQ={type:t,m,b};
+      q.innerHTML=`<strong>נתונה הפונקציה: y = ${m}x ${b>=0?'+':''} ${b}</strong><br><br>
+        א. מצא את החיתוך עם ציר y<br>
+        ב. מצא את החיתוך עם ציר x`;
+    } else {
+      const x1=rnd(-3,0), y1=rnd(-3,5);
+      const x2=x1+rnd(1,3), y2=y1+m*(x2-x1);
+      currentQ={type:t,m,b:y1-m*x1,x1,y1,x2,y2};
+      q.innerHTML=`<strong>הישר עובר דרך הנקודות (${x1}, ${y1}) ו-(${x2}, ${fmt(y2)})</strong><br><br>
+        מצא את השיפוע של הישר`;
+    }
+
+  } else if(genDiff==='med'){
+    const types=['table2formula','2pts2formula','verbal'];
+    const t=types[rnd(0,types.length-1)];
+    const m=rndNZ(-5,5), b=rnd(-6,6);
+
+    if(t==='table2formula'){
+      const xs=[0,1,2,3];
+      const ys=xs.map(x=>m*x+b);
+      currentQ={type:t,m,b};
+      q.innerHTML=`<strong>הטבלה הבאה מתארת פונקציה קווית:</strong><br>
+        <table style="margin:8px 0;font-size:0.85rem;">
+          <tr style="background:var(--text);color:var(--yellow);"><th>x</th>${xs.map(x=>`<th>${x}</th>`).join('')}</tr>
+          <tr><td style="font-weight:900;">y</td>${ys.map(y=>`<td>${y}</td>`).join('')}</tr>
+        </table>
+        מצא את נוסחת הפונקציה`;
+    } else if(t==='2pts2formula'){
+      const x1=rndNZ(-4,4), y1=rnd(-6,6);
+      const x2=x1+rndNZ(1,3), y2=y1+m*(x2-x1);
+      currentQ={type:t,m,b:y1-m*x1,x1,y1,x2,y2};
+      q.innerHTML=`<strong>ישר עובר דרך (${x1}, ${y1}) ו-(${x2}, ${fmt(y2)})</strong><br><br>
+        מצא את נוסחת הישר`;
+    } else {
+      const rate=rndNZ(-10,10), start=rnd(-20,20);
+      currentQ={type:t,m:rate,b:start};
+      q.innerHTML=`<strong>תיאור מילולי:</strong><br>
+        מכונית נוסעת על כביש. בתחילת המדידה היא במרחק ${start > 0 ? start : Math.abs(start)} ק"מ ${start > 0 ? 'מהעיר' : 'לפני העיר'}.
+        בכל שעה היא ${rate>0?`מתרחקת ב-${rate}`:` מתקרבת ב-${Math.abs(rate)}`} ק"מ.<br><br>
+        א. כתוב נוסחה (x = שעות, y = מרחק)<br>
+        ב. כמה ק"מ תהיה אחרי 3 שעות?`;
+    }
+
+  } else {
+    // hard
+    const types=['parallel','perpendicular','find-k'];
+    const t=types[rnd(0,types.length-1)];
+    const m=rndNZ(-4,4), b=rnd(-6,6);
+
+    if(t==='parallel'){
+      const b2=rnd(-8,8);
+      currentQ={type:t,m,b,b2};
+      q.innerHTML=`<strong>נתון הישר: y = ${m}x ${b>=0?'+':''} ${b}</strong><br><br>
+        מצא את משוואת הישר המקביל לו, העובר דרך הנקודה (2, ${fmt(m*2+b2)})`;
+    } else if(t==='perpendicular'){
+      const pm=m!==0?-1/m:1;
+      const pb=rnd(-5,5);
+      const px=rnd(1,4), py=fmt(pm*px+pb);
+      currentQ={type:t,m,b,pm:fmt(pm),pb};
+      q.innerHTML=`<strong>נתון הישר: y = ${m}x ${b>=0?'+':''} ${b}</strong><br><br>
+        מצא את משוואת הישר המאונך לו, העובר דרך הנקודה (${px}, ${py})`;
+    } else {
+      const k=rndNZ(-5,5);
+      const x0=rnd(1,5);
+      const y0=k*x0+b;
+      currentQ={type:t,m:k,b,x0,y0};
+      q.innerHTML=`<strong>הישר y = kx ${b>=0?'+':''} ${b} עובר דרך הנקודה (${x0}, ${y0})</strong><br><br>
+        מצא את הערך של k`;
+    }
+  }
+}
+
+function showAns(){
+  if(!currentQ){generateQ();return;}
+  const a=document.getElementById('gen-ans');
+  a.classList.add('show');
+  const q=currentQ;
+  let html='';
+
+  if(q.type==='formula2table'){
+    const ys=[0,1,2,3].map(x=>q.m*x+q.b);
+    html=`<strong>פתרון:</strong><br>
+      הצב x=0,1,2,3 בנוסחה y=${q.m}x${q.b>=0?'+':''}${q.b}:<br>
+      <table style="margin:8px 0;font-size:0.85rem;">
+        <tr style="background:var(--green);"><th>x</th><th>0</th><th>1</th><th>2</th><th>3</th></tr>
+        <tr><td style="font-weight:900;">y</td>${ys.map(y=>`<td><strong>${y}</strong></td>`).join('')}</tr>
+      </table>`;
+  } else if(q.type==='formula2intercepts'){
+    html=`<strong>פתרון:</strong><br>
+      א. ציר y: הצב x=0 → y=${q.b} → נקודה <strong>(0, ${q.b})</strong><br>
+      ב. ציר x: הצב y=0 → 0=${q.m}x${q.b>=0?'+':''}${q.b} → x=${fmt(-q.b/q.m)} → נקודה <strong>(${fmt(-q.b/q.m)}, 0)</strong>`;
+  } else if(q.type==='slope-from-points'){
+    html=`<strong>פתרון:</strong><br>
+      m = (${fmt(q.y2)}−${q.y1}) ÷ (${q.x2}−${q.x1}) = ${fmt(q.y2-q.y1)} ÷ ${q.x2-q.x1} = <strong>${fmt(q.m)}</strong>`;
+  } else if(q.type==='table2formula'){
+    html=`<strong>פתרון:</strong><br>
+      שלב 1: m = הפרש y = <strong>${q.m}</strong><br>
+      שלב 2: הצב (0,${q.b}): b = <strong>${q.b}</strong><br>
+      נוסחה: <strong>y = ${q.m}x ${q.b>=0?'+':''}${q.b}</strong>`;
+  } else if(q.type==='2pts2formula'){
+    html=`<strong>פתרון:</strong><br>
+      m = (${fmt(q.y2)}−${q.y1})÷(${q.x2}−${q.x1}) = <strong>${fmt(q.m)}</strong><br>
+      b: ${q.y1}=${fmt(q.m)}·${q.x1}+b → b=<strong>${fmt(q.b)}</strong><br>
+      נוסחה: <strong>y = ${fmt(q.m)}x ${q.b>=0?'+':''}${fmt(q.b)}</strong>`;
+  } else if(q.type==='verbal'){
+    html=`<strong>פתרון:</strong><br>
+      א. <strong>y = ${q.m}x + ${q.b}</strong> (m=${q.m}, b=${q.b})<br>
+      ב. אחרי 3 שעות: y = ${q.m}·3+${q.b} = <strong>${fmt(q.m*3+q.b)} ק"מ</strong>`;
+  } else if(q.type==='parallel'){
+    html=`<strong>פתרון:</strong><br>
+      ישר מקביל → אותו שיפוע: m = ${q.m}<br>
+      עובר דרך (2, ${fmt(q.m*2+q.b2)}): ${fmt(q.m*2+q.b2)}=${q.m}·2+b → b=<strong>${fmt(q.b2)}</strong><br>
+      נוסחה: <strong>y = ${q.m}x ${q.b2>=0?'+':''}${fmt(q.b2)}</strong>`;
+  } else if(q.type==='perpendicular'){
+    const px=parseInt(currentQ.x0)||2;
+    const py=parseFloat(q.pm)*px+q.pb;
+    html=`<strong>פתרון:</strong><br>
+      ישר מאונך → m₁×m₂=−1 → m = <strong>${q.pm}</strong><br>
+      עובר דרך (${px}, ${fmt(py)}): b=<strong>${fmt(q.pb)}</strong><br>
+      נוסחה: <strong>y = ${q.pm}x ${q.pb>=0?'+':''}${fmt(q.pb)}</strong>`;
+  } else if(q.type==='find-k'){
+    html=`<strong>פתרון:</strong><br>
+      הצב (${q.x0}, ${q.y0}): ${q.y0} = k·${q.x0} ${q.b>=0?'+':''}${q.b}<br>
+      k·${q.x0} = ${q.y0-q.b} → k = <strong>${fmt(q.m)}</strong>`;
+  }
+
+  a.innerHTML=html;
+}
+
+// draw on load
+window.addEventListener('load', ()=>{
+  const gPanel=document.getElementById('panel-graph');
+  if(gPanel && !gPanel.classList.contains('active')) return;
+  drawGraph();
+});
+</script>
+</body>
+</html>

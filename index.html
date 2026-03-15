@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מתמטיקה — עתיד ארנון</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">
+    <div class="logo-mark">∫</div>
+    <span class="logo-text">מתמטיקה עם עוז</span>
+  </div>
+  <span class="topbar-badge">תשפ״ו</span>
+</div>
+
+<div class="home-hero">
+  <div class="home-title">חומרי לימוד</div>
+  <p class="home-sub">בחר כיתה להתחיל</p>
+  <div class="class-switcher">
+    <button class="class-btn active" onclick="switchClass('y10',this)">כיתה י׳ · 4 יח"ל</button>
+    <button class="class-btn" onclick="switchClass('y8',this)">כיתה ח׳</button>
+  </div>
+</div>
+
+<div class="home-main">
+
+  <!-- ══ כיתה י׳ ══ -->
+  <div class="class-panel active" id="panel-y10">
+
+    <div class="subject-tabs">
+      <button class="subject-tab active" onclick="switchTab('stat',this)">📊 פרק א׳ — סטטיסטיקה</button>
+      <button class="subject-tab" onclick="switchTab('geo',this)">📐 פרק ב׳ — גיאומטריה</button>
+      <button class="subject-tab" onclick="switchTab('calc',this)">∫ פרק ג׳ — חדו"א</button>
+      <button class="subject-tab" onclick="switchTab('games10',this)">🎮 משחקים</button>
+    </div>
+
+    <!-- סטטיסטיקה -->
+    <div class="tab-panel active" id="tab-stat">
+      <div class="cards-grid">
+        <a href="normal-distribution.html" class="card stat">
+          <span class="card-emoji">🔔</span>
+          <div class="card-title">התפלגות נורמלית</div>
+          <div class="card-sub">ממוצע · סטיית תקן · ציון z</div>
+          <span class="card-tag">✓ מוכן</span>
+        </a>
+        <a href="regression.html" class="card stat">
+          <span class="card-emoji">📈</span>
+          <div class="card-title">רגרסיה וקורלציה</div>
+          <div class="card-sub">ישר רגרסיה · מקדם r</div>
+          <span class="card-tag">✓ מוכן</span>
+        </a>
+        <a href="probability.html" class="card stat">
+          <span class="card-emoji">🎲</span>
+          <div class="card-title">הסתברות</div>
+          <div class="card-sub">טבלה · הסתברות מותנית</div>
+          <span class="card-tag">✓ מוכן</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- גיאומטריה -->
+    <div class="tab-panel" id="tab-geo">
+      <div class="cards-grid">
+        <div class="card coming geo"><span class="card-emoji">△</span><div class="card-title">דמיון משולשים</div><div class="card-sub">יחס דמיון · הוכחות</div><span class="card-tag">בקרוב</span></div>
+        <div class="card coming geo"><span class="card-emoji">⭕</span><div class="card-title">מעגל ומשיק</div><div class="card-sub">משיק · מיתר · זוויות</div><span class="card-tag">בקרוב</span></div>
+        <div class="card coming geo"><span class="card-emoji">📍</span><div class="card-title">גיאומטריה קואורדינטית</div><div class="card-sub">ישרים · מרחקים · שטחים</div><span class="card-tag">בקרוב</span></div>
+      </div>
+    </div>
+
+    <!-- חדו"א -->
+    <div class="tab-panel" id="tab-calc">
+      <div class="cards-grid">
+        <a href="sqrt-functions.html" class="card calc">
+          <span class="card-emoji">√</span>
+          <div class="card-title">פונקציית שורש</div>
+          <div class="card-sub">חקירה · נגזרת · מחולל</div>
+          <span class="card-tag">✓ מוכן</span>
+        </a>
+        <a href="polynomials.html" class="card calc">
+          <span class="card-emoji">³</span>
+          <div class="card-title">פולינומים</div>
+          <div class="card-sub">חקירה · קיצון · פרמטרים</div>
+          <span class="card-tag">✓ מוכן</span>
+        </a>
+        <a href="rational.html" class="card calc">
+          <span class="card-emoji">÷</span>
+          <div class="card-title">פונקציה רציונלית</div>
+          <div class="card-sub">אסימפטוטות · כלל המנה</div>
+          <span class="card-tag">✓ מוכן</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- משחקים י׳ -->
+    <div class="tab-panel" id="tab-games10">
+      <a href="escape-room-competition.html" class="card game-card">
+        <div class="game-badge">🏆 תחרות צוותים</div>
+        <div class="card-title">מסע המתמטיקאים</div>
+        <div class="card-sub">חדרי בריחה · תחרות · כיתה י׳</div>
+        <div class="game-meta">
+          <span>⏱ ~45 דקות</span>
+          <span>👥 משחק קבוצתי</span>
+        </div>
+        <span class="card-tag" style="background:var(--navy);color:var(--purple-light);border-color:var(--navy);">🎮 שחק עכשיו</span>
+      </a>
+    </div>
+
+  </div>
+
+  <!-- ══ כיתה ח׳ ══ -->
+  <div class="class-panel" id="panel-y8">
+
+    <div class="subject-tabs">
+      <button class="subject-tab active" onclick="switchTab('alg8',this)">📐 אלגברה</button>
+      <button class="subject-tab" onclick="switchTab('geo8',this)">📏 גיאומטריה</button>
+      <button class="subject-tab" onclick="switchTab('games8',this)">🎮 משחקים</button>
+    </div>
+
+    <!-- אלגברה ח׳ -->
+    <div class="tab-panel active" id="tab-alg8">
+      <div class="cards-grid">
+        <a href="equations-flowchart.html" class="card g8c">
+          <span class="card-emoji">⚖️</span>
+          <div class="card-title">משוואות ואי-שוויונות</div>
+          <div class="card-sub">תרשים זרימה · שיטות פתרון</div>
+          <span class="card-tag">✓ מוכן</span>
+        </a>
+        <a href="linear-functions.html" class="card g8c">
+          <span class="card-emoji">📈</span>
+          <div class="card-title">פונקציה קווית</div>
+          <div class="card-sub">שיפוע · חותך · ייצוגים · מחולל</div>
+          <span class="card-tag">✓ מוכן</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- גיאומטריה ח׳ -->
+    <div class="tab-panel" id="tab-geo8">
+      <div class="cards-grid">
+        <a href="pythagoras.html" class="card geo">
+          <span class="card-emoji">📐</span>
+          <div class="card-title">משפט פיתגורס</div>
+          <div class="card-sub">משפט · הוכחה · שלשות · מחולל</div>
+          <span class="card-tag">✓ מוכן</span>
+        </a>
+        <div class="card coming geo"><span class="card-emoji">△</span><div class="card-title">זוויות ומשולשים</div><div class="card-sub">סוגי זוויות · משפטי משולשים</div><span class="card-tag">בקרוב</span></div>
+        <div class="card coming geo"><span class="card-emoji">⬜</span><div class="card-title">שטחים והיקפים</div><div class="card-sub">מלבן · משולש · מעגל</div><span class="card-tag">בקרוב</span></div>
+      </div>
+    </div>
+
+    <!-- משחקים ח׳ -->
+    <div class="tab-panel" id="tab-games8">
+      <a href="escape-room-grade8.html" class="card game-card">
+        <div class="game-badge">🚀 הרפתקה</div>
+        <div class="card-title">מסע המתמטיקאים — משוואות</div>
+        <div class="card-sub">חדר בריחה · כיתה ח׳ · משוואות ואי-שוויונות</div>
+        <div class="game-meta">
+          <span>⏱ ~30 דקות</span>
+          <span>👤 יחיד / קבוצה</span>
+        </div>
+        <span class="card-tag" style="background:var(--navy);color:var(--purple-light);border-color:var(--navy);">🎮 שחק עכשיו</span>
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function switchClass(cls,btn){
+  document.querySelectorAll('.class-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.class-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-'+cls).classList.add('active');
+}
+function switchTab(tab,btn){
+  const panel=btn.closest('.class-panel');
+  panel.querySelectorAll('.subject-tab').forEach(b=>b.classList.remove('active'));
+  panel.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+}
+</script>
+</body>
+</html>

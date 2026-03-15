@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>איך פותרים משוואות — כל הסוגים</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* page-specific for equations-flowchart */
+:root{
+  --purple:#5b21b6; --purple-light:#ede9fe; --purple-border:#c4b5fd;
+  --teal:#0f766e; --teal-light:#ccfbf1;
+  --orange:#c2410c; --orange-light:#fff7ed;
+  --red:#b91c1c; --red-light:#fee2e2;
+  --green:#166534; --green-light:#dcfce7;
+  --blue:#1d4ed8; --blue-light:#eff6ff;
+  --gray:#78716c;
+  --shadow:0 2px 12px rgba(0,0,0,0.08);
+  --bg:#f8f7f4; --white:#fff; --border:#e4e0d8; --text:#1c1917;
+}
+
+.main-nav{display:flex;justify-content:center;max-width:700px;margin:22px auto 0;background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.2);border-radius:14px;overflow:hidden;}
+.main-btn{flex:1;padding:12px 4px;border:none;background:transparent;font-family:'Nunito',sans-serif;font-size:0.83rem;font-weight:800;cursor:pointer;color:rgba(255,255,255,0.6);transition:all 0.2s;border-left:1px solid rgba(255,255,255,0.15);}
+.main-btn:last-child{border-left:none;}
+.main-btn.active{background:rgba(255,255,255,0.2);color:#fff;}
+.main-btn:hover:not(.active){background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.9);}
+
+main{max-width:700px;margin:0 auto;padding:28px 14px 80px;}
+.panel{display:none;}
+.panel.active{display:flex;flex-direction:column;align-items:center;gap:0;}
+.section-title{width:100%;font-family:'Fredoka One',cursive;font-size:1.1rem;font-weight:700;color:var(--purple);padding:16px 0 10px;border-bottom:2px solid var(--purple-border);margin-bottom:4px;}
+
+.node{width:100%;border-radius:14px;padding:16px 22px;font-size:0.95rem;font-weight:700;line-height:1.5;}
+.node.start{background:linear-gradient(135deg,#3b0764,#5b21b6 60%,#9d174d);color:#fff;text-align:center;font-size:1.1rem;font-weight:900;border-radius:50px;padding:14px 36px;box-shadow:0 6px 20px rgba(91,33,182,.3);}
+.node.end{background:var(--green);color:#fff;text-align:center;font-size:1.05rem;font-weight:900;border-radius:50px;padding:14px 36px;box-shadow:0 6px 20px rgba(22,101,52,.3);}
+.node.step{border:2px solid;display:flex;align-items:flex-start;gap:12px;background:var(--white);box-shadow:var(--shadow);}
+.node.step .num{font-size:1.4rem;min-width:30px;line-height:1;margin-top:2px;}
+.node.step .content .title{font-size:1rem;font-weight:800;margin-bottom:3px;}
+.node.step .content .detail{font-size:0.87rem;font-weight:600;color:var(--gray);line-height:1.5;}
+.node.decision{background:var(--white);border:2.5px solid;border-radius:14px;box-shadow:var(--shadow);}
+.node.decision .q{font-size:0.95rem;font-weight:800;margin-bottom:8px;}
+.node.decision .opts{display:flex;gap:8px;flex-wrap:wrap;}
+.node.decision .opt{padding:4px 14px;border-radius:20px;font-size:0.82rem;font-weight:700;}
+.node.warn{background:#fefce8;border:2px solid #fde047;color:#713f12;}
+.node.purple{border-color:var(--purple);} .node.purple .num{color:var(--purple);} .node.purple .opt{background:var(--purple-light);color:var(--purple);}
+.node.teal{border-color:var(--teal);} .node.teal .num{color:var(--teal);} .node.teal .opt{background:var(--teal-light);color:var(--teal);}
+.node.orange{border-color:var(--orange);} .node.orange .num{color:var(--orange);} .node.orange .opt{background:var(--orange-light);color:var(--orange);}
+.node.red{border-color:var(--red);} .node.red .num{color:var(--red);} .node.red .opt{background:var(--red-light);color:var(--red);}
+.node.green{border-color:var(--green);} .node.green .num{color:var(--green);} .node.green .opt{background:var(--green-light);color:var(--green);}
+.node.blue{border-color:var(--blue);} .node.blue .num{color:var(--blue);} .node.blue .opt{background:var(--blue-light);color:var(--blue);}
+
+.arrow{display:flex;justify-content:center;padding:4px 0;}
+.spacer{height:12px;}
+.tip{width:100%;background:#fefce8;border:1.5px solid #fde047;border-radius:14px;padding:12px 16px;font-size:0.85rem;font-weight:700;color:#713f12;line-height:1.5;}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 2px;font-size:0.9em;}
+.frac .num{border-bottom:1.5px solid currentColor;padding:0 3px;line-height:1.3;}
+.frac .den{padding:0 3px;line-height:1.3;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="topbar-logo">
+    <div class="logo-mark">∫</div>
+    <span class="logo-text">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge">כיתה ח׳ · אלגברה</span>
+    <a href="index.html" class="topbar-home">← בית</a>
+  </div>
+</div>
+    <span class="logo-text">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge">כיתה ח׳</span>
+    <a href="index.html" class="topbar-home">← בית</a>
+  </div>
+</div>
+    <span class="logo-text" style="color:var(--ink,#1a1a1a);font-family:'Fredoka One',cursive;">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge" style="background:var(--ink,#1a1a1a);color:var(--yellow,#FFE135);font-family:'Fredoka One',cursive;">כיתה ח׳</span>
+    <a href="index.html" class="topbar-home" style="border:2.5px solid var(--ink,#1a1a1a);color:var(--ink,#1a1a1a);font-family:'Fredoka One',cursive;background:#fff;border-radius:999px;padding:5px 14px;text-decoration:none;font-size:0.82rem;">← דף הבית</a>
+  </div>
+</div>
+
+<div class="hero">
+  <h1>איך פותרים משוואות?</h1>
+  <p class="hero-sub">לחץ על סוג המשוואה שלך 👇</p>
+</div>
+
+<div class="type-nav">
+  <button class="type-btn btn-simple active" onclick="show('simple',this)">1️⃣ משוואה פשוטה</button>
+  <button class="type-btn btn-parens"        onclick="show('parens',this)">2️⃣ עם סוגריים</button>
+  <button class="type-btn btn-frac"          onclick="show('frac',this)">3️⃣ עם מכנים (שברים)</button>
+  <button class="type-btn btn-system"        onclick="show('system',this)">4️⃣ מערכת משוואות</button>
+</div>
+
+<!-- ARROW SVG helper -->
+<template id="arr">
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+</template>
+
+<!-- ═══════════════════════════════ PANEL 1 ═══════════════════════════════ -->
+<div class="panel active" id="panel-simple">
+  <div class="node start">🔢 משוואה פשוטה (ללא סוגריים / מכנים)</div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="node step blue">
+    <div class="num">1️⃣</div>
+    <div class="content">
+      <div class="title">העבר אברי x לצד שמאל</div>
+      <div class="detail">כשמעבירים — <strong>הסימן מתהפך!</strong></div>
+      <div class="math">5x − 2 = 2x + 7 → 5x − 2x = 7 + 2</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="node step orange">
+    <div class="num">2️⃣</div>
+    <div class="content">
+      <div class="title">צמצם אברים דומים</div>
+      <div class="detail">חבר/חסר את כל אברי x יחד, ואת כל המספרים יחד</div>
+      <div class="math">3x = 9</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="node step purple">
+    <div class="num">3️⃣</div>
+    <div class="content">
+      <div class="title">חלק את שני הצדדים במקדם x</div>
+      <div class="detail">כדי לבודד את x לגמרי</div>
+      <div class="math">x = 9 ÷ 3 = <strong>3</strong></div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="node step green">
+    <div class="num">4️⃣</div>
+    <div class="content">
+      <div class="title">✅ בדיקה — הצב במשוואה המקורית</div>
+      <div class="detail">שני הצדדים צריכים להיות שווים</div>
+      <div class="math">5(3)−2 = 13 ✓ &nbsp; 2(3)+7 = 13 ✓</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="node end">🎉 x = 3 — זה הפתרון!</div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+  <div class="tip">💡 <strong>כלל הזהב:</strong> מה שעושים לצד אחד — חייבים לעשות גם לצד השני!</div>
+</div>
+
+<!-- ═══════════════════════════════ PANEL 2 ═══════════════════════════════ -->
+<div class="panel" id="panel-parens">
+  <div class="node start">🟠 משוואה עם סוגריים</div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="node step orange">
+    <div class="num">1️⃣</div>
+    <div class="content">
+      <div class="title">פתח סוגריים — חוק הפילוג</div>
+      <div class="detail">המספר שמחוץ לסוגריים מוכפל בכל אבר בתוכם</div>
+      <div class="math">3(x + 2) = 3x + 6</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="node alert-step">
+    ⚠️ <strong>שים לב לסימן מינוס לפני סוגריים!</strong><br>
+    מינוס הופך את כל הסימנים: &nbsp; −(x − 3) = −x + 3
+  </div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="node step blue">
+    <div class="num">2️⃣</div>
+    <div class="content">
+      <div class="title">העבר x לשמאל, מספרים לימין</div>
+      <div class="detail">הסימן מתהפך בכל העברה</div>
+      <div class="math">3x + 6 = x + 10 → 3x − x = 10 − 6</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="node step purple">
+    <div class="num">3️⃣</div>
+    <div class="content">
+      <div class="title">צמצם וחלק</div>
+      <div class="math">2x = 4 → x = <strong>2</strong></div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="node step green">
+    <div class="num">4️⃣</div>
+    <div class="content">
+      <div class="title">✅ בדיקה</div>
+      <div class="math">3(2+2)=12 ✓ &nbsp; 2+10=12 ✓</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="node end">🎉 x = 2 — זה הפתרון!</div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="example">
+    <div class="ex-title">📝 דוגמה: 3(x + 2) = x + 10</div>
+    <table>
+      <tr><td>פתח סוגריים:</td><td>3x + 6 = x + 10</td></tr>
+      <tr><td>x לשמאל:</td><td>3x − x = 10 − 6</td></tr>
+      <tr><td>צמצם:</td><td>2x = 4</td></tr>
+      <tr><td>חלק:</td><td>x = 2</td></tr>
+      <tr><td>בדיקה:</td><td>3(4)=12 ✓ &nbsp; 2+10=12 ✓</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ PANEL 3 ═══════════════════════════════ -->
+<div class="panel" id="panel-frac">
+  <div class="node start">🟣 משוואה עם מכנים (שברים)</div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="node step purple">
+    <div class="num">1️⃣</div>
+    <div class="content">
+      <div class="title">מצא מכנה משותף קטן ביותר (מ.מ.ק)</div>
+      <div class="detail">המספר הקטן שכל המכנים מתחלקים בו בשלמות</div>
+      <div class="math">x/2 + x/3 = 5 → מ.מ.ק = 6</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="node step red">
+    <div class="num">2️⃣</div>
+    <div class="content">
+      <div class="title">הכפל את כל המשוואה במ.מ.ק</div>
+      <div class="detail">כופלים כל אבר — ימין ושמאל — כדי לבטל את כל המכנים</div>
+      <div class="math">×6: &nbsp; 3x + 2x = 30</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="node alert-step">
+    ⚠️ <strong>בדוק:</strong> אחרי הכפל, כל המכנים אמורים להיעלם!<br>
+    אם נשאר מכנה — חזור וכפל שוב את כל האברים.
+  </div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="node step blue">
+    <div class="num">3️⃣</div>
+    <div class="content">
+      <div class="title">פתור את המשוואה הרגילה שנשארת</div>
+      <div class="detail">עכשיו אין יותר שברים — פתרון רגיל!</div>
+      <div class="math">5x = 30 → x = <strong>6</strong></div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="node step green">
+    <div class="num">4️⃣</div>
+    <div class="content">
+      <div class="title">✅ בדיקה — הצב במשוואה המקורית עם השברים</div>
+      <div class="math">6/2 + 6/3 = 3 + 2 = 5 ✓</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="node end">🎉 x = 6 — זה הפתרון!</div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="example">
+    <div class="ex-title">📝 דוגמה: x/4 + 1 = (x+2)/2</div>
+    <table>
+      <tr><td>מ.מ.ק של 4 ו-2:</td><td>4</td></tr>
+      <tr><td>הכפל ב-4:</td><td>x + 4 = 2(x+2)</td></tr>
+      <tr><td>פתח סוגריים:</td><td>x + 4 = 2x + 4</td></tr>
+      <tr><td>x לשמאל:</td><td>x − 2x = 4 − 4</td></tr>
+      <tr><td>צמצם וחלק:</td><td>−x = 0 → x = 0</td></tr>
+      <tr><td>בדיקה:</td><td>0+1 = 1 ✓ &nbsp; 2/2 = 1 ✓</td></tr>
+    </table>
+  </div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+  <div class="tip">💡 <strong>טיפ:</strong> אם המכנים שונים לגמרי — פשוט תכפול אותם זה בזה. למשל מכנים 3 ו-4 → מ.מ.ק = 12.</div>
+</div>
+
+<!-- ═══════════════════════════════ PANEL 4 ═══════════════════════════════ -->
+<div class="panel" id="panel-system">
+  <div class="node start">🩷 מערכת משוואות — 2 משוואות, 2 נעלמות</div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="diamond-wrap">
+    <div class="diamond pink">איזו שיטה<br>לבחור?</div>
+    <div class="branches">
+      <div class="branch">
+        <div class="branch-label yes">🔁 הצבה</div>
+        <div class="branch-box yes-box">כשקל לבודד נעלם אחד<br>למשל: y = 3x + 1</div>
+      </div>
+      <div class="branch">
+        <div class="branch-label no">➕ צירוף</div>
+        <div class="branch-box no-box">כשמקדם של נעלם שווה בשתי המשוואות</div>
+      </div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div style="display:flex;gap:14px;width:100%;align-items:flex-start;">
+    <div style="flex:1;display:flex;flex-direction:column;gap:10px;">
+      <div class="section-label" style="background:var(--green);">🔁 שיטת ההצבה</div>
+      <div class="node step green" style="font-size:0.9rem;padding:14px 16px;">
+        <div class="num" style="font-size:1.2rem;">1</div>
+        <div class="content">
+          <div class="title" style="font-size:0.95rem;">בודד נעלם אחד</div>
+          <div class="math" style="font-size:0.88rem;">y = 3 − x</div>
+        </div>
+      </div>
+      <div class="node step blue" style="font-size:0.9rem;padding:14px 16px;">
+        <div class="num" style="font-size:1.2rem;">2</div>
+        <div class="content">
+          <div class="title" style="font-size:0.95rem;">הצב במשוואה השנייה</div>
+          <div class="math" style="font-size:0.88rem;">2x+(3−x)=5</div>
+        </div>
+      </div>
+      <div class="node step purple" style="font-size:0.9rem;padding:14px 16px;">
+        <div class="num" style="font-size:1.2rem;">3</div>
+        <div class="content">
+          <div class="title" style="font-size:0.95rem;">פתור — מצא x</div>
+          <div class="math" style="font-size:0.88rem;">x = 2</div>
+        </div>
+      </div>
+      <div class="node step orange" style="font-size:0.9rem;padding:14px 16px;">
+        <div class="num" style="font-size:1.2rem;">4</div>
+        <div class="content">
+          <div class="title" style="font-size:0.95rem;">הצב בחזרה — מצא y</div>
+          <div class="math" style="font-size:0.88rem;">y = 3−2 = 1</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="flex:1;display:flex;flex-direction:column;gap:10px;">
+      <div class="section-label" style="background:var(--pink);">➕ שיטת הצירוף</div>
+      <div class="node step pink" style="font-size:0.9rem;padding:14px 16px;">
+        <div class="num" style="font-size:1.2rem;">1</div>
+        <div class="content">
+          <div class="title" style="font-size:0.95rem;">כוון מקדמים שווים</div>
+          <div class="detail" style="font-size:0.82rem;">הכפל משוואה כדי שמקדם אחד יהיה זהה</div>
+        </div>
+      </div>
+      <div class="node step red" style="font-size:0.9rem;padding:14px 16px;">
+        <div class="num" style="font-size:1.2rem;">2</div>
+        <div class="content">
+          <div class="title" style="font-size:0.95rem;">חבר/חסר את המשוואות</div>
+          <div class="detail" style="font-size:0.82rem;">נעלם אחד נבטל — נשאר רק אחד</div>
+        </div>
+      </div>
+      <div class="node step indigo" style="font-size:0.9rem;padding:14px 16px;">
+        <div class="num" style="font-size:1.2rem;">3</div>
+        <div class="content">
+          <div class="title" style="font-size:0.95rem;">פתור ומצא נעלם ראשון</div>
+        </div>
+      </div>
+      <div class="node step teal" style="font-size:0.9rem;padding:14px 16px;">
+        <div class="num" style="font-size:1.2rem;">4</div>
+        <div class="content">
+          <div class="title" style="font-size:0.95rem;">הצב למצוא את השני</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="node step green">
+    <div class="num">✅</div>
+    <div class="content">
+      <div class="title">בדיקה — הצב x ו-y בשתי המשוואות המקוריות</div>
+      <div class="detail">שתי המשוואות חייבות להתקיים בו-זמנית!</div>
+      <div class="math">x=2,y=1: &nbsp; 2+1=3 ✓ &nbsp; 2(2)+1=5 ✓</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="node end">🎉 הפתרון: x = 2, y = 1</div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+
+  <div class="example">
+    <div class="ex-title">📝 דוגמה בהצבה: x + y = 3 , 2x + y = 5</div>
+    <table>
+      <tr><td>בודד y:</td><td>y = 3 − x (ממשוואה 1)</td></tr>
+      <tr><td>הצב במשוואה 2:</td><td>2x + (3 − x) = 5</td></tr>
+      <tr><td>פשט:</td><td>x + 3 = 5 → x = 2</td></tr>
+      <tr><td>מצא y:</td><td>y = 3 − 2 = 1</td></tr>
+      <tr><td>בדיקה:</td><td>2+1=3 ✓ &nbsp; 4+1=5 ✓</td></tr>
+    </table>
+  </div>
+  <div class="arrow"><svg width="24" height="36" viewBox="0 0 24 36"><line x1="12" y1="0" x2="12" y2="28" stroke="#aaa" stroke-width="2.5"/><polygon points="12,36 5,22 19,22" fill="#aaa"/></svg></div>
+  <div class="tip">💡 <strong>איך לבחור שיטה?</strong> רואים y=... כבר כתוב? → הצבה. המקדמים שווים? → צירוף. בשתי השיטות מגיעים לאותה תשובה!</div>
+</div>
+
+<script>
+function show(type, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + type).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+</script>
+</body>
+</html>

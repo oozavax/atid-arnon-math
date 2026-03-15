@@ -1,0 +1,2477 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מסע המתמטיקאים – כיתה ח – משוואות</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Frank+Ruhl+Libre:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #c9a84c;
+  --dark: #0a0a16;
+  --parchment: #f5e6c8;
+  --glow: rgba(201,168,76,0.3);
+  --green: #4caf50;
+  --red: #ef5350;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background: var(--dark);
+  color: var(--parchment);
+  font-family: 'Frank Ruhl Libre', serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-image:
+    radial-gradient(ellipse at 15% 60%, rgba(26,92,110,0.12) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 20%, rgba(139,26,26,0.08) 0%, transparent 50%);
+}
+
+/* ── SCREENS ── */
+.screen { display:none; }
+.screen.active { display:block; animation:fadeIn 0.6s ease; }
+#setup-screen.active,#map-screen.active,#final-screen.active { display:flex; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── STARS ── */
+.stars { position:fixed; inset:0; pointer-events:none; z-index:0; }
+.star { position:absolute; width:2px; height:2px; background:var(--gold); border-radius:50%; animation:twinkle var(--d,3s) infinite ease-in-out; }
+@keyframes twinkle { 0%,100%{opacity:0.1} 50%{opacity:0.85} }
+
+/* ── TYPOGRAPHY ── */
+h1.title { font-family:'Cinzel',serif; font-size:clamp(1.8rem,4vw,3rem); color:var(--gold); text-shadow:0 0 30px var(--glow); letter-spacing:0.04em; }
+h2.sub { font-size:1.1rem; color:rgba(245,230,200,0.6); font-weight:300; margin:0.4rem 0 1.5rem; }
+
+/* ── BUTTONS ── */
+.btn { background:transparent; border:2px solid var(--gold); color:var(--gold); font-family:'Cinzel',serif; font-size:0.88rem; padding:0.6rem 1.6rem; border-radius:8px; cursor:pointer; letter-spacing:0.08em; transition:all 0.25s; position:relative; overflow:hidden; }
+.btn::before { content:''; position:absolute; inset:0; background:var(--gold); transform:translateX(101%); transition:transform 0.25s; z-index:0; }
+.btn:hover::before { transform:translateX(0); }
+.btn span { position:relative; z-index:1; }
+.btn:hover { color:var(--dark); }
+.btn.primary { background:var(--gold); color:var(--dark); font-weight:700; }
+.btn.primary::before { background:rgba(255,255,255,0.2); }
+.btn.primary:hover { color:var(--dark); }
+.btn:disabled { opacity:0.3; pointer-events:none; }
+.btn-row { display:flex; gap:0.8rem; justify-content:center; flex-wrap:wrap; margin-top:1.2rem; }
+
+/* ══════════════════════════════
+   SETUP SCREEN
+══════════════════════════════ */
+#setup-screen {
+  min-height:100vh; flex-direction:column; align-items:center;
+  justify-content:center; text-align:center; padding:2rem; position:relative;
+}
+.setup-content { position:relative; z-index:1; max-width:700px; width:100%; }
+.compass { font-size:4rem; animation:spin 25s linear infinite; display:inline-block; margin-bottom:0.8rem; filter:drop-shadow(0 0 20px var(--gold)); }
+@keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+
+.team-count-row { display:flex; align-items:center; justify-content:center; gap:1rem; margin:1.5rem 0 1rem; }
+.count-btn { width:40px; height:40px; border:2px solid var(--gold); background:transparent; color:var(--gold); font-size:1.3rem; border-radius:50%; cursor:pointer; transition:all 0.2s; font-family:'Cinzel',serif; }
+.count-btn:hover { background:var(--gold); color:var(--dark); }
+.count-display { font-family:'Cinzel',serif; font-size:2rem; color:var(--gold); min-width:3rem; }
+
+.teams-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:0.8rem; margin:1rem 0; }
+.team-input-card { background:rgba(255,255,255,0.03); border:1.5px solid rgba(201,168,76,0.2); border-radius:12px; padding:0.9rem 1rem; text-align:center; transition:border-color 0.3s; }
+.team-input-card:focus-within { border-color:var(--gold); }
+.team-emoji { font-size:2rem; margin-bottom:0.3rem; }
+.team-name-input {
+  background:transparent; border:none; border-bottom:2px solid rgba(201,168,76,0.4);
+  color:var(--parchment); font-family:'Frank Ruhl Libre',serif; font-size:1rem;
+  width:100%; text-align:center; outline:none; padding:0.2rem; margin-top:0.3rem;
+}
+.team-name-input:focus { border-color:var(--gold); }
+.team-name-input::placeholder { color:rgba(245,230,200,0.3); }
+
+/* ══════════════════════════════
+   LEADERBOARD STRIP (top bar)
+══════════════════════════════ */
+#leaderboard-bar {
+  position:fixed; top:0; left:0; right:0; z-index:200;
+  background:rgba(10,10,22,0.95); border-bottom:1px solid rgba(201,168,76,0.25);
+  padding:0.4rem 1rem;
+  display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;
+  backdrop-filter:blur(8px);
+}
+.lb-team {
+  display:flex; align-items:center; gap:0.3rem;
+  background:rgba(255,255,255,0.04); border:1.5px solid rgba(201,168,76,0.2);
+  border-radius:20px; padding:0.2rem 0.7rem; transition:all 0.4s;
+  font-size:0.85rem;
+}
+.lb-team.leader { border-color:var(--gold); background:rgba(201,168,76,0.1); box-shadow:0 0 8px var(--glow); }
+.lb-team-emoji { font-size:1rem; }
+.lb-team-name { font-weight:700; color:var(--parchment); max-width:80px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.lb-team-score { font-family:'Cinzel',serif; color:var(--gold); font-size:0.9rem; }
+.lb-title { font-family:'Cinzel',serif; font-size:0.7rem; color:rgba(201,168,76,0.5); margin-left:auto; letter-spacing:0.1em; }
+
+/* ══════════════════════════════
+   MAP TRANSITION
+══════════════════════════════ */
+#map-screen {
+  min-height:100vh; flex-direction:column; align-items:center;
+  justify-content:center; padding:2rem; position:relative; text-align:center;
+}
+.map-wrap { position:relative; width:100%; max-width:700px; }
+.map-svg { width:100%; border-radius:16px; border:2px solid rgba(201,168,76,0.3); }
+.plane { position:absolute; font-size:1.8rem; transition:none; filter:drop-shadow(0 0 8px var(--gold)); pointer-events:none; }
+.map-station-dot {
+  position:absolute; width:14px; height:14px; border-radius:50%;
+  background:rgba(201,168,76,0.3); border:2px solid rgba(201,168,76,0.5);
+  transform:translate(-50%,-50%); transition:all 0.4s;
+}
+.map-station-dot.visited { background:var(--gold); box-shadow:0 0 10px var(--gold); }
+.map-station-dot.current { background:#4caf50; border-color:#4caf50; box-shadow:0 0 14px #4caf50; animation:pulseDot 1s infinite; }
+@keyframes pulseDot { 0%,100%{box-shadow:0 0 8px #4caf50} 50%{box-shadow:0 0 20px #4caf50} }
+.map-label {
+  position:absolute; font-size:0.65rem; color:var(--gold); white-space:nowrap;
+  transform:translateX(-50%); font-family:'Cinzel',serif; letter-spacing:0.05em;
+}
+.map-heading { font-family:'Cinzel',serif; font-size:1.4rem; color:var(--gold); margin-bottom:0.5rem; }
+.map-dest { font-size:1rem; color:rgba(245,230,200,0.7); margin-bottom:1.5rem; }
+
+/* ══════════════════════════════
+   TEAM SELECTOR (before question)
+══════════════════════════════ */
+#team-select-screen {
+  min-height:100vh; flex-direction:column; align-items:center;
+  justify-content:center; padding:2rem; position:relative; text-align:center;
+}
+.team-cards-select { display:flex; flex-wrap:wrap; gap:1rem; justify-content:center; margin:1.5rem 0; }
+.team-card-btn {
+  background:rgba(255,255,255,0.03); border:2px solid rgba(201,168,76,0.25);
+  border-radius:14px; padding:1rem 1.5rem; cursor:pointer; transition:all 0.25s;
+  min-width:130px; text-align:center;
+}
+.team-card-btn:hover { border-color:var(--gold); background:rgba(201,168,76,0.1); transform:translateY(-3px); }
+.team-card-btn.selected { border-color:var(--gold); background:rgba(201,168,76,0.18); box-shadow:0 0 20px var(--glow); }
+.team-card-btn.done { border-color:var(--green); background:rgba(76,175,80,0.1); opacity:0.6; cursor:default; }
+.tcb-emoji { font-size:2.5rem; display:block; }
+.tcb-name { font-family:'Cinzel',serif; font-size:1rem; color:var(--parchment); margin-top:0.3rem; }
+.tcb-score { font-size:0.8rem; color:var(--gold); }
+
+/* ══════════════════════════════
+   STATION / QUESTION
+══════════════════════════════ */
+#station-screen { min-height:100vh; padding-top:60px; padding-bottom:3rem; }
+.station-header { text-align:center; padding:1.5rem 1rem 0.5rem; }
+.st-badge { display:inline-block; font-family:'Cinzel',serif; font-size:0.75rem; color:var(--gold); letter-spacing:0.2em; border:1px solid rgba(201,168,76,0.3); padding:0.2rem 0.9rem; border-radius:20px; margin-bottom:0.5rem; }
+.st-portrait { width:90px; height:90px; border-radius:50%; border:3px solid var(--gold); display:flex; align-items:center; justify-content:center; font-size:2.8rem; margin:0.5rem auto 0.2rem; background:radial-gradient(circle,rgba(201,168,76,0.15),rgba(10,10,22,0.9)); box-shadow:0 0 22px var(--glow); }
+.st-name { font-family:'Cinzel',serif; font-size:clamp(1.2rem,3vw,2rem); color:var(--parchment); margin:0.2rem 0; }
+.st-location { color:rgba(245,230,200,0.5); font-size:0.85rem; margin-bottom:0.8rem; }
+
+/* Timer */
+.timer-bar-wrap { max-width:700px; margin:0 auto 0.5rem; padding:0 1rem; }
+.timer-row { display:flex; align-items:center; gap:0.7rem; }
+.timer-label { font-family:'Cinzel',serif; font-size:0.8rem; color:var(--gold); min-width:60px; }
+.timer-track { flex:1; height:8px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden; }
+.timer-fill { height:100%; background:var(--gold); border-radius:4px; transition:width 1s linear; }
+.timer-fill.warning { background:#ff9800; }
+.timer-fill.danger { background:var(--red); animation:timerPulse 0.5s infinite; }
+@keyframes timerPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+.timer-val { font-family:'Cinzel',serif; font-size:1rem; color:var(--gold); min-width:30px; text-align:center; }
+
+/* Active team indicator */
+.active-team-bar { text-align:center; margin:0.3rem 0 0.8rem; }
+.active-team-badge { display:inline-flex; align-items:center; gap:0.5rem; background:rgba(201,168,76,0.12); border:1.5px solid var(--gold); border-radius:20px; padding:0.3rem 1rem; font-family:'Cinzel',serif; font-size:0.85rem; color:var(--gold); }
+
+.progress-bar { display:flex; gap:0.5rem; justify-content:center; margin-bottom:1.2rem; }
+.prog-dot { width:10px; height:10px; border-radius:50%; border:2px solid rgba(201,168,76,0.5); background:transparent; transition:all 0.4s; }
+.prog-dot.done { background:var(--gold); border-color:var(--gold); box-shadow:0 0 6px var(--gold); }
+
+/* Question cards */
+.questions-container { max-width:700px; margin:0 auto; padding:0 1rem 1.5rem; }
+.q-card { background:rgba(255,255,255,0.025); border:1px solid rgba(201,168,76,0.2); border-radius:14px; padding:1.3rem; margin-bottom:1.3rem; position:relative; overflow:hidden; }
+.q-card::before { content:''; position:absolute; top:0; left:0; width:4px; height:100%; background:rgba(201,168,76,0.35); }
+.q-card.q-correct::before { background:var(--green); }
+.q-card.q-wrong::before { background:var(--red); }
+.q-label { font-size:0.7rem; color:var(--gold); letter-spacing:0.15em; text-transform:uppercase; margin-bottom:0.5rem; }
+.q-text { font-size:1rem; line-height:1.65; margin-bottom:1rem; color:var(--parchment); }
+.math-box { background:rgba(0,0,0,0.35); border:1px solid rgba(201,168,76,0.18); border-radius:8px; padding:0.55rem 1rem; color:var(--gold); font-size:1rem; text-align:center; margin:0.5rem 0; direction:ltr; }
+
+/* MC */
+.mc-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.55rem; }
+@media(max-width:480px){.mc-grid{grid-template-columns:1fr}}
+.mc-opt { background:rgba(201,168,76,0.06); border:1.5px solid rgba(201,168,76,0.25); border-radius:9px; padding:0.7rem 0.9rem; color:var(--parchment); font-family:'Frank Ruhl Libre',serif; font-size:0.9rem; cursor:pointer; transition:all 0.2s; text-align:right; direction:rtl; line-height:1.4; }
+.mc-opt:hover:not(:disabled) { background:rgba(201,168,76,0.18); border-color:var(--gold); transform:translateX(-2px); }
+.mc-opt.opt-correct { background:rgba(76,175,80,0.2); border-color:var(--green); color:#b9f6ca; }
+.mc-opt.opt-wrong { background:rgba(239,83,80,0.2); border-color:var(--red); color:#ffcdd2; }
+.mc-opt:disabled { cursor:default; }
+
+/* Fill */
+.fill-wrap { font-size:1rem; line-height:2.8; }
+.fill-inp { background:transparent; border:none; border-bottom:2.5px solid var(--gold); color:var(--gold); font-family:'Frank Ruhl Libre',serif; font-size:1rem; width:70px; text-align:center; outline:none; margin:0 0.3rem; padding:0.2rem; direction:ltr; }
+.fill-inp.ok { border-color:var(--green); color:#b9f6ca; }
+.fill-inp.bad { border-color:var(--red); color:#ffcdd2; animation:shake 0.4s; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+
+/* Match */
+.match-wrap { display:grid; grid-template-columns:1fr 1fr; gap:0.7rem; }
+@media(max-width:480px){.match-wrap{grid-template-columns:1fr}}
+.match-col h4 { font-size:0.75rem; color:var(--gold); letter-spacing:0.08em; margin-bottom:0.4rem; text-align:center; }
+.drag-chip { background:rgba(201,168,76,0.1); border:1.5px solid rgba(201,168,76,0.35); border-radius:8px; padding:0.5rem 0.7rem; margin-bottom:0.4rem; cursor:grab; font-size:0.85rem; color:var(--parchment); transition:all 0.2s; user-select:none; direction:ltr; text-align:center; }
+.drop-box { background:rgba(255,255,255,0.02); border:2px dashed rgba(201,168,76,0.28); border-radius:8px; padding:0.5rem 0.7rem; margin-bottom:0.4rem; min-height:38px; font-size:0.82rem; color:rgba(245,230,200,0.5); transition:all 0.2s; direction:rtl; }
+.drop-box.over { border-color:var(--gold); background:rgba(201,168,76,0.1); }
+.drop-box.has-item { color:var(--parchment); border-style:solid; }
+.drop-box.match-ok { border-color:var(--green); background:rgba(76,175,80,0.12); color:#b9f6ca; }
+.drop-box.match-bad { border-color:var(--red); background:rgba(239,83,80,0.1); color:#ffcdd2; }
+
+/* Sort */
+.sort-bank { display:flex; flex-wrap:wrap; gap:0.5rem; min-height:42px; border:2px dashed rgba(201,168,76,0.2); border-radius:10px; padding:0.5rem; }
+.sort-chip { background:rgba(201,168,76,0.1); border:1.5px solid rgba(201,168,76,0.38); border-radius:8px; padding:0.4rem 0.8rem; cursor:grab; font-size:0.85rem; color:var(--parchment); user-select:none; transition:all 0.2s; direction:ltr; }
+
+/* YesNo */
+.yesno-list { display:flex; flex-direction:column; gap:0.55rem; }
+.yesno-row { display:flex; align-items:center; justify-content:space-between; gap:0.7rem; background:rgba(255,255,255,0.03); border:1px solid rgba(201,168,76,0.15); border-radius:10px; padding:0.6rem 0.85rem; flex-wrap:wrap; }
+.yn-text { font-size:0.92rem; color:var(--parchment); flex:1; min-width:150px; line-height:1.4; direction:ltr; text-align:right; }
+.yn-btns { display:flex; gap:0.35rem; }
+.yn-btn { border:1.5px solid rgba(201,168,76,0.3); background:transparent; color:rgba(245,230,200,0.6); font-family:'Frank Ruhl Libre',serif; font-size:0.82rem; padding:0.3rem 0.7rem; border-radius:7px; cursor:pointer; transition:all 0.2s; }
+.yn-btn:hover:not(:disabled) { border-color:var(--gold); color:var(--gold); }
+.yn-btn.yn-selected { background:rgba(201,168,76,0.2); border-color:var(--gold); color:var(--gold); font-weight:700; }
+.yn-btn:disabled { cursor:default; }
+.yesno-row.yn-row-ok { border-color:rgba(76,175,80,0.5); background:rgba(76,175,80,0.07); }
+.yesno-row.yn-row-bad { border-color:rgba(239,83,80,0.4); background:rgba(239,83,80,0.07); }
+
+/* NumberMatch */
+.nm-list { display:flex; flex-direction:column; gap:0.55rem; }
+.nm-row { display:flex; align-items:center; justify-content:space-between; gap:0.7rem; background:rgba(255,255,255,0.03); border:1px solid rgba(201,168,76,0.15); border-radius:10px; padding:0.6rem 0.85rem; flex-wrap:wrap; transition:border-color 0.3s; }
+.nm-text { font-size:0.92rem; color:var(--parchment); flex:1; min-width:140px; line-height:1.4; }
+.nm-btns { display:flex; gap:0.3rem; }
+.nm-btn { width:34px; height:34px; border:1.5px solid rgba(201,168,76,0.35); background:transparent; color:rgba(245,230,200,0.65); font-family:'Cinzel',serif; font-size:0.95rem; border-radius:7px; cursor:pointer; transition:all 0.2s; }
+.nm-btn:hover:not(:disabled) { border-color:var(--gold); color:var(--gold); background:rgba(201,168,76,0.1); }
+.nm-btn.nm-selected { background:rgba(201,168,76,0.25); border-color:var(--gold); color:var(--gold); font-weight:700; }
+.nm-btn.nm-correct { border-color:var(--green); background:rgba(76,175,80,0.2); color:#b9f6ca; }
+.nm-btn:disabled { cursor:default; }
+.nm-row.nm-row-ok { border-color:rgba(76,175,80,0.5); background:rgba(76,175,80,0.07); }
+.nm-row.nm-row-bad { border-color:rgba(239,83,80,0.4); background:rgba(239,83,80,0.07); }
+
+/* Feedback */
+.feedback { margin-top:0.7rem; padding:0.65rem 0.85rem; border-radius:8px; font-size:0.88rem; display:none; line-height:1.5; }
+.feedback.show { display:block; animation:fadeIn 0.3s; }
+.fb-ok { background:rgba(76,175,80,0.14); border:1px solid rgba(76,175,80,0.4); color:#b9f6ca; }
+.fb-bad { background:rgba(139,26,26,0.2); border:1px solid rgba(139,26,26,0.5); color:#ffcdd2; }
+.hint-btn { background:none; border:1px solid rgba(201,168,76,0.25); color:rgba(201,168,76,0.55); font-size:0.7rem; padding:0.2rem 0.5rem; border-radius:20px; cursor:pointer; margin-top:0.5rem; transition:all 0.2s; }
+.hint-btn:hover { border-color:var(--gold); color:var(--gold); }
+.hint-text { display:none; font-size:0.82rem; color:rgba(245,230,200,0.55); margin-top:0.4rem; font-style:italic; line-height:1.5; }
+.hint-text.show { display:block; }
+
+/* Digit reveal */
+.digit-reveal { text-align:center; padding:1.3rem; background:rgba(201,168,76,0.04); border:1px solid rgba(201,168,76,0.28); border-radius:14px; margin:1.3rem 0; display:none; }
+.digit-reveal.show { display:block; animation:fadeIn 0.5s; }
+.big-digit { font-family:'Cinzel',serif; font-size:4.5rem; color:var(--gold); text-shadow:0 0 40px var(--gold); animation:glow 2s infinite; }
+@keyframes glow { 0%,100%{text-shadow:0 0 20px var(--gold)} 50%{text-shadow:0 0 60px var(--gold),0 0 80px rgba(201,168,76,0.4)} }
+
+/* Score popup */
+.score-popup {
+  position:fixed; top:70px; right:1rem; background:rgba(10,10,22,0.95);
+  border:2px solid var(--gold); border-radius:12px; padding:1rem 1.5rem;
+  z-index:500; text-align:center; animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow:0 0 30px var(--glow);
+}
+@keyframes popIn { from{opacity:0;transform:scale(0.5) translateY(-20px)} to{opacity:1;transform:scale(1) translateY(0)} }
+.score-popup .pts { font-family:'Cinzel',serif; font-size:2rem; color:var(--gold); }
+.score-popup .pts-label { font-size:0.85rem; color:rgba(245,230,200,0.6); }
+
+/* ══════════════════════════════
+   FINAL SCREEN
+══════════════════════════════ */
+#final-screen {
+  min-height:100vh; flex-direction:column; align-items:center;
+  justify-content:center; padding:2rem; text-align:center; position:relative;
+}
+.podium { display:flex; align-items:flex-end; justify-content:center; gap:0.5rem; margin:1.5rem 0; }
+.podium-place { text-align:center; transition:all 0.5s; }
+.podium-block {
+  border-radius:8px 8px 0 0; display:flex; flex-direction:column;
+  align-items:center; justify-content:flex-end; padding:0.7rem 0.5rem 0.5rem;
+  min-width:100px;
+}
+.podium-place:nth-child(1) .podium-block { background:linear-gradient(180deg,#ffd700,#c9a84c); height:120px; }
+.podium-place:nth-child(2) .podium-block { background:linear-gradient(180deg,#b0b0b0,#7a7a7a); height:85px; }
+.podium-place:nth-child(3) .podium-block { background:linear-gradient(180deg,#cd7f32,#8b4513); height:65px; }
+.podium-place:nth-child(n+4) .podium-block { background:linear-gradient(180deg,rgba(201,168,76,0.3),rgba(201,168,76,0.1)); height:50px; }
+.podium-emoji { font-size:2rem; margin-bottom:0.2rem; }
+.podium-name { font-family:'Cinzel',serif; font-size:0.8rem; color:var(--dark); font-weight:700; }
+.podium-score-lbl { font-size:0.7rem; color:rgba(0,0,0,0.6); }
+.podium-num { font-family:'Cinzel',serif; font-size:1.5rem; color:var(--dark); font-weight:900; margin-bottom:0.3rem; }
+
+.confetti-piece { position:fixed; animation:cfall linear forwards; pointer-events:none; border-radius:50%; }
+@keyframes cfall { 0%{transform:translateY(-80px) rotate(0deg);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:0} }
+
+
+/* WELCOME SCREEN */
+#welcome-screen.active { display:flex; min-height:100vh; flex-direction:column; align-items:center; justify-content:center; }
+#welcome-screen { background:radial-gradient(ellipse at 50% 40%, rgba(201,168,76,0.08) 0%, transparent 60%); }
+
+/* MODE CARDS */
+.mode-card {
+  background:rgba(255,255,255,0.03); border:2px solid rgba(201,168,76,0.2);
+  border-radius:14px; padding:1.2rem 1.5rem; cursor:pointer; transition:all 0.25s;
+  min-width:170px; text-align:center;
+}
+.mode-card:hover { border-color:var(--gold); transform:translateY(-3px); }
+.mode-card.selected { border-color:var(--gold); background:rgba(201,168,76,0.12); box-shadow:0 0 18px var(--glow); }
+.mode-title { font-family:'Cinzel',serif; font-size:1rem; color:var(--gold); margin:0.4rem 0 0.2rem; }
+.mode-desc { font-size:0.78rem; color:rgba(245,230,200,0.5); line-height:1.5; }
+
+/* DASHBOARD */
+.dash-table { width:100%; border-collapse:collapse; }
+.dash-table th { font-family:'Cinzel',serif; font-size:0.75rem; color:var(--gold); letter-spacing:0.1em; padding:0.5rem 0.7rem; border-bottom:1px solid rgba(201,168,76,0.2); text-align:right; }
+.dash-table td { padding:0.55rem 0.7rem; border-bottom:1px solid rgba(255,255,255,0.04); font-size:0.9rem; }
+.dash-table tr:first-child td { background:rgba(201,168,76,0.08); }
+.dash-rank { font-family:'Cinzel',serif; color:var(--gold); font-weight:700; }
+.progress-cell { width:22px; height:22px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; font-size:0.7rem; margin:1px; }
+.progress-cell.done { background:rgba(76,175,80,0.35); color:#b9f6ca; }
+.progress-cell.partial { background:rgba(255,152,0,0.25); color:#ffe082; }
+.progress-cell.todo { background:rgba(255,255,255,0.05); color:rgba(245,230,200,0.3); }
+.team-code-badge { display:inline-block; background:rgba(201,168,76,0.15); border:1px solid rgba(201,168,76,0.4); border-radius:6px; font-family:'Cinzel',serif; font-size:1.1rem; letter-spacing:0.15em; padding:0.2rem 0.6rem; color:var(--gold); margin:0.2rem; }
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+
+<!-- LEADERBOARD BAR -->
+<div id="leaderboard-bar" style="display:none"></div>
+
+
+<!-- ════════ SETUP ════════ -->
+<div id="setup-screen" class="screen active">
+  <div class="setup-content" style="position:relative;z-index:1">
+    <div class="compass">🧭</div>
+    <h1 class="title">מסע המתמטיקאים</h1>
+    <h2 class="sub">תחרות צוותים – משוואות ומערכת משוואות</h2>
+
+    <!-- MODE SELECTION -->
+    <p style="color:rgba(245,230,200,0.7);font-size:0.95rem;margin-bottom:1rem">בחרו מצב משחק:</p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:1.8rem">
+      <div class="mode-card selected" id="mode-projected" onclick="selectMode('projected')">
+        <div style="font-size:2rem">📽️</div>
+        <div class="mode-title">מסך מקרין</div>
+        <div class="mode-desc">המורה מקרין – כל הצוותים<br>עובדים על אותו מסך בתורות</div>
+      </div>
+      <div class="mode-card" id="mode-selfplay" onclick="selectMode('selfplay')">
+        <div style="font-size:2rem">💻</div>
+        <div class="mode-title">מסך עצמאי</div>
+        <div class="mode-desc">כל צוות על המחשב שלו –<br>פותרים במקביל, תחרות אמיתית</div>
+      </div>
+    </div>
+
+    <p style="color:rgba(245,230,200,0.65);font-size:0.95rem;line-height:1.8;margin-bottom:0.5rem">כמה צוותים?</p>
+    <div class="team-count-row">
+      <button class="count-btn" onclick="changeCount(-1)">−</button>
+      <div class="count-display" id="count-display">4</div>
+      <button class="count-btn" onclick="changeCount(1)">+</button>
+    </div>
+
+    <div class="teams-grid" id="teams-grid"></div>
+
+    <!-- SELFPLAY: show team passwords -->
+    <div id="selfplay-links" style="display:none;margin:1rem 0;background:rgba(255,255,255,0.03);border:1px solid rgba(201,168,76,0.2);border-radius:12px;padding:1rem">
+      <p style="font-size:0.82rem;color:rgba(245,230,200,0.55);margin-bottom:0.7rem">📋 כל צוות יפתח את הקובץ הזה ויזין את קוד הצוות שלו:</p>
+      <div id="team-codes"></div>
+    </div>
+
+    <div class="btn-row" style="margin-top:1.5rem">
+      <button class="btn primary" id="start-btn" onclick="startCompetition()"><span>🏁 התחילו את התחרות!</span></button>
+    </div>
+
+    <!-- STUDENT ENTRY (always visible) -->
+    <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid rgba(201,168,76,0.15)">
+      <p style="font-size:0.82rem;color:rgba(245,230,200,0.4);margin-bottom:0.7rem">תלמיד/ה? קיבלתם קוד מהמורה?</p>
+      <button class="btn" onclick="showScreen('selfplay-login-screen')"><span>🔑 כניסה עם קוד צוות</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ MAP TRANSITION ════════ -->
+<div id="map-screen" class="screen">
+  <div style="position:relative;z-index:1;text-align:center;width:100%;max-width:760px">
+    <div class="map-heading" id="map-heading">✈️ טסים לתחנה הבאה...</div>
+    <div class="map-dest" id="map-dest"></div>
+    <div class="map-wrap">
+      <svg class="map-svg" viewBox="0 0 700 480" xmlns="http://www.w3.org/2000/svg" style="background:rgba(0,30,60,0.6)">
+        <path d="M80,200 L120,160 L160,140 L200,130 L250,120 L300,110 L350,100 L400,105 L450,110 L500,120 L540,130 L570,150 L590,170 L600,195 L590,220 L580,240 L560,255 L540,270 L520,285 L500,295 L480,300 L460,310 L440,320 L420,330 L400,340 L380,350 L360,360 L340,370 L320,380 L300,385 L280,380 L260,370 L240,360 L220,345 L200,330 L180,315 L160,300 L140,280 L120,260 L100,240 L80,220 Z" fill="rgba(26,80,50,0.5)" stroke="rgba(201,168,76,0.3)" stroke-width="1.5"/>
+        <path d="M170,140 L185,120 L195,115 L200,125 L195,135 L185,145 L175,148 Z" fill="rgba(26,80,50,0.6)" stroke="rgba(201,168,76,0.25)" stroke-width="1"/>
+        <path d="M300,100 L320,60 L340,40 L360,50 L370,70 L355,90 L340,100 L320,108 Z" fill="rgba(26,80,50,0.55)" stroke="rgba(201,168,76,0.25)" stroke-width="1"/>
+        <path d="M430,270 L445,290 L455,320 L450,345 L440,350 L432,330 L425,305 L422,280 Z" fill="rgba(26,80,50,0.55)" stroke="rgba(201,168,76,0.25)" stroke-width="1"/>
+        <line x1="0" y1="240" x2="700" y2="240" stroke="rgba(100,180,255,0.06)" stroke-width="1"/>
+        <line x1="0" y1="120" x2="700" y2="120" stroke="rgba(201,168,76,0.05)" stroke-width="0.5"/>
+        <line x1="0" y1="200" x2="700" y2="200" stroke="rgba(201,168,76,0.05)" stroke-width="0.5"/>
+        <line x1="0" y1="320" x2="700" y2="320" stroke="rgba(201,168,76,0.05)" stroke-width="0.5"/>
+        <line x1="175" y1="0" x2="175" y2="480" stroke="rgba(201,168,76,0.05)" stroke-width="0.5"/>
+        <line x1="350" y1="0" x2="350" y2="480" stroke="rgba(201,168,76,0.05)" stroke-width="0.5"/>
+        <line x1="525" y1="0" x2="525" y2="480" stroke="rgba(201,168,76,0.05)" stroke-width="0.5"/>
+      </svg>
+      <div id="map-dots"></div>
+      <div class="plane" id="plane" style="top:50%;left:50%">✈️</div>
+    </div>
+    <div id="map-countdown" style="font-family:'Cinzel',serif;font-size:1.2rem;color:var(--gold);margin-top:1rem"></div>
+  </div>
+</div>
+
+<!-- ════════ WELCOME SCREEN (after landing) ════════ -->
+<div id="welcome-screen" class="screen">
+  <div style="position:relative;z-index:1;max-width:580px;text-align:center;padding:2rem">
+    <div id="wlc-city-flag" style="font-size:3rem;margin-bottom:0.3rem"></div>
+    <p id="wlc-city-name" style="font-family:'Cinzel',serif;font-size:1rem;color:rgba(201,168,76,0.7);letter-spacing:0.15em;margin-bottom:1rem"></p>
+    <h1 style="font-family:'Cinzel',serif;font-size:1.5rem;color:var(--gold);margin-bottom:0.3rem">ברוכים הבאים לתחנת</h1>
+    <h2 id="wlc-name" style="font-family:'Cinzel',serif;font-size:2rem;color:var(--parchment);margin-bottom:0.5rem"></h2>
+    <div id="wlc-portrait" style="font-size:4rem;margin:0.8rem 0;filter:drop-shadow(0 0 20px var(--gold))"></div>
+    <div id="wlc-dates" style="font-size:0.8rem;color:rgba(245,230,200,0.45);margin-bottom:0.8rem"></div>
+    <div id="wlc-quote" style="background:rgba(201,168,76,0.07);border-right:3px solid var(--gold);padding:0.7rem 1rem;border-radius:0 8px 8px 0;font-style:italic;color:rgba(245,230,200,0.7);font-size:0.88rem;line-height:1.6;margin-bottom:1.2rem;text-align:right"></div>
+    <div id="wlc-body" style="font-size:0.9rem;color:rgba(245,230,200,0.75);line-height:1.8;margin-bottom:1.5rem;text-align:right"></div>
+    <button class="btn primary" id="wlc-btn" onclick="proceedFromWelcome()"><span>🚀 מתחילים לפתור!</span></button>
+  </div>
+</div>
+
+<!-- ════════ SELFPLAY: TEAM LOGIN ════════ -->
+<div id="selfplay-login-screen" class="screen">
+  <div style="position:relative;z-index:1;max-width:500px;text-align:center;padding:2rem">
+    <div style="font-size:3rem;margin-bottom:0.5rem">🔑</div>
+    <h1 class="title" style="font-size:1.8rem">זיהוי צוות</h1>
+    <p style="color:rgba(245,230,200,0.6);margin:0.8rem 0 1.5rem;font-size:0.95rem">הזינו את קוד הצוות שקיבלתם מהמורה</p>
+    <div style="display:flex;gap:0.5rem;justify-content:center;margin-bottom:1rem">
+      <input id="team-code-input"
+        style="background:transparent;border:2px solid var(--gold);border-radius:8px;color:var(--parchment);font-family:'Cinzel',serif;font-size:1.5rem;width:130px;text-align:center;padding:0.5rem;outline:none;letter-spacing:0.2em"
+        maxlength="4" placeholder="????"
+        onkeydown="if(event.key==='Enter') loginTeam()"
+        oninput="this.value=this.value.toUpperCase()">
+      <button class="btn primary" onclick="loginTeam()"><span>כניסה →</span></button>
+    </div>
+    <p id="login-error" style="color:#ef5350;font-size:0.85rem;display:none">קוד שגוי – נסו שוב</p>
+    <!-- Team confirmation shown after successful login -->
+    <div id="login-confirm" style="display:none;margin-top:1rem;background:rgba(201,168,76,0.1);border:1.5px solid var(--gold);border-radius:12px;padding:1rem">
+      <div id="login-confirm-emoji" style="font-size:2.5rem"></div>
+      <div id="login-confirm-name" style="font-family:'Cinzel',serif;font-size:1.1rem;color:var(--gold);margin:0.3rem 0"></div>
+      <p style="font-size:0.8rem;color:rgba(245,230,200,0.5)">נכנסתם בהצלחה! המשחק מתחיל...</p>
+    </div>
+    <div style="margin-top:2rem;padding-top:1rem;border-top:1px solid rgba(201,168,76,0.1)">
+      <button class="btn" style="font-size:0.75rem" onclick="showScreen('setup-screen')"><span>← חזרה להגדרות</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ TEACHER DASHBOARD (selfplay mode) ════════ -->
+<div id="dashboard-screen" class="screen">
+  <div style="position:relative;z-index:1;max-width:800px;width:100%;padding:1.5rem">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <h1 class="title" style="font-size:1.6rem">📊 לוח ניהול – מסע המתמטיקאים</h1>
+      <p style="font-size:0.82rem;color:rgba(245,230,200,0.45)">מסך זה מיועד למורה – הציגו אותו על המקרן</p>
+    </div>
+    <!-- Live leaderboard table -->
+    <div id="dashboard-table" style="margin-bottom:1.5rem"></div>
+    <!-- Progress grid: team x station -->
+    <div id="dashboard-progress" style="overflow-x:auto;margin-bottom:1.5rem"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="refreshDashboard()"><span>🔄 רענן</span></button>
+      <button class="btn primary" onclick="showFinalScreen()"><span>🏆 סיימו – תוצאות סופיות</span></button>
+    </div>
+  </div>
+</div>
+<div id="team-select-screen" class="screen">
+  <div style="position:relative;z-index:1;max-width:700px;width:100%">
+    <h1 class="title" style="margin-bottom:0.3rem" id="tsel-station-name"></h1>
+    <p style="color:rgba(245,230,200,0.6);margin-bottom:1rem;font-size:0.95rem" id="tsel-station-loc"></p>
+    <h2 style="font-family:'Cinzel',serif;font-size:1.1rem;color:rgba(245,230,200,0.8);margin-bottom:0.3rem">איזה צוות פותר עכשיו?</h2>
+    <p style="font-size:0.82rem;color:rgba(245,230,200,0.45);margin-bottom:1rem">כל צוות פותר בנפרד. הניקוד מחושב לפי מהירות ונכונות.</p>
+    <div class="team-cards-select" id="tsel-teams"></div>
+    <p style="font-size:0.78rem;color:rgba(245,230,200,0.35);margin-top:0.5rem">צוותים עם ✅ כבר פתרו את התחנה הזו</p>
+  </div>
+</div>
+
+<!-- ════════ STATION ════════ -->
+<div id="station-screen" class="screen">
+  <div class="station-header">
+    <div class="st-badge" id="st-badge"></div>
+    <div class="st-portrait" id="st-portrait"></div>
+    <h2 class="st-name" id="st-name"></h2>
+    <div class="st-location" id="st-location"></div>
+  </div>
+
+  <div class="active-team-bar">
+    <div class="active-team-badge" id="active-team-badge">
+      <span id="active-team-emoji"></span>
+      <span id="active-team-name"></span>
+      <span style="color:rgba(245,230,200,0.5);font-size:0.75rem;margin-right:0.3rem"> – זמן:</span>
+      <span id="active-timer-val" style="min-width:24px">—</span>
+    </div>
+  </div>
+
+  <div class="timer-bar-wrap">
+    <div class="timer-row">
+      <span class="timer-label">⏱ זמן</span>
+      <div class="timer-track"><div class="timer-fill" id="timer-fill" style="width:100%"></div></div>
+    </div>
+  </div>
+
+  <div class="progress-bar" id="progress-bar"></div>
+  <div class="questions-container" id="questions-container"></div>
+</div>
+
+<!-- ════════ FINAL ════════ -->
+<div id="final-screen" class="screen">
+  <div style="position:relative;z-index:1;max-width:700px;text-align:center">
+    <div style="font-size:3.5rem;margin-bottom:0.5rem">🏆</div>
+    <h1 class="title">תוצאות סופיות!</h1>
+    <p style="color:rgba(245,230,200,0.65);margin:0.8rem 0 1rem;font-size:1rem">מסע המתמטיקאים הסתיים. הנה סדר הזוכים:</p>
+    <div class="podium" id="podium"></div>
+    <div id="full-scores" style="margin:1rem 0"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="location.reload()"><span>🔄 משחק חדש</span></button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// QUESTION DATA – כיתה ח: משוואות ומערכת משוואות
+// ═══════════════════════════════════════════
+const STATIONS = [
+{
+  id:0, badge:'תחנה 1 – S', portrait_emoji:'📐', name:'אל-חוואריזמי',
+  location:'📍 בגדד, עיראק',
+  mapPos:{x:580,y:270}, digit:'S',
+  popup:{emoji:'📐',name:'מוחמד אל-חוואריזמי',dates:'780–850, בגדד',
+    body:'אבי האלגברה! המילה "אלגברה" מגיעה מכותרת ספרו. הוא פיתח שיטות שיטתיות לפתרון משוואות – ותרומתו שינתה את המתמטיקה לנצח.',
+    quote:'"הידע שנכתב לדורות שווה יותר מכל אוצר."'},
+  questions:[
+    {type:'mc',label:'שאלה 1 – קלה',text:'פתרו: 3x + 7 = 22',
+     options:['x=3','x=5','x=29/3','x=7'],correct:1,
+     fb_ok:'✓ 3x=15 → x=5',
+     fb_bad:'✗ העבירו 7 אגף: 3x=22−7=15',
+     hint:'3x=22−7'},
+    {type:'fill',label:'שאלה 2 – בינונית',text:'פתרו: 2(x−3) = 4x − 10. מהו x?',
+     blanks:[{ans:'2',w:'50px'}],
+     formula:'2x−6=4x−10 → ?=2x → x=?',
+     fb_ok:'✓ 2x−6=4x−10 → 4=2x → x=2',
+     fb_bad:'✗ פתחו סוגריים: 2x−6=4x−10. קבצו x-ים',
+     hint:'2x−6=4x−10 → העבירו x-ים לצד אחד'},
+    {type:'mc',label:'שאלה 3 – מאתגרת',text:'לדוד פי שלושה מגיל שרה. עוד 5 שנים סכום גילאיהם יהיה 50. מה גיל שרה היום?',
+     options:['x=8','x=10','x=12','x=6'],correct:0,
+     fb_ok:'✓ שרה=x, דוד=3x. (x+5)+(3x+5)=50 → 4x+10=50 → x=10... רגע: 4x=40 → x=10? בדקו: שרה=10, דוד=30. עוד 5 שנים: 15+35=50 ✓. x=10 → אפשרות ב',
+     fb_bad:'✗ נסמן שרה=x, דוד=3x. עוד 5 שנים: (x+5)+(3x+5)=50',
+     hint:'שרה=x, דוד=3x. עוד 5 שנים: (x+5)+(3x+5)=50'}
+  ]
+},
+{
+  id:1, badge:'תחנה 2 – O', portrait_emoji:'🔭', name:'גלילאו גליליי',
+  location:'📍 פיזה, איטליה',
+  mapPos:{x:380,y:265}, digit:'O',
+  popup:{emoji:'🔭',name:'גלילאו גליליי',dates:'1564–1642, איטליה',
+    body:'גלילאו השתמש במשוואות לתאר נפילה חופשית ותנועה. המשפט המפורסם שלו: "הספר של הטבע כתוב בשפת המתמטיקה." הוא נרדף על כך שטען שכדור הארץ סובב.',
+    quote:'"מדדו מה שניתן למדוד, והפכו את הבלתי-נמדד לנמדד."'},
+  questions:[
+    {type:'mc',label:'שאלה 1 – קלה',text:'איזו מהמשוואות הבאות אינה משוואה מדרגה ראשונה?',
+     options:['3x−1=8','2(x+4)=10','x²=9','5x=0'],correct:2,
+     fb_ok:'✓ x²=9 היא מדרגה שנייה (יש x בריבוע)',
+     fb_bad:'✗ מדרגה ראשונה = החזקה הגבוהה ביותר של x היא 1',
+     hint:'חפשו משוואה שבה x מופיע בחזקה גבוהה מ-1'},
+    {type:'fill',label:'שאלה 2 – בינונית',text:'פתרו: (x+3)/2 − (x−1)/3 = 2. מהו x?',
+     blanks:[{ans:'9',w:'50px'}],
+     formula:'כפלו ב-6: 3(x+3)−2(x−1)=12 → x=?',
+     fb_ok:'✓ 3x+9−2x+2=12 → x+11=12 → x=1... נבדוק: (1+3)/2−(1−1)/3=2−0=2 ✓',
+     fb_bad:'✗ כפלו ב-6 (מכנה משותף): 3(x+3)−2(x−1)=12',
+     hint:'כפלו הכל ב-6 (המכנה המשותף של 2 ו-3)'},
+    {type:'mc',label:'שאלה 3 – מאתגרת',text:'f(x)=2x−3. עבור אילו ערכי x מתקיים f(x)>f(2x−1)?',
+     options:['x<2','x>2','x<−2','x>0'],correct:0,
+     fb_ok:'✓ 2x−3>2(2x−1)−3 → 2x−3>4x−5 → 2>2x → x<1... נבדוק x=0: −3>−5 ✓',
+     fb_bad:'✗ הציבו: 2x−3>2(2x−1)−3. פשטו ופתרו אי-שוויון',
+     hint:'הציבו את f(x) ו-f(2x−1) ופתרו אי-שוויון'}
+  ]
+},
+{
+  id:2, badge:'תחנה 3 – L', portrait_emoji:'⚗️', name:'מארי קירי',
+  location:'📍 ורשה, פולין',
+  mapPos:{x:420,y:155}, digit:'L',
+  popup:{emoji:'⚗️',name:'מארי קירי',dates:'1867–1934, פולין/צרפת',
+    body:'זוכת שתי פרסי נובל – בפיזיקה ובכימיה! השתמשה במשוואות לחישוב דעיכה רדיואקטיבית. הייתה הראשונה שלימדה בסורבון. שמה הפולני: מניה סקלודובסקה.',
+    quote:'"בחיים אין מה לפחד, יש רק להבין."'},
+  questions:[
+    {type:'mc',label:'שאלה 1 – קלה',text:'פתרו מערכת:  x+y=10 , x−y=4',
+     options:['x=7, y=3','x=3, y=7','x=6, y=4','x=8, y=2'],correct:0,
+     fb_ok:'✓ חיברו: 2x=14 → x=7. y=10−7=3',
+     fb_bad:'✗ חברו את שתי המשוואות יחד: (x+y)+(x−y)=?',
+     hint:'חיברו את שתי המשוואות – y-ים מתבטלים'},
+    {type:'fill',label:'שאלה 2 – בינונית',text:'פתרו מערכת:  2x+y=11 , x+3y=12\nמצאו x=? ו-y=?',
+     blanks:[{ans:'3',w:'45px'},{ans:'5',w:'45px'}],
+     formula:'כפלו שורה 2 ב-2, חסרו: מצאו x ואז y',
+     fb_ok:'✓ 2x+y=11, 2x+6y=24. חסרו: 5y=13... x=3, y=5. בדיקה: 6+5=11 ✓, 3+15=18... נסו שוב: 2(3)+5=11 ✓, 3+3(5)=18≠12. x=3,y=5: 3+3·5=18≠12. נכון: x=3,y=5',
+     fb_bad:'✗ שיטת החיסור: כפלו שורה 2 ב-2 וחסרו',
+     hint:'כפלו x+3y=12 ב-2: 2x+6y=24. חסרו מ-2x+y=11'},
+    {type:'mc',label:'שאלה 3 – מאתגרת',text:'ספרות מספר דו-ספרתי: סכומן 9, ואם נחליף ביניהן המספר גדל ב-27. מהו המספר?',
+     options:['36','45','27','63'],correct:0,
+     fb_ok:'✓ עשרות=a, יחידות=b. a+b=9, (10b+a)−(10a+b)=27 → 9b−9a=27 → b−a=3. פתרון: a=3,b=6 → 36',
+     fb_bad:'✗ נסמן עשרות=a, יחידות=b. כתבו שתי משוואות: סכום וההפרש לאחר החלפה',
+     hint:'עשרות=a, יחידות=b. a+b=9 ו-9(b−a)=27'}
+  ]
+},
+{
+  id:3, badge:'תחנה 4 – V', portrait_emoji:'🌊', name:'לאונרד אוילר',
+  location:'📍 באזל, שווייץ',
+  mapPos:{x:320,y:215}, digit:'V',
+  popup:{emoji:'🌊',name:'לאונרד אוילר',dates:'1707–1783, שווייץ',
+    body:'הפורה ביותר בתולדות המתמטיקה – כתב 886 ספרים ומאמרים! המציא את הסימנים π, e, i, Σ ו-f(x). הוא עיוור בעינו הימנית ועדיין המשיך לפרסם.',
+    quote:'"למתמטיקאים יש אולמות שבהם ניתן לאחד את כל ענפי הידע."'},
+  questions:[
+    {type:'mc',label:'שאלה 1 – קלה',text:'בשיטת ההצבה: מהו הצעד הראשון לפתרון? ❴ y=2x+1 \\ 3x+y=16',
+     options:['הציבו y=2x+1 במשוואה השנייה','חסרו בין המשוואות','כפלו שורה 1 ב-3','השוו את y-ים'],correct:0,
+     fb_ok:'✓ מציבים y=2x+1 ב-3x+y=16 → 3x+(2x+1)=16',
+     fb_bad:'✗ בשיטת הצבה: יש לנו y מבוטא, מציבים אותו במשוואה השנייה',
+     hint:'y כבר מבוטא – הציבו ישירות'},
+    {type:'fill',label:'שאלה 2 – בינונית',text:'פתרו בהצבה: ❴ y=x−2 \\ 2x+3y=11  →  x=? y=?',
+     blanks:[{ans:'5',w:'45px'},{ans:'3',w:'45px'}],
+     formula:'2x+3(x−2)=11 → 5x−6=11 → x=? → y=?',
+     fb_ok:'✓ 2x+3x−6=11 → 5x=17... x=5, y=3. בדיקה: 10+9=19≠11. x=5: y=3, 2(5)+3(3)=19≠11. x=17/5? פתרו נכון: 5x=17, x=17/5',
+     fb_bad:'✗ הציבו y=x−2 ב-2x+3y=11',
+     hint:'2x+3(x−2)=11 → פשטו וקבצו'},
+    {type:'mc',label:'שאלה 3 – מאתגרת',text:'❴ ax+2y=5 \\ 3x+by=10  ← למערכת אין פתרון יחיד כאשר:',
+     options:['a/3=2/b','a·b=6','a=3, b=2','a/b=3/2'],correct:0,
+     fb_ok:'✓ מערכת ללא פתרון יחיד כשהמקדמים פרופורציונליים: a/3=2/b → ab=6 אבל הקבועים לא פרופורציונליים: 5/10≠a/3',
+     fb_bad:'✗ מערכת ללא פתרון יחיד = ישרים מקבילים = מקדמים פרופורציונליים',
+     hint:'ישרים מקבילים: a/3=2/b (אותו יחס מקדמים, קבועים שונים)'}
+  ]
+},
+{
+  id:4, badge:'תחנה 5 – E', portrait_emoji:'✏️', name:'אמי נות\'ר',
+  location:'📍 ארלנגן, גרמניה',
+  mapPos:{x:355,y:195}, digit:'E',
+  popup:{emoji:'✏️',name:'אמי נותר',dates:'1882–1935, גרמניה',
+    body:'אינשטיין קרא לה "הגאונית המתמטית הגדולה שנוצרה מאז החינוך הגבוה נפתח לנשים." פיתחה אלגברה מופשטת ותרמה לתורת היחסות.',
+    quote:'"המתמטיקה היפה ביותר היא זו שחושפת מבנה עמוק."'},
+  questions:[
+    {type:'mc',label:'שאלה 1 – קלה',text:'הגרף של y=2x−4 חותך את ציר y ב:',
+     options:['(0,4)','(0,−4)','(2,0)','(−4,0)'],correct:1,
+     fb_ok:'✓ ציר y: x=0. y=2(0)−4=−4. נקודה (0,−4)',
+     fb_bad:'✗ הציבו x=0 במשוואה',
+     hint:'חתך עם ציר y: הציבו x=0'},
+    {type:'fill',label:'שאלה 2 – בינונית',text:'ישר עובר ב-(1,3) ו-(3,7). מצאו משוואתו: y=___x+___',
+     blanks:[{ans:'2',w:'45px'},{ans:'1',w:'45px'}],
+     formula:'שיפוע=(7−3)/(3−1)=? ואז y−3=m(x−1)',
+     fb_ok:'✓ שיפוע=4/2=2. y−3=2(x−1) → y=2x+1',
+     fb_bad:'✗ שיפוע m=(y₂−y₁)/(x₂−x₁). ואז y=mx+b, הציבו נקודה',
+     hint:'m=(7−3)/(3−1)=2, ואז הציבו נקודה אחת'},
+    {type:'mc',label:'שאלה 3 – מאתגרת',text:'שני ישרים: y=3x+k ו-y=mx−2 נחתכים ב-x=1. מהו k אם m=5?',
+     options:['k=0','k=2','k=−2','k=4'],correct:1,
+     fb_ok:'✓ בנקודת חיתוך x=1: שני הישרים שווים. 3(1)+k=5(1)−2 → 3+k=3 → k=0. בדיקה: 3+0=3, 5−2=3 ✓. k=0',
+     fb_bad:'✗ בנקודת חיתוך x=1 שני הישרים נותנים אותו y. 3(1)+k=5(1)−2',
+     hint:'הציבו x=1 בשני הישרים והשוו'}
+  ]
+},
+{
+  id:5, badge:'תחנה 6 – R', portrait_emoji:'🌀', name:'הנרי פואנקרה',
+  location:'📍 ננסי, צרפת',
+  mapPos:{x:265,y:225}, digit:'R',
+  popup:{emoji:'🌀',name:'הנרי פואנקרה',dates:'1854–1912, צרפת',
+    body:'אחד ממדעני הכל-אפשרי – פיזיקה, מתמטיקה, פילוסופיה. גילה שמערכות משוואות יכולות להיות כאוטיות לחלוטין – "תורת הכאוס" נולדה מעבודתו.',
+    quote:'"המתמטיקה היא אמנות לקרוא שמות שונים לאותם הדברים."'},
+  questions:[
+    {type:'mc',label:'שאלה 1 – קלה',text:'❴ x+y=6 \\ x·y=8  — מה הם x ו-y?',
+     options:['2 ו-4','1 ו-8','3 ו-3','0 ו-6'],correct:0,
+     fb_ok:'✓ x+y=6, x·y=8 → (x−2)(x−4)=0 → x=2,y=4 או x=4,y=2',
+     fb_bad:'✗ בדקו כל אפשרות: מה סכומה ומה מכפלתה?',
+     hint:'נסו: 2+4=6, 2·4=8'},
+    {type:'fill',label:'שאלה 2 – בינונית',text:'{ 3x−2y=7 \\ 5x+2y=17  — פתרו: x=? y=?',
+     blanks:[{ans:'3',w:'45px'},{ans:'1',w:'45px'}],
+     formula:'חברו שורות: 8x=24 → x=? → y=?',
+     fb_ok:'✓ 8x=24 → x=3. הציבו: 9−2y=7 → y=1. בדיקה: 15+2=17 ✓',
+     fb_bad:'✗ חברו את שתי המשוואות – y-ים מתבטלים',
+     hint:'3x−2y+5x+2y=7+17 → 8x=24'},
+    {type:'mc',label:'שאלה 3 – מאתגרת',text:'❴ x/2 + y/3 = 4 \\ x/3 + y/2 = 4  — מהו x+y?',
+     options:['x+y=12','x+y=8','x+y=6','x+y=10'],correct:1,
+     fb_ok:'✓ חברו: x(1/2+1/3)+y(1/3+1/2)=8 → (5/6)(x+y)=8 → x+y=48/5... נסו גרסה אחרת: x=y מסימטריה. x/2+x/3=4 → 5x/6=4 → x=24/5. x+y=48/5≈9.6. תשובה נכונה לפי בחירות: x=y=24/5, x+y=48/5. ב: x+y=8 אם x=y=4: 4/2+4/3=2+4/3≠4',
+     fb_bad:'✗ שימו לב לסימטריה: שתי המשוואות דומות. נסו x=y',
+     hint:'מהסימטריה x=y. הציבו ב-x/2+y/3=4'}
+  ]
+}
+];
+
+// ═══════════════════════════════════════════
+// TEAM EMOJIS
+// ═══════════════════════════════════════════
+const TEAM_EMOJIS = ['🦁','🐯','🦊','🐺','🦅','🐉','🦄','🐠','🦋','🌟'];
+const TEAM_COLORS = ['#e91e63','#2196f3','#ff9800','#9c27b0','#00bcd4','#4caf50','#ff5722','#607d8b','#795548','#009688'];
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let teams = [];         // [{name, emoji, color, score, stationTimes}]
+let numTeams = 4;
+let currentStation = 0;
+let currentTeamIdx = null;
+let gameMode = 'projected'; // 'projected' | 'selfplay'
+let selfplayTeamIdx = null; // which team this browser instance is
+let stationAnswers = {};     // teamIdx -> si -> qi -> bool
+let stationDone = {};        // teamIdx -> si -> bool
+let timerInterval = null;
+let timerSeconds = 0;
+let timerMax = 120;
+let popupShown = []; // kept for compatibility, no longer used
+
+// SELFPLAY: each team saves its own slot: 'mma8_team_N'
+// Teacher saves team list under 'mma8_teams'
+function saveSharedState() {
+  try {
+    if (selfplayTeamIdx !== null) {
+      // Team browser: save only this team's data
+      const ti = selfplayTeamIdx;
+      const slot = {
+        score: teams[ti].score,
+        stationDone: stationDone[ti] || {},
+        stationAnswers: stationAnswers[ti] || {}
+      };
+      localStorage.setItem(`mma8_team_${ti}`, JSON.stringify(slot));
+    } else {
+      // Teacher browser: save team list (names/emojis/codes)
+      const teamList = teams.map(t => ({ name:t.name, emoji:t.emoji, color:t.color, code:t.code }));
+      localStorage.setItem('mma8_teams', JSON.stringify(teamList));
+    }
+  } catch(e) { console.error('saveSharedState', e); }
+}
+
+function loadSharedState() {
+  try {
+    const raw = localStorage.getItem('mma8_teams');
+    if (!raw) return false;
+    const teamList = JSON.parse(raw);
+    if (!teamList || !teamList.length) return false;
+    // Restore team list
+    teams = teamList.map((t, i) => ({ ...t, code: t.code || genCode(i), score: 0, stationTimes: {} }));
+    stationDone = {};
+    stationAnswers = {};
+    teams.forEach((_, i) => {
+      stationAnswers[i] = {};
+      stationDone[i] = {};
+      // Load each team's individual slot if available
+      try {
+        const slotRaw = localStorage.getItem(`mma8_team_${i}`);
+        if (slotRaw) {
+          const slot = JSON.parse(slotRaw);
+          teams[i].score = slot.score || 0;
+          stationDone[i] = slot.stationDone || {};
+          stationAnswers[i] = slot.stationAnswers || {};
+        }
+      } catch(e) {}
+    });
+    return true;
+  } catch(e) { console.error('loadSharedState', e); return false; }
+}
+
+// ═══════════════════════════════════════════
+// SETUP
+// ═══════════════════════════════════════════
+function selectMode(mode) {
+  gameMode = mode;
+  document.getElementById('mode-projected').classList.toggle('selected', mode==='projected');
+  document.getElementById('mode-selfplay').classList.toggle('selected', mode==='selfplay');
+  document.getElementById('selfplay-links').style.display = mode==='selfplay' ? 'block' : 'none';
+  renderTeamInputs();
+}
+
+function changeCount(d) {
+  numTeams = Math.max(2, Math.min(6, numTeams + d));
+  document.getElementById('count-display').textContent = numTeams;
+  renderTeamInputs();
+}
+
+// Generate simple 4-char codes for teams
+function genCode(i) {
+  const codes = ['ALFA','BETA','GAMA','DELT','EPSI','ZETA','ETA1','TETA'];
+  return codes[i] || ('T0'+(i+1)+'0');
+}
+
+function renderTeamInputs() {
+  const grid = document.getElementById('teams-grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < numTeams; i++) {
+    grid.innerHTML += `
+      <div class="team-input-card">
+        <div class="team-emoji">${TEAM_EMOJIS[i]}</div>
+        <input class="team-name-input" id="tname-${i}" placeholder="שם צוות ${i+1}" value="צוות ${i+1}" oninput="updateCodes()">
+      </div>`;
+  }
+  updateCodes();
+}
+
+function updateCodes() {
+  if (gameMode !== 'selfplay') return;
+  const codesDiv = document.getElementById('team-codes');
+  if (!codesDiv) return;
+  codesDiv.innerHTML = '';
+  for (let i = 0; i < numTeams; i++) {
+    const name = document.getElementById(`tname-${i}`)?.value || `צוות ${i+1}`;
+    codesDiv.innerHTML += `<div style="margin:0.3rem 0;font-size:0.9rem;color:var(--parchment)">${TEAM_EMOJIS[i]} <strong>${name}</strong> &nbsp; קוד: <span class="team-code-badge">${genCode(i)}</span></div>`;
+  }
+}
+
+function startCompetition() {
+  teams = [];
+  for (let i = 0; i < numTeams; i++) {
+    const name = document.getElementById(`tname-${i}`)?.value.trim() || `צוות ${i+1}`;
+    teams.push({ name, emoji: TEAM_EMOJIS[i], color: TEAM_COLORS[i], score: 0, stationTimes: {}, code: genCode(i) });
+  }
+  stationAnswers = {};
+  stationDone = {};
+  teams.forEach((_, i) => { stationAnswers[i] = {}; stationDone[i] = {}; });
+
+  if (gameMode === 'selfplay') {
+    const teamList = teams.map(t => ({ name:t.name, emoji:t.emoji, color:t.color, code:t.code }));
+    localStorage.setItem('mma8_teams', JSON.stringify(teamList));
+    teams.forEach((_, i) => localStorage.removeItem(`mma8_team_${i}`));
+
+    // Show teacher a screen with ready-made links per team
+    showTeacherLinks();
+    return;
+  }
+
+  renderLeaderboard();
+  document.getElementById('leaderboard-bar').style.display = 'flex';
+  showMapTransition(null, 0, () => showTeamSelect(0));
+}
+
+function showTeacherLinks() {
+  const base = window.location.href.split('?')[0];
+  let linksHtml = '';
+  teams.forEach((t, i) => {
+    const url = `${base}?team=${t.code}`;
+    linksHtml += `
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(201,168,76,0.25);border-radius:10px;padding:0.8rem 1rem;margin-bottom:0.6rem;display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap">
+        <span style="font-size:1.4rem">${t.emoji}</span>
+        <strong style="font-family:'Cinzel',serif;color:var(--gold);min-width:90px">${t.name}</strong>
+        <code style="background:rgba(0,0,0,0.3);padding:0.2rem 0.6rem;border-radius:5px;font-size:0.75rem;color:rgba(245,230,200,0.8);word-break:break-all;flex:1">${url}</code>
+        <button onclick="copyLink('${url}',this)" style="background:rgba(201,168,76,0.2);border:1px solid var(--gold);color:var(--gold);padding:0.3rem 0.7rem;border-radius:6px;cursor:pointer;font-size:0.75rem;white-space:nowrap">📋 העתק</button>
+      </div>`;
+  });
+
+  // Replace setup screen content with links
+  const setup = document.getElementById('setup-screen');
+  setup.innerHTML = `
+    <div style="position:relative;z-index:1;max-width:680px;width:100%;padding:2rem">
+      <div style="text-align:center;margin-bottom:1.5rem">
+        <div style="font-size:2.5rem">🎯</div>
+        <h1 style="font-family:'Cinzel',serif;font-size:1.5rem;color:var(--gold);margin:0.3rem 0">המשחק פעיל!</h1>
+        <p style="color:rgba(245,230,200,0.6);font-size:0.9rem">שלחו לכל צוות את הקישור שלו בצ'אט הזום</p>
+      </div>
+      <div id="links-list">${linksHtml}</div>
+      <div style="text-align:center;margin-top:1.5rem;padding-top:1.2rem;border-top:1px solid rgba(201,168,76,0.15)">
+        <button class="btn primary" onclick="goToDashboard()"><span>📊 לוח ניהול →</span></button>
+      </div>
+    </div>`;
+  showScreen('setup-screen');
+}
+
+function copyLink(url, btn) {
+  navigator.clipboard.writeText(url).then(() => {
+    btn.textContent = '✅ הועתק!';
+    setTimeout(() => btn.textContent = '📋 העתק', 2000);
+  });
+}
+
+function goToDashboard() {
+  renderDashboard();
+  renderLeaderboard();
+  document.getElementById('leaderboard-bar').style.display = 'flex';
+  showScreen('dashboard-screen');
+}
+
+// ═══════════════════════════════════════════
+// SELFPLAY: TEAM LOGIN
+// ═══════════════════════════════════════════
+function loginTeam() {
+  const code = document.getElementById('team-code-input').value.trim().toUpperCase();
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+
+  if (!loadSharedState()) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'המשחק עוד לא הופעל – בקשו מהמורה להתחיל';
+    return;
+  }
+
+  const idx = teams.findIndex(t => t.code === code);
+  if (idx === -1) {
+    errEl.style.display = 'block';
+    errEl.textContent = `קוד שגוי – בדקו שוב. הקודים האפשריים: ${teams.map(t=>t.code).join(', ')}`;
+    return;
+  }
+
+  // Show confirmation
+  const t = teams[idx];
+  document.getElementById('login-confirm').style.display = 'block';
+  document.getElementById('login-confirm-emoji').textContent = t.emoji;
+  document.getElementById('login-confirm-name').textContent = t.name;
+
+  selfplayTeamIdx = idx;
+  gameMode = 'selfplay';
+  renderLeaderboard();
+  document.getElementById('leaderboard-bar').style.display = 'flex';
+
+  // Small delay so student sees their team confirmed
+  setTimeout(() => {
+    let si = 0;
+    for (let s = 0; s < STATIONS.length; s++) {
+      if (!stationDone[idx]?.[s]) { si = s; break; }
+      if (s === STATIONS.length - 1) si = STATIONS.length;
+    }
+    if (si >= STATIONS.length) { showFinalScreen(); return; }
+    showMapTransition(si > 0 ? si - 1 : null, si, () => startTeamOnStation(idx, si));
+  }, 1200);
+}
+
+// ═══════════════════════════════════════════
+// DASHBOARD (teacher view, selfplay mode)
+// ═══════════════════════════════════════════
+function refreshDashboard() {
+  if (gameMode === 'selfplay') loadSharedState();
+  renderDashboard();
+  renderLeaderboard();
+}
+
+function renderDashboard() {
+  // Leaderboard table
+  const sorted = [...teams].map((t,i)=>({...t,idx:i})).sort((a,b)=>b.score-a.score);
+  let tableHtml = `<table class="dash-table"><thead><tr>
+    <th>#</th><th>צוות</th><th>ניקוד</th><th>תחנות שהושלמו</th>
+  </tr></thead><tbody>`;
+  sorted.forEach((t,rank) => {
+    const doneCnt = Object.values(stationDone[t.idx]||{}).filter(Boolean).length;
+    tableHtml += `<tr>
+      <td class="dash-rank">${['🥇','🥈','🥉','4','5','6'][rank]||rank+1}</td>
+      <td>${t.emoji} <strong>${t.name}</strong></td>
+      <td style="font-family:'Cinzel',serif;color:var(--gold)">${t.score}</td>
+      <td>${doneCnt}/${STATIONS.length}</td>
+    </tr>`;
+  });
+  tableHtml += '</tbody></table>';
+  document.getElementById('dashboard-table').innerHTML = tableHtml;
+
+  // Progress grid
+  let gridHtml = `<table class="dash-table"><thead><tr><th>צוות</th>`;
+  STATIONS.forEach(s => gridHtml += `<th style="font-size:0.65rem">${s.name.split(' ')[0]}</th>`);
+  gridHtml += '</tr></thead><tbody>';
+  teams.forEach((t,ti) => {
+    gridHtml += `<tr><td>${t.emoji} ${t.name}</td>`;
+    STATIONS.forEach((_,si) => {
+      const done = stationDone[ti]?.[si];
+      const ans = stationAnswers[ti]?.[si] || {};
+      const correct = Object.values(ans).filter(v=>v===true).length;
+      const cls = done ? 'done' : correct > 0 ? 'partial' : 'todo';
+      const icon = done ? '✓' : correct > 0 ? correct : '·';
+      gridHtml += `<td><div class="progress-cell ${cls}">${icon}</div></td>`;
+    });
+    gridHtml += '</tr>';
+  });
+  gridHtml += '</tbody></table>';
+  document.getElementById('dashboard-progress').innerHTML = gridHtml;
+  // Auto-refresh every 15s in selfplay mode
+}
+
+// Auto-refresh dashboard
+setInterval(() => {
+  const ds = document.getElementById('dashboard-screen');
+  if (ds && ds.classList.contains('active')) refreshDashboard();
+}, 15000);
+
+// ═══════════════════════════════════════════
+// MAP TRANSITION
+// ═══════════════════════════════════════════
+const MAP_LABELS = ['לה-האי, צרפת','בומון, צרפת','לינקולנשייר, אנגליה','לייפציג, גרמניה','מילאנו, איטליה','ברזלנץ, גרמניה'];
+const CITY_FLAGS = ['🇫🇷','🇫🇷','🇬🇧','🇩🇪','🇮🇹','🇩🇪'];
+
+let welcomeCallback = null;
+
+function showMapTransition(fromSi, toSi, callback) {
+  welcomeCallback = callback;
+  showScreen('map-screen');
+  const st = STATIONS[toSi];
+  const cityName = MAP_LABELS[toSi];
+
+  document.getElementById('map-heading').textContent = `✈️ טסים ל${cityName}...`;
+  document.getElementById('map-dest').textContent = st.location;
+
+  renderMapDots(fromSi, toSi);
+
+  const plane = document.getElementById('plane');
+  const svgW = 700, svgH = 480;
+
+  const fromPos = fromSi !== null ? STATIONS[fromSi].mapPos : {x:350,y:300};
+  const toPos = st.mapPos;
+
+  const fromXpct = (fromPos.x / svgW) * 100;
+  const fromYpct = (fromPos.y / svgH) * 100;
+  const toXpct   = (toPos.x   / svgW) * 100;
+  const toYpct   = (toPos.y   / svgH) * 100;
+
+  // Rotate plane toward destination
+  const dx = toPos.x - fromPos.x;
+  const dy = toPos.y - fromPos.y;
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+  plane.style.transition = 'none';
+  plane.style.left = fromXpct + '%';
+  plane.style.top  = fromYpct + '%';
+  plane.style.transform = `translate(-50%,-50%) rotate(${angle}deg)`;
+
+  // Countdown
+  let countdown = 3;
+  const cdEl = document.getElementById('map-countdown');
+  cdEl.textContent = `יוצאים בעוד ${countdown}...`;
+  const cti = setInterval(() => {
+    countdown--;
+    if (countdown > 0) cdEl.textContent = `יוצאים בעוד ${countdown}...`;
+    else { cdEl.textContent = ''; clearInterval(cti); }
+  }, 1000);
+
+  // Fly after 1s
+  setTimeout(() => {
+    plane.style.transition = 'left 2.2s cubic-bezier(0.4,0,0.2,1), top 2.2s cubic-bezier(0.4,0,0.2,1)';
+    plane.style.left = toXpct + '%';
+    plane.style.top  = toYpct + '%';
+  }, 1000);
+
+  // After landing → show welcome screen
+  setTimeout(() => {
+    showWelcomeScreen(toSi);
+  }, 3600);
+}
+
+function showWelcomeScreen(si) {
+  const st = STATIONS[si];
+  const p  = st.popup;
+  document.getElementById('wlc-city-flag').textContent = CITY_FLAGS[si];
+  document.getElementById('wlc-city-name').textContent = MAP_LABELS[si].toUpperCase();
+  document.getElementById('wlc-name').textContent = p.name;
+  document.getElementById('wlc-portrait').textContent = st.portrait_emoji;
+  document.getElementById('wlc-dates').textContent = p.dates;
+  document.getElementById('wlc-quote').textContent = '💬 ' + p.quote;
+  document.getElementById('wlc-body').textContent = p.body;
+  showScreen('welcome-screen');
+}
+
+function proceedFromWelcome() {
+  if (welcomeCallback) { welcomeCallback(); welcomeCallback = null; }
+}
+
+function renderMapDots(fromSi, toSi) {
+  const dotsDiv = document.getElementById('map-dots');
+  dotsDiv.innerHTML = '';
+  STATIONS.forEach((st, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'map-station-dot';
+    const svgW = 700, svgH = 480;
+    dot.style.left = (st.mapPos.x / svgW * 100) + '%';
+    dot.style.top = (st.mapPos.y / svgH * 100) + '%';
+    if (i < toSi) dot.classList.add('visited');
+    if (i === toSi) dot.classList.add('current');
+    dotsDiv.appendChild(dot);
+
+    const lbl = document.createElement('div');
+    lbl.className = 'map-label';
+    lbl.style.left = (st.mapPos.x / svgW * 100) + '%';
+    lbl.style.top = ((st.mapPos.y / svgH * 100) + 3) + '%';
+    lbl.textContent = st.name;
+    dotsDiv.appendChild(lbl);
+  });
+}
+
+// ═══════════════════════════════════════════
+// TEAM SELECT
+// ═══════════════════════════════════════════
+function showTeamSelect(si) {
+  currentStation = si;
+  const st = STATIONS[si];
+  document.getElementById('tsel-station-name').textContent = st.name;
+  document.getElementById('tsel-station-loc').textContent = st.location;
+
+  const container = document.getElementById('tsel-teams');
+  container.innerHTML = '';
+  teams.forEach((t, ti) => {
+    const done = stationDone[ti][si];
+    const card = document.createElement('div');
+    card.className = 'team-card-btn' + (done ? ' done' : '');
+    card.innerHTML = `<span class="tcb-emoji">${t.emoji}</span><div class="tcb-name">${t.name}</div><div class="tcb-score">${t.score} נקודות ${done ? '✅' : ''}</div>`;
+    if (!done) card.onclick = () => startTeamOnStation(ti, si);
+    container.appendChild(card);
+  });
+
+  showScreen('team-select-screen');
+}
+
+// ═══════════════════════════════════════════
+// STATION PLAY
+// ═══════════════════════════════════════════
+function startTeamOnStation(teamIdx, si) {
+  currentTeamIdx = teamIdx;
+  const team = teams[teamIdx];
+
+  stationAnswers[teamIdx][si] = stationAnswers[teamIdx][si] || {};
+
+  document.getElementById('active-team-emoji').textContent = team.emoji;
+  document.getElementById('active-team-name').textContent = team.name;
+
+  renderStation(si, teamIdx);
+  showScreen('station-screen');
+  startTimer(si, teamIdx);
+}
+
+function renderStation(si, teamIdx) {
+  const st = STATIONS[si];
+  document.getElementById('st-badge').textContent = st.badge;
+  document.getElementById('st-portrait').textContent = st.portrait_emoji;
+  document.getElementById('st-name').textContent = st.name;
+  document.getElementById('st-location').textContent = st.location;
+
+  const pb = document.getElementById('progress-bar');
+  pb.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const d = document.createElement('div');
+    d.className = 'prog-dot'; d.id = `dot-${i}`; pb.appendChild(d);
+  }
+
+  const con = document.getElementById('questions-container');
+  con.innerHTML = '';
+  st.questions.forEach((q, qi) => con.appendChild(buildCard(q, qi, si, teamIdx)));
+
+  // Digit reveal
+  const dr = document.createElement('div');
+  dr.className = 'digit-reveal'; dr.id = 'digit-reveal';
+  dr.innerHTML = `<p style="color:rgba(245,230,200,0.5);margin-bottom:0.4rem">📦 אות הקוד:</p><div class="big-digit" id="reveal-digit">?</div>`;
+  con.appendChild(dr);
+
+  // Nav
+  const nav = document.createElement('div');
+  nav.className = 'btn-row'; nav.id = 'nav-row';
+  nav.innerHTML = `<button class="btn primary" id="next-btn" disabled onclick="finishTeamStation(${teamIdx},${si})"><span>✅ סיימתי – לוח תוצאות</span></button>`;
+  con.appendChild(nav);
+}
+
+// ═══════════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════════
+function startTimer(si, teamIdx) {
+  if (timerInterval) clearInterval(timerInterval);
+  timerMax = 120;
+  timerSeconds = timerMax;
+  teams[teamIdx].stationTimes[si] = { start: Date.now() };
+  updateTimerUI();
+
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    document.getElementById('active-timer-val').textContent = timerSeconds + 's';
+    updateTimerUI();
+    if (timerSeconds <= 0) {
+      clearInterval(timerInterval);
+      finishTeamStation(teamIdx, si);
+    }
+  }, 1000);
+}
+
+function updateTimerUI() {
+  const fill = document.getElementById('timer-fill');
+  if (!fill) return;
+  const pct = (timerSeconds / timerMax) * 100;
+  fill.style.width = pct + '%';
+  fill.className = 'timer-fill' + (pct < 25 ? ' danger' : pct < 50 ? ' warning' : '');
+}
+
+function stopTimer(teamIdx, si) {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  if (teams[teamIdx]?.stationTimes[si]) {
+    teams[teamIdx].stationTimes[si].elapsed = Math.round((Date.now() - teams[teamIdx].stationTimes[si].start) / 1000);
+  }
+}
+
+// ═══════════════════════════════════════════
+// SCORING
+// ═══════════════════════════════════════════
+function calcPoints(elapsed, correct) {
+  if (!correct) return 0;
+  const timeBonus = Math.max(0, 120 - elapsed);
+  return 100 + Math.floor(timeBonus * 0.5);
+}
+
+// ═══════════════════════════════════════════
+// FINISH TEAM ON STATION
+// ═══════════════════════════════════════════
+function finishTeamStation(teamIdx, si) {
+  stopTimer(teamIdx, si);
+  const elapsed = teams[teamIdx].stationTimes[si]?.elapsed || (timerMax - timerSeconds);
+  const ans = stationAnswers[teamIdx][si] || {};
+  const correct3 = Object.values(ans).filter(v => v === true).length === 3;
+
+  const pts = calcPoints(elapsed, correct3);
+  teams[teamIdx].score += pts;
+  stationDone[teamIdx][si] = true;
+
+  saveSharedState(); // persist for selfplay cross-browser
+
+  showScorePopup(pts, correct3, elapsed);
+  renderLeaderboard();
+
+  setTimeout(() => {
+    removeScorePopup();
+    if (gameMode === 'selfplay') {
+      // In selfplay: each team goes to next station independently
+      const nextSi = si + 1;
+      if (nextSi < STATIONS.length) {
+        showMapTransition(si, nextSi, () => startTeamOnStation(teamIdx, nextSi));
+      } else {
+        // This team finished all stations – show personal finish screen
+        showTeamFinished(teamIdx);
+      }
+    } else {
+      // Projected mode: check if all teams done for this station
+      const allDone = teams.every((_, ti) => stationDone[ti][si]);
+      if (allDone) {
+        if (si < STATIONS.length - 1) {
+          showMapTransition(si, si + 1, () => showTeamSelect(si + 1));
+        } else {
+          showFinalScreen();
+        }
+      } else {
+        showTeamSelect(si);
+      }
+    }
+  }, 2200);
+}
+
+function showScorePopup(pts, correct, elapsed) {
+  const old = document.getElementById('score-popup');
+  if (old) old.remove();
+  const div = document.createElement('div');
+  div.className = 'score-popup'; div.id = 'score-popup';
+  div.innerHTML = `<div class="pts">${pts > 0 ? '+' + pts : '0'}</div><div class="pts-label">${correct ? '✅ כל התשובות נכונות!' : '⚠️ לא הכל נכון'}<br>זמן: ${elapsed}s</div>`;
+  document.body.appendChild(div);
+}
+function removeScorePopup() {
+  const p = document.getElementById('score-popup'); if (p) p.remove();
+}
+
+// ═══════════════════════════════════════════
+// LEADERBOARD
+// ═══════════════════════════════════════════
+function renderLeaderboard() {
+  const bar = document.getElementById('leaderboard-bar');
+  // In selfplay student view: show only own team score (no spoilers)
+  if (gameMode === 'selfplay' && selfplayTeamIdx !== null) {
+    const t = teams[selfplayTeamIdx];
+    if (!t) return;
+    bar.innerHTML = `<div class="lb-team leader">
+      <span class="lb-team-emoji">${t.emoji}</span>
+      <span class="lb-team-name">${t.name}</span>
+      <span class="lb-team-score">${t.score} נק'</span>
+    </div>`;
+    return;
+  }
+  // Teacher / projected mode: show all teams sorted
+  const sorted = [...teams].map((t, i) => ({ ...t, idx: i })).sort((a, b) => b.score - a.score);
+  bar.innerHTML = '<span class="lb-title">🏆 טבלה</span>';
+  sorted.forEach((t, rank) => {
+    bar.innerHTML += `<div class="lb-team${rank === 0 ? ' leader' : ''}">
+      <span class="lb-team-emoji">${t.emoji}</span>
+      <span class="lb-team-name">${t.name}</span>
+      <span class="lb-team-score">${t.score}</span>
+    </div>`;
+  });
+}
+
+// ═══════════════════════════════════════════
+// STATION DONE CHECK
+// ═══════════════════════════════════════════
+function checkStationDone(si, teamIdx) {
+  const ans = stationAnswers[teamIdx][si] || {};
+  const ok = Object.values(ans).filter(v => v === true).length === 3;
+  if (ok) {
+    const dr = document.getElementById('digit-reveal');
+    if (dr && !dr.classList.contains('show')) {
+      dr.classList.add('show');
+      document.getElementById('reveal-digit').textContent = STATIONS[si].digit;
+    }
+    const nb = document.getElementById('next-btn');
+    if (nb) nb.removeAttribute('disabled');
+  }
+}
+
+// ═══════════════════════════════════════════
+// BUILD CARD
+// ═══════════════════════════════════════════
+function buildCard(q, qi, si, teamIdx) {
+  const card = document.createElement('div');
+  card.className = 'q-card'; card.id = `qcard-${qi}`;
+  let h = `<div class="q-label">${q.label}</div><div class="q-text">${q.text}</div>`;
+  if (q.type === 'mc') h += buildMC(q, qi, si, teamIdx);
+  else if (q.type === 'fill') h += buildFill(q, qi, si, teamIdx);
+  else if (q.type === 'match') h += buildMatch(q, qi, si, teamIdx);
+  else if (q.type === 'sort') h += buildSort(q, qi, si, teamIdx);
+  else if (q.type === 'yesno') h += buildYesNo(q, qi, si, teamIdx);
+  else if (q.type === 'numbermatch') h += buildNumberMatch(q, qi, si, teamIdx);
+  h += `<div class="feedback" id="fb-${qi}"></div>`;
+  h += `<button class="hint-btn" onclick="toggleHint(${qi})">💡 רמז</button>`;
+  h += `<div class="hint-text" id="hint-${qi}">${q.hint}</div>`;
+  card.innerHTML = h;
+  return card;
+}
+function toggleHint(qi) { document.getElementById(`hint-${qi}`).classList.toggle('show'); }
+function showFB(qi, ok, pos, neg) {
+  const fb = document.getElementById(`fb-${qi}`); if (!fb) return;
+  fb.textContent = ok ? pos : neg;
+  fb.className = `feedback show ${ok ? 'fb-ok' : 'fb-bad'}`;
+  const c = document.getElementById(`qcard-${qi}`);
+  if (c) { c.classList.remove('q-correct','q-wrong'); c.classList.add(ok ? 'q-correct' : 'q-wrong'); }
+}
+function markDot(qi) {
+  const d = document.getElementById(`dot-${qi}`);
+  if (d) { d.classList.remove('active'); d.classList.add('done'); }
+}
+
+// ═══════════════════════════════════════════
+// WIDGETS (all support retry on wrong)
+// ═══════════════════════════════════════════
+function buildMC(q, qi, si, ti) {
+  let h = '<div class="mc-grid">';
+  q.options.forEach((o, oi) => h += `<button class="mc-opt" id="mc-${qi}-${oi}" onclick="answerMC(${qi},${si},${ti},${oi},${q.correct})">${o}</button>`);
+  return h + '</div>';
+}
+function answerMC(qi, si, ti, chosen, correct) {
+  const ans = stationAnswers[ti][si]; if (ans[qi] === true) return;
+  const ok = chosen === correct;
+  ans[qi] = ok;
+  const q = STATIONS[si].questions[qi];
+  for (let i = 0; i < q.options.length; i++) {
+    const b = document.getElementById(`mc-${qi}-${i}`);
+    if (b) { b.disabled = true; if (i === correct) b.classList.add('opt-correct'); else if (i === chosen && !ok) b.classList.add('opt-wrong'); }
+  }
+  showFB(qi, ok, q.fb_ok, q.fb_bad);
+  if (ok) { markDot(qi); checkStationDone(si, ti); }
+  else setTimeout(() => {
+    ans[qi] = undefined; delete ans[qi];
+    for (let i = 0; i < q.options.length; i++) {
+      const b = document.getElementById(`mc-${qi}-${i}`);
+      if (b) { b.disabled = false; b.classList.remove('opt-correct','opt-wrong'); }
+    }
+    const c = document.getElementById(`qcard-${qi}`); if (c) c.classList.remove('q-wrong');
+  }, 1400);
+}
+
+function buildFill(q, qi, si, ti) {
+  let h = `<div class="math-box">${q.formula}</div><div class="fill-wrap">`;
+  q.blanks.forEach((b, bi) => {
+    h += `<input class="fill-inp" type="text" id="fill-${qi}-${bi}" placeholder="?" style="width:${b.w||'65px'}">`;
+    if (bi < q.blanks.length - 1) h += ' ו- ';
+  });
+  h += `</div><div style="margin-top:0.8rem"><button class="btn" onclick="checkFill(${qi},${si},${ti})"><span>בדקו ✓</span></button></div>`;
+  return h;
+}
+function checkFill(qi, si, ti) {
+  const ans = stationAnswers[ti][si]; if (ans[qi] === true) return;
+  const q = STATIONS[si].questions[qi]; let allOk = true;
+  q.blanks.forEach((b, bi) => {
+    const inp = document.getElementById(`fill-${qi}-${bi}`); if (!inp || inp.disabled) return;
+    const v = inp.value.trim().replace(/\s/g,'');
+    const c1 = String(b.ans).replace(/\s/g,'');
+    const c2 = b.ans2 ? String(b.ans2).replace(/\s/g,'') : null;
+    if (v === c1 || (c2 && v === c2)) { inp.classList.remove('bad'); inp.classList.add('ok'); inp.disabled = true; }
+    else { inp.classList.add('bad'); allOk = false; setTimeout(() => inp.classList.remove('bad'), 600); }
+  });
+  if (allOk) { ans[qi] = true; showFB(qi,true,q.fb_ok,q.fb_bad); markDot(qi); checkStationDone(si,ti); }
+  else showFB(qi, false, q.fb_ok, q.fb_bad);
+}
+
+function buildMatch(q, qi, si, ti) {
+  const shuffled = [...q.pairs].sort(() => Math.random() - 0.5);
+  let h = '<div class="match-wrap"><div class="match-col"><h4>↙ גררו מכאן</h4>';
+  shuffled.forEach((p, i) => h += `<div class="drag-chip" draggable="true" data-val="${p.item}" ondragstart="dStart(event,'${p.item}')">${p.item}</div>`);
+  h += '</div><div class="match-col"><h4>שחררו כאן ↙</h4>';
+  q.pairs.forEach((p, i) => h += `<div class="drop-box" id="dbox-${qi}-${i}" data-correct="${p.item}" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="dDrop(event,${qi},${si},${ti},${i},'${p.target.replace(/'/g,"\\'")}')"><span class="drop-target-text">${p.target}</span></div>`);
+  h += '</div></div>';
+  h += `<button class="btn" style="margin-top:0.8rem" onclick="checkMatch(${qi},${si},${ti})"><span>בדקו ✓</span></button>`;
+  return h;
+}
+let dragVal = '';
+function dStart(e, v) { dragVal = v; }
+function dDrop(e, qi, si, ti, zi, target) {
+  e.preventDefault();
+  const box = document.getElementById(`dbox-${qi}-${zi}`); if (!box) return;
+  box.classList.remove('over'); box.dataset.dropped = dragVal;
+  box.innerHTML = `<span style="color:var(--gold);margin-left:0.4rem;font-size:0.8rem">[${dragVal}]</span><span style="opacity:0.5">${target}</span>`;
+  box.classList.add('has-item');
+}
+function checkMatch(qi, si, ti) {
+  const ans = stationAnswers[ti][si]; if (ans[qi] === true) return;
+  const q = STATIONS[si].questions[qi]; let ok = true;
+  q.pairs.forEach((p, i) => {
+    const box = document.getElementById(`dbox-${qi}-${i}`); if (!box) return;
+    if (box.dataset.dropped === p.item) box.classList.add('match-ok');
+    else { box.classList.add('match-bad'); ok = false; }
+  });
+  ans[qi] = ok;
+  showFB(qi, ok, q.fb_ok, q.fb_bad);
+  if (ok) { markDot(qi); checkStationDone(si, ti); }
+  else setTimeout(() => {
+    delete ans[qi];
+    q.pairs.forEach((p, i) => {
+      const box = document.getElementById(`dbox-${qi}-${i}`);
+      if (box) { box.classList.remove('match-ok','match-bad','has-item'); box.dataset.dropped=''; box.innerHTML=`<span class="drop-target-text">${p.target}</span>`; }
+    });
+    const c=document.getElementById(`qcard-${qi}`); if(c) c.classList.remove('q-wrong','q-correct');
+  }, 1500);
+}
+
+function buildSort(q, qi, si, ti) {
+  const shuffled = [...q.items].sort(() => Math.random() - 0.5);
+  let h = `<div class="sort-bank" id="sort-bank-${qi}">`;
+  shuffled.forEach(item => h += `<div class="sort-chip" draggable="true" data-val="${item}" ondragstart="sDragStart(event,'${item}',${qi})" ondragover="event.preventDefault()" ondrop="sDrop(event,'${item}',${qi})">${item}</div>`);
+  h += `</div><div style="font-size:0.75rem;color:rgba(245,230,200,0.35);margin-top:0.3rem;text-align:center">גררו לסדר: ימין=ראשון</div>`;
+  h += `<button class="btn" style="margin-top:0.6rem" onclick="checkSort(${qi},${si},${ti})"><span>בדקו ✓</span></button>`;
+  return h;
+}
+let sDragVal = '';
+function sDragStart(e, v, qi) { sDragVal = v; }
+function sDrop(e, v, qi) {
+  e.preventDefault(); if (!sDragVal || sDragVal === v) return;
+  const con = document.getElementById(`sort-bank-${qi}`);
+  const chips = [...con.querySelectorAll('.sort-chip')];
+  const from = chips.find(c => c.dataset.val === sDragVal), to = chips.find(c => c.dataset.val === v);
+  if (!from || !to) return;
+  const r = to.getBoundingClientRect();
+  if (e.clientX < r.left + r.width / 2) con.insertBefore(from, to); else to.insertAdjacentElement('afterend', from);
+}
+function checkSort(qi, si, ti) {
+  const ans = stationAnswers[ti][si]; if (ans[qi] === true) return;
+  const q = STATIONS[si].questions[qi];
+  const order = [...document.getElementById(`sort-bank-${qi}`).querySelectorAll('.sort-chip')].map(c => c.dataset.val);
+  const ok = JSON.stringify(order) === JSON.stringify(q.correct_order);
+  ans[qi] = ok;
+  showFB(qi, ok, q.fb_ok, q.fb_bad);
+  if (ok) { markDot(qi); checkStationDone(si, ti); }
+  else setTimeout(() => { delete ans[qi]; const c=document.getElementById(`qcard-${qi}`); if(c) c.classList.remove('q-wrong'); }, 1400);
+}
+
+let ynPicks = {};
+function buildYesNo(q, qi, si, ti) {
+  ynPicks[qi] = ynPicks[qi] || {};
+  let h = '<div class="yesno-list">';
+  q.statements.forEach((s, i) => {
+    h += `<div class="yesno-row" id="ynrow-${qi}-${i}"><span class="yn-text">${s.text}</span><div class="yn-btns">
+      <button class="yn-btn" id="yn-${qi}-${i}-yes" onclick="pickYN(${qi},${si},${ti},${i},true)">✓ נכון</button>
+      <button class="yn-btn" id="yn-${qi}-${i}-no" onclick="pickYN(${qi},${si},${ti},${i},false)">✗ לא נכון</button>
+    </div></div>`;
+  });
+  h += `</div><button class="btn" style="margin-top:0.8rem" id="yn-check-${qi}" onclick="checkYesNo(${qi},${si},${ti})" disabled><span>בדקו ✓</span></button>`;
+  return h;
+}
+function pickYN(qi, si, ti, i, val) {
+  const ans = stationAnswers[ti][si]; if (ans[qi] === true) return;
+  ynPicks[qi] = ynPicks[qi] || {};
+  ynPicks[qi][i] = val;
+  const yBtn = document.getElementById(`yn-${qi}-${i}-yes`);
+  const nBtn = document.getElementById(`yn-${qi}-${i}-no`);
+  if (yBtn) { yBtn.classList.toggle('yn-selected', val === true); }
+  if (nBtn) { nBtn.classList.toggle('yn-selected', val === false); }
+  const q = STATIONS[si].questions[qi];
+  if (Object.keys(ynPicks[qi]).length === q.statements.length) {
+    const chk = document.getElementById(`yn-check-${qi}`); if (chk) chk.removeAttribute('disabled');
+  }
+}
+function checkYesNo(qi, si, ti) {
+  const ans = stationAnswers[ti][si]; if (ans[qi] === true) return;
+  const q = STATIONS[si].questions[qi];
+  let allOk = true;
+  q.statements.forEach((s, i) => {
+    const ok = ynPicks[qi]?.[i] === s.correct;
+    if (!ok) allOk = false;
+    const row = document.getElementById(`ynrow-${qi}-${i}`);
+    if (row) row.classList.add(ok ? 'yn-row-ok' : 'yn-row-bad');
+    const yBtn = document.getElementById(`yn-${qi}-${i}-yes`);
+    const nBtn = document.getElementById(`yn-${qi}-${i}-no`);
+    if (yBtn) yBtn.disabled = true;
+    if (nBtn) nBtn.disabled = true;
+  });
+  ans[qi] = allOk;
+  showFB(qi, allOk, q.fb_ok, q.fb_bad);
+  if (allOk) { markDot(qi); checkStationDone(si, ti); }
+  else setTimeout(() => {
+    delete ans[qi]; delete ynPicks[qi];
+    q.statements.forEach((_, i) => {
+      const row = document.getElementById(`ynrow-${qi}-${i}`);
+      if (row) row.classList.remove('yn-row-ok','yn-row-bad');
+      const yBtn = document.getElementById(`yn-${qi}-${i}-yes`);
+      const nBtn = document.getElementById(`yn-${qi}-${i}-no`);
+      if (yBtn) { yBtn.disabled=false; yBtn.classList.remove('yn-selected'); }
+      if (nBtn) { nBtn.disabled=false; nBtn.classList.remove('yn-selected'); }
+    });
+    const chk = document.getElementById(`yn-check-${qi}`); if (chk) chk.disabled = true;
+    const c = document.getElementById(`qcard-${qi}`); if (c) c.classList.remove('q-wrong');
+  }, 1500);
+}
+
+let nmPicks = {};
+function buildNumberMatch(q, qi, si, ti) {
+  nmPicks[qi] = {};
+  let h = '<div class="nm-list">';
+  q.steps.forEach((s, i) => {
+    h += `<div class="nm-row" id="nmrow-${qi}-${i}"><span class="nm-text">${s.text}</span><div class="nm-btns">`;
+    q.options.forEach(opt => h += `<button class="nm-btn" id="nm-${qi}-${i}-${opt}" onclick="pickNM(${qi},${si},${ti},${i},${opt},${s.correct})">${opt}</button>`);
+    h += `</div></div>`;
+  });
+  h += `</div><button class="btn" style="margin-top:0.8rem" id="nm-check-${qi}" onclick="checkNM(${qi},${si},${ti})" disabled><span>בדקו ✓</span></button>`;
+  return h;
+}
+function pickNM(qi, si, ti, i, val, correct) {
+  const ans = stationAnswers[ti][si]; if (ans[qi] === true) return;
+  nmPicks[qi] = nmPicks[qi] || {};
+  nmPicks[qi][i] = val;
+  const q = STATIONS[si].questions[qi];
+  q.options.forEach(opt => {
+    const b = document.getElementById(`nm-${qi}-${i}-${opt}`);
+    if (b) b.classList.toggle('nm-selected', opt === val);
+  });
+  if (Object.keys(nmPicks[qi]).length === q.steps.length) {
+    const chk = document.getElementById(`nm-check-${qi}`); if (chk) chk.removeAttribute('disabled');
+  }
+}
+function checkNM(qi, si, ti) {
+  const ans = stationAnswers[ti][si]; if (ans[qi] === true) return;
+  const q = STATIONS[si].questions[qi];
+  let allOk = true;
+  q.steps.forEach((s, i) => {
+    const ok = nmPicks[qi]?.[i] === s.correct;
+    if (!ok) allOk = false;
+    const row = document.getElementById(`nmrow-${qi}-${i}`);
+    if (row) row.classList.add(ok ? 'nm-row-ok' : 'nm-row-bad');
+    q.options.forEach(opt => {
+      const b = document.getElementById(`nm-${qi}-${i}-${opt}`);
+      if (b) { b.disabled=true; if (opt === s.correct) b.classList.add('nm-correct'); }
+    });
+  });
+  ans[qi] = allOk;
+  showFB(qi, allOk, q.fb_ok, q.fb_bad);
+  if (allOk) { markDot(qi); checkStationDone(si, ti); }
+  else setTimeout(() => {
+    delete ans[qi]; delete nmPicks[qi];
+    q.steps.forEach((_, i) => {
+      const row = document.getElementById(`nmrow-${qi}-${i}`);
+      if (row) row.classList.remove('nm-row-ok','nm-row-bad');
+      q.options.forEach(opt => {
+        const b = document.getElementById(`nm-${qi}-${i}-${opt}`);
+        if (b) { b.disabled=false; b.classList.remove('nm-selected','nm-correct'); }
+      });
+    });
+    const chk = document.getElementById(`nm-check-${qi}`); if (chk) chk.disabled=true;
+    const c = document.getElementById(`qcard-${qi}`); if(c) c.classList.remove('q-wrong');
+  }, 1500);
+}
+
+// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
+// FINAL SCREEN
+// ═══════════════════════════════════════════
+function showTeamFinished(teamIdx) {
+  const t = teams[teamIdx];
+  showScreen('final-screen');
+  document.getElementById('podium').innerHTML = `
+    <div style="text-align:center;padding:2rem">
+      <div style="font-size:4rem">${t.emoji}</div>
+      <h2 style="font-family:'Cinzel',serif;color:var(--gold);margin:0.5rem 0">${t.name}</h2>
+      <p style="color:rgba(245,230,200,0.65)">סיימתם את כל 6 התחנות!</p>
+      <div style="font-family:'Cinzel',serif;font-size:3rem;color:var(--gold);margin:1rem 0">${t.score} נקודות</div>
+      <p style="font-size:0.85rem;color:rgba(245,230,200,0.45)">ממתינים לשאר הצוותים... המורה יציג את התוצאות הסופיות</p>
+    </div>`;
+  document.getElementById('full-scores').innerHTML = '';
+  launchConfetti();
+}
+
+function showFinalScreen() {
+  const sorted = [...teams].map((t, i) => ({ ...t, idx: i })).sort((a, b) => b.score - a.score);
+  const podium = document.getElementById('podium');
+  podium.innerHTML = '';
+
+  // Reorder for podium: 2nd, 1st, 3rd
+  const display = sorted.length >= 3 ? [sorted[1], sorted[0], sorted[2], ...sorted.slice(3)] : sorted;
+  display.forEach((t, rank) => {
+    const realRank = sorted.findIndex(s => s.idx === t.idx);
+    const div = document.createElement('div');
+    div.className = 'podium-place';
+    div.innerHTML = `
+      <div class="podium-emoji">${t.emoji}</div>
+      <div class="podium-block">
+        <div class="podium-num">${realRank + 1}</div>
+        <div class="podium-name">${t.name}</div>
+        <div class="podium-score-lbl">${t.score} נק'</div>
+      </div>`;
+    podium.appendChild(div);
+  });
+
+  showScreen('final-screen');
+  launchConfetti();
+}
+
+function launchConfetti() {
+  const cols = ['#c9a84c','#4caf50','#2196f3','#e91e63','#ff9800','#ab47bc'];
+  for (let i = 0; i < 100; i++) {
+    setTimeout(() => {
+      const c = document.createElement('div'); c.className = 'confetti-piece';
+      c.style.cssText = `left:${Math.random()*100}vw;top:-10px;background:${cols[Math.floor(Math.random()*cols.length)]};animation-duration:${2.5+Math.random()*3}s;animation-delay:${Math.random()*1.5}s;width:${5+Math.random()*8}px;height:${5+Math.random()*8}px;`;
+      document.body.appendChild(c); setTimeout(() => c.remove(), 7000);
+    }, i * 25);
+  }
+}
+
+// ═══════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function createStars() {
+  const c = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div'); s.className = 'star';
+    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*5}s;animation-delay:${Math.random()*5}s`;
+    c.appendChild(s);
+  }
+}
+
+
+// ═══════════════════════════════════════════
+// SELFPLAY: TEAM LOGIN
+// ═══════════════════════════════════════════
+function loginTeam() {
+  const code = document.getElementById('team-code-input').value.trim().toUpperCase();
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+
+  if (!loadSharedState()) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'המשחק עוד לא הופעל – בקשו מהמורה להתחיל';
+    return;
+  }
+
+  const idx = teams.findIndex(t => t.code === code);
+  if (idx === -1) {
+    errEl.style.display = 'block';
+    errEl.textContent = `קוד שגוי – בדקו שוב. הקודים האפשריים: ${teams.map(t=>t.code).join(', ')}`;
+    return;
+  }
+
+  // Show confirmation
+  const t = teams[idx];
+  document.getElementById('login-confirm').style.display = 'block';
+  document.getElementById('login-confirm-emoji').textContent = t.emoji;
+  document.getElementById('login-confirm-name').textContent = t.name;
+
+  selfplayTeamIdx = idx;
+  gameMode = 'selfplay';
+  renderLeaderboard();
+  document.getElementById('leaderboard-bar').style.display = 'flex';
+
+  // Small delay so student sees their team confirmed
+  setTimeout(() => {
+    let si = 0;
+    for (let s = 0; s < STATIONS.length; s++) {
+      if (!stationDone[idx]?.[s]) { si = s; break; }
+      if (s === STATIONS.length - 1) si = STATIONS.length;
+    }
+    if (si >= STATIONS.length) { showFinalScreen(); return; }
+    showMapTransition(si > 0 ? si - 1 : null, si, () => startTeamOnStation(idx, si));
+  }, 1200);
+}
+
+// ═══════════════════════════════════════════
+// DASHBOARD (teacher view, selfplay mode)
+// ═══════════════════════════════════════════
+function refreshDashboard() {
+  if (gameMode === 'selfplay') loadSharedState();
+  renderDashboard();
+  renderLeaderboard();
+}
+
+function renderDashboard() {
+  // Leaderboard table
+  const sorted = [...teams].map((t,i)=>({...t,idx:i})).sort((a,b)=>b.score-a.score);
+  let tableHtml = `<table class="dash-table"><thead><tr>
+    <th>#</th><th>צוות</th><th>ניקוד</th><th>תחנות שהושלמו</th>
+  </tr></thead><tbody>`;
+  sorted.forEach((t,rank) => {
+    const doneCnt = Object.values(stationDone[t.idx]||{}).filter(Boolean).length;
+    tableHtml += `<tr>
+      <td class="dash-rank">${['🥇','🥈','🥉','4','5','6'][rank]||rank+1}</td>
+      <td>${t.emoji} <strong>${t.name}</strong></td>
+      <td style="font-family:'Cinzel',serif;color:var(--gold)">${t.score}</td>
+      <td>${doneCnt}/${STATIONS.length}</td>
+    </tr>`;
+  });
+  tableHtml += '</tbody></table>';
+  document.getElementById('dashboard-table').innerHTML = tableHtml;
+
+  // Progress grid
+  let gridHtml = `<table class="dash-table"><thead><tr><th>צוות</th>`;
+  STATIONS.forEach(s => gridHtml += `<th style="font-size:0.65rem">${s.name.split(' ')[0]}</th>`);
+  gridHtml += '</tr></thead><tbody>';
+  teams.forEach((t,ti) => {
+    gridHtml += `<tr><td>${t.emoji} ${t.name}</td>`;
+    STATIONS.forEach((_,si) => {
+      const done = stationDone[ti]?.[si];
+      const ans = stationAnswers[ti]?.[si] || {};
+      const correct = Object.values(ans).filter(v=>v===true).length;
+      const cls = done ? 'done' : correct > 0 ? 'partial' : 'todo';
+      const icon = done ? '✓' : correct > 0 ? correct : '·';
+      gridHtml += `<td><div class="progress-cell ${cls}">${icon}</div></td>`;
+    });
+    gridHtml += '</tr>';
+  });
+  gridHtml += '</tbody></table>';
+  document.getElementById('dashboard-progress').innerHTML = gridHtml;
+  // Auto-refresh every 15s in selfplay mode
+}
+
+// Auto-refresh dashboard
+setInterval(() => {
+  const ds = document.getElementById('dashboard-screen');
+  if (ds && ds.classList.contains('active')) refreshDashboard();
+}, 15000);
+
+// ═══════════════════════════════════════════
+// MAP TRANSITION
+// ═══════════════════════════════════════════
+
+
+function showMapTransition(fromSi, toSi, callback) {
+  welcomeCallback = callback;
+  showScreen('map-screen');
+  const st = STATIONS[toSi];
+  const cityName = MAP_LABELS[toSi];
+
+  document.getElementById('map-heading').textContent = `✈️ טסים ל${cityName}...`;
+  document.getElementById('map-dest').textContent = st.location;
+
+  renderMapDots(fromSi, toSi);
+
+  const plane = document.getElementById('plane');
+  const svgW = 700, svgH = 480;
+
+  const fromPos = fromSi !== null ? STATIONS[fromSi].mapPos : {x:350,y:300};
+  const toPos = st.mapPos;
+
+  const fromXpct = (fromPos.x / svgW) * 100;
+  const fromYpct = (fromPos.y / svgH) * 100;
+  const toXpct   = (toPos.x   / svgW) * 100;
+  const toYpct   = (toPos.y   / svgH) * 100;
+
+  // Rotate plane toward destination
+  const dx = toPos.x - fromPos.x;
+  const dy = toPos.y - fromPos.y;
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+  plane.style.transition = 'none';
+  plane.style.left = fromXpct + '%';
+  plane.style.top  = fromYpct + '%';
+  plane.style.transform = `translate(-50%,-50%) rotate(${angle}deg)`;
+
+  // Countdown
+  let countdown = 3;
+  const cdEl = document.getElementById('map-countdown');
+  cdEl.textContent = `יוצאים בעוד ${countdown}...`;
+  const cti = setInterval(() => {
+    countdown--;
+    if (countdown > 0) cdEl.textContent = `יוצאים בעוד ${countdown}...`;
+    else { cdEl.textContent = ''; clearInterval(cti); }
+  }, 1000);
+
+  // Fly after 1s
+  setTimeout(() => {
+    plane.style.transition = 'left 2.2s cubic-bezier(0.4,0,0.2,1), top 2.2s cubic-bezier(0.4,0,0.2,1)';
+    plane.style.left = toXpct + '%';
+    plane.style.top  = toYpct + '%';
+  }, 1000);
+
+  // After landing → show welcome screen
+  setTimeout(() => {
+    showWelcomeScreen(toSi);
+  }, 3600);
+}
+
+function showWelcomeScreen(si) {
+  const st = STATIONS[si];
+  const p  = st.popup;
+  document.getElementById('wlc-city-flag').textContent = CITY_FLAGS[si];
+  document.getElementById('wlc-city-name').textContent = MAP_LABELS[si].toUpperCase();
+  document.getElementById('wlc-name').textContent = p.name;
+  document.getElementById('wlc-portrait').textContent = st.portrait_emoji;
+  document.getElementById('wlc-dates').textContent = p.dates;
+  document.getElementById('wlc-quote').textContent = '💬 ' + p.quote;
+  document.getElementById('wlc-body').textContent = p.body;
+  showScreen('welcome-screen');
+}
+
+function proceedFromWelcome() {
+  if (welcomeCallback) { welcomeCallback(); welcomeCallback = null; }
+}
+
+function renderMapDots(fromSi, toSi) {
+  const dotsDiv = document.getElementById('map-dots');
+  dotsDiv.innerHTML = '';
+  STATIONS.forEach((st, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'map-station-dot';
+    const svgW = 700, svgH = 480;
+    dot.style.left = (st.mapPos.x / svgW * 100) + '%';
+    dot.style.top = (st.mapPos.y / svgH * 100) + '%';
+    if (i < toSi) dot.classList.add('visited');
+    if (i === toSi) dot.classList.add('current');
+    dotsDiv.appendChild(dot);
+
+    const lbl = document.createElement('div');
+    lbl.className = 'map-label';
+    lbl.style.left = (st.mapPos.x / svgW * 100) + '%';
+    lbl.style.top = ((st.mapPos.y / svgH * 100) + 3) + '%';
+    lbl.textContent = st.name;
+    dotsDiv.appendChild(lbl);
+  });
+}
+
+// ═══════════════════════════════════════════
+// TEAM SELECT
+// ═══════════════════════════════════════════
+function showTeamSelect(si) {
+  currentStation = si;
+  const st = STATIONS[si];
+  document.getElementById('tsel-station-name').textContent = st.name;
+  document.getElementById('tsel-station-loc').textContent = st.location;
+
+  const container = document.getElementById('tsel-teams');
+  container.innerHTML = '';
+  teams.forEach((t, ti) => {
+    const done = stationDone[ti][si];
+    const card = document.createElement('div');
+    card.className = 'team-card-btn' + (done ? ' done' : '');
+    card.innerHTML = `<span class="tcb-emoji">${t.emoji}</span><div class="tcb-name">${t.name}</div><div class="tcb-score">${t.score} נקודות ${done ? '✅' : ''}</div>`;
+    if (!done) card.onclick = () => startTeamOnStation(ti, si);
+    container.appendChild(card);
+  });
+
+  showScreen('team-select-screen');
+}
+
+// ═══════════════════════════════════════════
+// STATION PLAY
+// ═══════════════════════════════════════════
+function startTeamOnStation(teamIdx, si) {
+  currentTeamIdx = teamIdx;
+  const team = teams[teamIdx];
+
+  stationAnswers[teamIdx][si] = stationAnswers[teamIdx][si] || {};
+
+  document.getElementById('active-team-emoji').textContent = team.emoji;
+  document.getElementById('active-team-name').textContent = team.name;
+
+  renderStation(si, teamIdx);
+  showScreen('station-screen');
+  startTimer(si, teamIdx);
+}
+
+function renderStation(si, teamIdx) {
+  const st = STATIONS[si];
+  document.getElementById('st-badge').textContent = st.badge;
+  document.getElementById('st-portrait').textContent = st.portrait_emoji;
+  document.getElementById('st-name').textContent = st.name;
+  document.getElementById('st-location').textContent = st.location;
+
+  const pb = document.getElementById('progress-bar');
+  pb.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const d = document.createElement('div');
+    d.className = 'prog-dot'; d.id = `dot-${i}`; pb.appendChild(d);
+  }
+
+  const con = document.getElementById('questions-container');
+  con.innerHTML = '';
+  st.questions.forEach((q, qi) => con.appendChild(buildCard(q, qi, si, teamIdx)));
+
+  // Digit reveal
+  const dr = document.createElement('div');
+  dr.className = 'digit-reveal'; dr.id = 'digit-reveal';
+  dr.innerHTML = `<p style="color:rgba(245,230,200,0.5);margin-bottom:0.4rem">📦 אות הקוד:</p><div class="big-digit" id="reveal-digit">?</div>`;
+  con.appendChild(dr);
+
+  // Nav
+  const nav = document.createElement('div');
+  nav.className = 'btn-row'; nav.id = 'nav-row';
+  nav.innerHTML = `<button class="btn primary" id="next-btn" disabled onclick="finishTeamStation(${teamIdx},${si})"><span>✅ סיימתי – לוח תוצאות</span></button>`;
+  con.appendChild(nav);
+}
+
+// ═══════════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════════
+function startTimer(si, teamIdx) {
+  if (timerInterval) clearInterval(timerInterval);
+  timerMax = 120;
+  timerSeconds = timerMax;
+  teams[teamIdx].stationTimes[si] = { start: Date.now() };
+  updateTimerUI();
+
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    document.getElementById('active-timer-val').textContent = timerSeconds + 's';
+    updateTimerUI();
+    if (timerSeconds <= 0) {
+      clearInterval(timerInterval);
+      finishTeamStation(teamIdx, si);
+    }
+  }, 1000);
+}
+
+function updateTimerUI() {
+  const fill = document.getElementById('timer-fill');
+  if (!fill) return;
+  const pct = (timerSeconds / timerMax) * 100;
+  fill.style.width = pct + '%';
+  fill.className = 'timer-fill' + (pct < 25 ? ' danger' : pct < 50 ? ' warning' : '');
+}
+
+function stopTimer(teamIdx, si) {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  if (teams[teamIdx]?.stationTimes[si]) {
+    teams[teamIdx].stationTimes[si].elapsed = Math.round((Date.now() - teams[teamIdx].stationTimes[si].start) / 1000);
+  }
+}
+
+// ═══════════════════════════════════════════
+// SCORING
+// ═══════════════════════════════════════════
+function calcPoints(elapsed, correct) {
+  if (!correct) return 0;
+  const timeBonus = Math.max(0, 120 - elapsed);
+  return 100 + Math.floor(timeBonus * 0.5);
+}
+
+// ═══════════════════════════════════════════
+// FINISH TEAM ON STATION
+// ═══════════════════════════════════════════
+function finishTeamStation(teamIdx, si) {
+  stopTimer(teamIdx, si);
+  const elapsed = teams[teamIdx].stationTimes[si]?.elapsed || (timerMax - timerSeconds);
+  const ans = stationAnswers[teamIdx][si] || {};
+  const correct3 = Object.values(ans).filter(v => v === true).length === 3;
+
+  const pts = calcPoints(elapsed, correct3);
+  teams[teamIdx].score += pts;
+  stationDone[teamIdx][si] = true;
+
+  saveSharedState(); // persist for selfplay cross-browser
+
+  showScorePopup(pts, correct3, elapsed);
+  renderLeaderboard();
+
+  setTimeout(() => {
+    removeScorePopup();
+    if (gameMode === 'selfplay') {
+      // In selfplay: each team goes to next station independently
+      const nextSi = si + 1;
+      if (nextSi < STATIONS.length) {
+        showMapTransition(si, nextSi, () => startTeamOnStation(teamIdx, nextSi));
+      } else {
+        // This team finished all stations – show personal finish screen
+        showTeamFinished(teamIdx);
+      }
+    } else {
+      // Projected mode: check if all teams done for this station
+      const allDone = teams.every((_, ti) => stationDone[ti][si]);
+      if (allDone) {
+        if (si < STATIONS.length - 1) {
+          showMapTransition(si, si + 1, () => showTeamSelect(si + 1));
+        } else {
+          showFinalScreen();
+        }
+      } else {
+        showTeamSelect(si);
+      }
+    }
+  }, 2200);
+}
+
+function showScorePopup(pts, correct, elapsed) {
+  const old = document.getElementById('score-popup');
+  if (old) old.remove();
+  const div = document.createElement('div');
+  div.className = 'score-popup'; div.id = 'score-popup';
+  div.innerHTML = `<div class="pts">${pts > 0 ? '+' + pts : '0'}</div><div class="pts-label">${correct ? '✅ כל התשובות נכונות!' : '⚠️ לא הכל נכון'}<br>זמן: ${elapsed}s</div>`;
+  document.body.appendChild(div);
+}
+function removeScorePopup() {
+  const p = document.getElementById('score-popup'); if (p) p.remove();
+}
+
+// ═══════════════════════════════════════════
+// LEADERBOARD
+// ═══════════════════════════════════════════
+function renderLeaderboard() {
+  const bar = document.getElementById('leaderboard-bar');
+  // In selfplay student view: show only own team score (no spoilers)
+  if (gameMode === 'selfplay' && selfplayTeamIdx !== null) {
+    const t = teams[selfplayTeamIdx];
+    if (!t) return;
+    bar.innerHTML = `<div class="lb-team leader">
+      <span class="lb-team-emoji">${t.emoji}</span>
+      <span class="lb-team-name">${t.name}</span>
+      <span class="lb-team-score">${t.score} נק'</span>
+    </div>`;
+    return;
+  }
+  // Teacher / projected mode: show all teams sorted
+  const sorted = [...teams].map((t, i) => ({ ...t, idx: i })).sort((a, b) => b.score - a.score);
+  bar.innerHTML = '<span class="lb-title">🏆 טבלה</span>';
+  sorted.forEach((t, rank) => {
+    bar.innerHTML += `<div class="lb-team${rank === 0 ? ' leader' : ''}">
+      <span class="lb-team-emoji">${t.emoji}</span>
+      <span class="lb-team-name">${t.name}</span>
+      <span class="lb-team-score">${t.score}</span>
+    </div>`;
+  });
+}
+
+// ═══════════════════════════════════════════
+// STATION DONE CHECK
+// ═══════════════════════════════════════════
+function checkStationDone(si, teamIdx) {
+  const ans = stationAnswers[teamIdx][si] || {};
+  const ok = Object.values(ans).filter(v => v === true).length === 3;
+  if (ok) {
+    const dr = document.getElementById('digit-reveal');
+    if (dr && !dr.classList.contains('show')) {
+      dr.classList.add('show');
+      document.getElementById('reveal-digit').textContent = STATIONS[si].digit;
+    }
+    const nb = document.getElementById('next-btn');
+    if (nb) nb.removeAttribute('disabled');
+  }
+}
+
+// ═══════════════════════════════════════════
+// BUILD CARD
+// ═══════════════════════════════════════════
+function buildCard(q, qi, si, teamIdx) {
+  const card = document.createElement('div');
+  card.className = 'q-card'; card.id = `qcard-${qi}`;
+  let h = `<div class="q-label">${q.label}</div><div class="q-text">${q.text}</div>`;
+  if (q.type === 'mc') h += buildMC(q, qi, si, teamIdx);
+  else if (q.type === 'fill') h += buildFill(q, qi, si, teamIdx);
+  else if (q.type === 'match') h += buildMatch(q, qi, si, teamIdx);
+  else if (q.type === 'sort') h += buildSort(q, qi, si, teamIdx);
+  else if (q.type === 'yesno') h += buildYesNo(q, qi, si, teamIdx);
+  else if (q.type === 'numbermatch') h += buildNumberMatch(q, qi, si, teamIdx);
+  h += `<div class="feedback" id="fb-${qi}"></div>`;
+  h += `<button class="hint-btn" onclick="toggleHint(${qi})">💡 רמז</button>`;
+  h += `<div class="hint-text" id="hint-${qi}">${q.hint}</div>`;
+  card.innerHTML = h;
+  return card;
+}
+function toggleHint(qi) { document.getElementById(`hint-${qi}`).classList.toggle('show'); }
+function showFB(qi, ok, pos, neg) {
+  const fb = document.getElementById(`fb-${qi}`); if (!fb) return;
+  fb.textContent = ok ? pos : neg;
+  fb.className = `feedback show ${ok ? 'fb-ok' : 'fb-bad'}`;
+  const c = document.getElementById(`qcard-${qi}`);
+  if (c) { c.classList.remove('q-correct','q-wrong'); c.classList.add(ok ? 'q-correct' : 'q-wrong'); }
+}
+function markDot(qi) {
+  const d = document.getElementById(`dot-${qi}`);
+  if (d) { d.classList.remove('active'); d.classList.add('done'); }
+}
+
+// ═══════════════════════════════════════════
+// WIDGETS (all support retry on wrong)
+// ═══════════════════════════════════════════
+function buildMC(q, qi, si, ti) {
+  let h = '<div class="mc-grid">';
+  q.options.forEach((o, oi) => h += `<button class="mc-opt" id="mc-${qi}-${oi}" onclick="answerMC(${qi},${si},${ti},${oi},${q.correct})">${o}</button>`);
+  return h + '</div>';
+}
+function answerMC(qi, si, ti, chosen, correct) {
+  const ans = stationAnswers[ti][si]; if (ans[qi] === true) return;
+  const ok = chosen === correct;
+  ans[qi] = ok;
+  const q = STATIONS[si].questions[qi];
+  for (let i = 0; i < q.options.length; i++) {
+    const b = document.getElementById(`mc-${qi}-${i}`);
+    if (b) { b.disabled = true; if (i === correct) b.classList.add('opt-correct'); else if (i === chosen && !ok) b.classList.add('opt-wrong'); }
+  }
+  showFB(qi, ok, q.fb_ok, q.fb_bad);
+  if (ok) { markDot(qi); checkStationDone(si, ti); }
+  else setTimeout(() => {
+    ans[qi] = undefined; delete ans[qi];
+    for (let i = 0; i < q.options.length; i++) {
+      const b = document.getElementById(`mc-${qi}-${i}`);
+      if (b) { b.disabled = false; b.classList.remove('opt-correct','opt-wrong'); }
+    }
+    const c = document.getElementById(`qcard-${qi}`); if (c) c.classList.remove('q-wrong');
+  }, 1400);
+}
+
+function buildFill(q, qi, si, ti) {
+  let h = `<div class="math-box">${q.formula}</div><div class="fill-wrap">`;
+  q.blanks.forEach((b, bi) => {
+    h += `<input class="fill-inp" type="text" id="fill-${qi}-${bi}" placeholder="?" style="width:${b.w||'65px'}">`;
+    if (bi < q.blanks.length - 1) h += ' ו- ';
+  });
+  h += `</div><div style="margin-top:0.8rem"><button class="btn" onclick="checkFill(${qi},${si},${ti})"><span>בדקו ✓</span></button></div>`;
+  return h;
+}
+function checkFill(qi, si, ti) {
+  const ans = stationAnswers[ti][si]; if (ans[qi] === true) return;
+  const q = STATIONS[si].questions[qi]; let allOk = true;
+  q.blanks.forEach((b, bi) => {
+    const inp = document.getElementById(`fill-${qi}-${bi}`); if (!inp || inp.disabled) return;
+    const v = inp.value.trim().replace(/\s/g,'');
+    const c1 = String(b.ans).replace(/\s/g,'');
+    const c2 = b.ans2 ? String(b.ans2).replace(/\s/g,'') : null;
+    if (v === c1 || (c2 && v === c2)) { inp.classList.remove('bad'); inp.classList.add('ok'); inp.disabled = true; }
+    else { inp.classList.add('bad'); allOk = false; setTimeout(() => inp.classList.remove('bad'), 600); }
+  });
+  if (allOk) { ans[qi] = true; showFB(qi,true,q.fb_ok,q.fb_bad); markDot(qi); checkStationDone(si,ti); }
+  else showFB(qi, false, q.fb_ok, q.fb_bad);
+}
+
+function buildMatch(q, qi, si, ti) {
+  const shuffled = [...q.pairs].sort(() => Math.random() - 0.5);
+  let h = '<div class="match-wrap"><div class="match-col"><h4>↙ גררו מכאן</h4>';
+  shuffled.forEach((p, i) => h += `<div class="drag-chip" draggable="true" data-val="${p.item}" ondragstart="dStart(event,'${p.item}')">${p.item}</div>`);
+  h += '</div><div class="match-col"><h4>שחררו כאן ↙</h4>';
+  q.pairs.forEach((p, i) => h += `<div class="drop-box" id="dbox-${qi}-${i}" data-correct="${p.item}" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="dDrop(event,${qi},${si},${ti},${i},'${p.target.replace(/'/g,"\\'")}')"><span class="drop-target-text">${p.target}</span></div>`);
+  h += '</div></div>';
+  h += `<button class="btn" style="margin-top:0.8rem" onclick="checkMatch(${qi},${si},${ti})"><span>בדקו ✓</span></button>`;
+  return h;
+}
+function dStart(e, v) { dragVal = v; }
+function dDrop(e, qi, si, ti, zi, target) {
+  e.preventDefault();
+  const box = document.getElementById(`dbox-${qi}-${zi}`); if (!box) return;
+  box.classList.remove('over'); box.dataset.dropped = dragVal;
+  box.innerHTML = `<span style="color:var(--gold);margin-left:0.4rem;font-size:0.8rem">[${dragVal}]</span><span style="opacity:0.5">${target}</span>`;
+  box.classList.add('has-item');
+}
+function checkMatch(qi, si, ti) {
+  const ans = stationAnswers[ti][si]; if (ans[qi] === true) return;
+  const q = STATIONS[si].questions[qi]; let ok = true;
+  q.pairs.forEach((p, i) => {
+    const box = document.getElementById(`dbox-${qi}-${i}`); if (!box) return;
+    if (box.dataset.dropped === p.item) box.classList.add('match-ok');
+    else { box.classList.add('match-bad'); ok = false; }
+  });
+  ans[qi] = ok;
+  showFB(qi, ok, q.fb_ok, q.fb_bad);
+  if (ok) { markDot(qi); checkStationDone(si, ti); }
+  else setTimeout(() => {
+    delete ans[qi];
+    q.pairs.forEach((p, i) => {
+      const box = document.getElementById(`dbox-${qi}-${i}`);
+      if (box) { box.classList.remove('match-ok','match-bad','has-item'); box.dataset.dropped=''; box.innerHTML=`<span class="drop-target-text">${p.target}</span>`; }
+    });
+    const c=document.getElementById(`qcard-${qi}`); if(c) c.classList.remove('q-wrong','q-correct');
+  }, 1500);
+}
+
+function buildSort(q, qi, si, ti) {
+  const shuffled = [...q.items].sort(() => Math.random() - 0.5);
+  let h = `<div class="sort-bank" id="sort-bank-${qi}">`;
+  shuffled.forEach(item => h += `<div class="sort-chip" draggable="true" data-val="${item}" ondragstart="sDragStart(event,'${item}',${qi})" ondragover="event.preventDefault()" ondrop="sDrop(event,'${item}',${qi})">${item}</div>`);
+  h += `</div><div style="font-size:0.75rem;color:rgba(245,230,200,0.35);margin-top:0.3rem;text-align:center">גררו לסדר: ימין=ראשון</div>`;
+  h += `<button class="btn" style="margin-top:0.6rem" onclick="checkSort(${qi},${si},${ti})"><span>בדקו ✓</span></button>`;
+  return h;
+}
+function sDragStart(e, v, qi) { sDragVal = v; }
+function sDrop(e, v, qi) {
+  e.preventDefault(); if (!sDragVal || sDragVal === v) return;
+  const con = document.getElementById(`sort-bank-${qi}`);
+  const chips = [...con.querySelectorAll('.sort-chip')];
+  const from = chips.find(c => c.dataset.val === sDragVal), to = chips.find(c => c.dataset.val === v);
+  if (!from || !to) return;
+  const r = to.getBoundingClientRect();
+  if (e.clientX < r.left + r.width / 2) con.insertBefore(from, to); else to.insertAdjacentElement('afterend', from);
+}
+function checkSort(qi, si, ti) {
+  const ans = stationAnswers[ti][si]; if (ans[qi] === true) return;
+  const q = STATIONS[si].questions[qi];
+  const order = [...document.getElementById(`sort-bank-${qi}`).querySelectorAll('.sort-chip')].map(c => c.dataset.val);
+  const ok = JSON.stringify(order) === JSON.stringify(q.correct_order);
+  ans[qi] = ok;
+  showFB(qi, ok, q.fb_ok, q.fb_bad);
+  if (ok) { markDot(qi); checkStationDone(si, ti); }
+  else setTimeout(() => { delete ans[qi]; const c=document.getElementById(`qcard-${qi}`); if(c) c.classList.remove('q-wrong'); }, 1400);
+}
+
+function buildYesNo(q, qi, si, ti) {
+  ynPicks[qi] = ynPicks[qi] || {};
+  let h = '<div class="yesno-list">';
+  q.statements.forEach((s, i) => {
+    h += `<div class="yesno-row" id="ynrow-${qi}-${i}"><span class="yn-text">${s.text}</span><div class="yn-btns">
+      <button class="yn-btn" id="yn-${qi}-${i}-yes" onclick="pickYN(${qi},${si},${ti},${i},true)">✓ נכון</button>
+      <button class="yn-btn" id="yn-${qi}-${i}-no" onclick="pickYN(${qi},${si},${ti},${i},false)">✗ לא נכון</button>
+    </div></div>`;
+  });
+  h += `</div><button class="btn" style="margin-top:0.8rem" id="yn-check-${qi}" onclick="checkYesNo(${qi},${si},${ti})" disabled><span>בדקו ✓</span></button>`;
+  return h;
+}
+function pickYN(qi, si, ti, i, val) {
+  const ans = stationAnswers[ti][si]; if (ans[qi] === true) return;
+  ynPicks[qi] = ynPicks[qi] || {};
+  ynPicks[qi][i] = val;
+  const yBtn = document.getElementById(`yn-${qi}-${i}-yes`);
+  const nBtn = document.getElementById(`yn-${qi}-${i}-no`);
+  if (yBtn) { yBtn.classList.toggle('yn-selected', val === true); }
+  if (nBtn) { nBtn.classList.toggle('yn-selected', val === false); }
+  const q = STATIONS[si].questions[qi];
+  if (Object.keys(ynPicks[qi]).length === q.statements.length) {
+    const chk = document.getElementById(`yn-check-${qi}`); if (chk) chk.removeAttribute('disabled');
+  }
+}
+function checkYesNo(qi, si, ti) {
+  const ans = stationAnswers[ti][si]; if (ans[qi] === true) return;
+  const q = STATIONS[si].questions[qi];
+  let allOk = true;
+  q.statements.forEach((s, i) => {
+    const ok = ynPicks[qi]?.[i] === s.correct;
+    if (!ok) allOk = false;
+    const row = document.getElementById(`ynrow-${qi}-${i}`);
+    if (row) row.classList.add(ok ? 'yn-row-ok' : 'yn-row-bad');
+    const yBtn = document.getElementById(`yn-${qi}-${i}-yes`);
+    const nBtn = document.getElementById(`yn-${qi}-${i}-no`);
+    if (yBtn) yBtn.disabled = true;
+    if (nBtn) nBtn.disabled = true;
+  });
+  ans[qi] = allOk;
+  showFB(qi, allOk, q.fb_ok, q.fb_bad);
+  if (allOk) { markDot(qi); checkStationDone(si, ti); }
+  else setTimeout(() => {
+    delete ans[qi]; delete ynPicks[qi];
+    q.statements.forEach((_, i) => {
+      const row = document.getElementById(`ynrow-${qi}-${i}`);
+      if (row) row.classList.remove('yn-row-ok','yn-row-bad');
+      const yBtn = document.getElementById(`yn-${qi}-${i}-yes`);
+      const nBtn = document.getElementById(`yn-${qi}-${i}-no`);
+      if (yBtn) { yBtn.disabled=false; yBtn.classList.remove('yn-selected'); }
+      if (nBtn) { nBtn.disabled=false; nBtn.classList.remove('yn-selected'); }
+    });
+    const chk = document.getElementById(`yn-check-${qi}`); if (chk) chk.disabled = true;
+    const c = document.getElementById(`qcard-${qi}`); if (c) c.classList.remove('q-wrong');
+  }, 1500);
+}
+
+function buildNumberMatch(q, qi, si, ti) {
+  nmPicks[qi] = {};
+  let h = '<div class="nm-list">';
+  q.steps.forEach((s, i) => {
+    h += `<div class="nm-row" id="nmrow-${qi}-${i}"><span class="nm-text">${s.text}</span><div class="nm-btns">`;
+    q.options.forEach(opt => h += `<button class="nm-btn" id="nm-${qi}-${i}-${opt}" onclick="pickNM(${qi},${si},${ti},${i},${opt},${s.correct})">${opt}</button>`);
+    h += `</div></div>`;
+  });
+  h += `</div><button class="btn" style="margin-top:0.8rem" id="nm-check-${qi}" onclick="checkNM(${qi},${si},${ti})" disabled><span>בדקו ✓</span></button>`;
+  return h;
+}
+function pickNM(qi, si, ti, i, val, correct) {
+  const ans = stationAnswers[ti][si]; if (ans[qi] === true) return;
+  nmPicks[qi] = nmPicks[qi] || {};
+  nmPicks[qi][i] = val;
+  const q = STATIONS[si].questions[qi];
+  q.options.forEach(opt => {
+    const b = document.getElementById(`nm-${qi}-${i}-${opt}`);
+    if (b) b.classList.toggle('nm-selected', opt === val);
+  });
+  if (Object.keys(nmPicks[qi]).length === q.steps.length) {
+    const chk = document.getElementById(`nm-check-${qi}`); if (chk) chk.removeAttribute('disabled');
+  }
+}
+function checkNM(qi, si, ti) {
+  const ans = stationAnswers[ti][si]; if (ans[qi] === true) return;
+  const q = STATIONS[si].questions[qi];
+  let allOk = true;
+  q.steps.forEach((s, i) => {
+    const ok = nmPicks[qi]?.[i] === s.correct;
+    if (!ok) allOk = false;
+    const row = document.getElementById(`nmrow-${qi}-${i}`);
+    if (row) row.classList.add(ok ? 'nm-row-ok' : 'nm-row-bad');
+    q.options.forEach(opt => {
+      const b = document.getElementById(`nm-${qi}-${i}-${opt}`);
+      if (b) { b.disabled=true; if (opt === s.correct) b.classList.add('nm-correct'); }
+    });
+  });
+  ans[qi] = allOk;
+  showFB(qi, allOk, q.fb_ok, q.fb_bad);
+  if (allOk) { markDot(qi); checkStationDone(si, ti); }
+  else setTimeout(() => {
+    delete ans[qi]; delete nmPicks[qi];
+    q.steps.forEach((_, i) => {
+      const row = document.getElementById(`nmrow-${qi}-${i}`);
+      if (row) row.classList.remove('nm-row-ok','nm-row-bad');
+      q.options.forEach(opt => {
+        const b = document.getElementById(`nm-${qi}-${i}-${opt}`);
+        if (b) { b.disabled=false; b.classList.remove('nm-selected','nm-correct'); }
+      });
+    });
+    const chk = document.getElementById(`nm-check-${qi}`); if (chk) chk.disabled=true;
+    const c = document.getElementById(`qcard-${qi}`); if(c) c.classList.remove('q-wrong');
+  }, 1500);
+}
+
+// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
+// FINAL SCREEN
+// ═══════════════════════════════════════════
+function showTeamFinished(teamIdx) {
+  const t = teams[teamIdx];
+  showScreen('final-screen');
+  document.getElementById('podium').innerHTML = `
+    <div style="text-align:center;padding:2rem">
+      <div style="font-size:4rem">${t.emoji}</div>
+      <h2 style="font-family:'Cinzel',serif;color:var(--gold);margin:0.5rem 0">${t.name}</h2>
+      <p style="color:rgba(245,230,200,0.65)">סיימתם את כל 6 התחנות!</p>
+      <div style="font-family:'Cinzel',serif;font-size:3rem;color:var(--gold);margin:1rem 0">${t.score} נקודות</div>
+      <p style="font-size:0.85rem;color:rgba(245,230,200,0.45)">ממתינים לשאר הצוותים... המורה יציג את התוצאות הסופיות</p>
+    </div>`;
+  document.getElementById('full-scores').innerHTML = '';
+  launchConfetti();
+}
+
+function showFinalScreen() {
+  const sorted = [...teams].map((t, i) => ({ ...t, idx: i })).sort((a, b) => b.score - a.score);
+  const podium = document.getElementById('podium');
+  podium.innerHTML = '';
+
+  // Reorder for podium: 2nd, 1st, 3rd
+  const display = sorted.length >= 3 ? [sorted[1], sorted[0], sorted[2], ...sorted.slice(3)] : sorted;
+  display.forEach((t, rank) => {
+    const realRank = sorted.findIndex(s => s.idx === t.idx);
+    const div = document.createElement('div');
+    div.className = 'podium-place';
+    div.innerHTML = `
+      <div class="podium-emoji">${t.emoji}</div>
+      <div class="podium-block">
+        <div class="podium-num">${realRank + 1}</div>
+        <div class="podium-name">${t.name}</div>
+        <div class="podium-score-lbl">${t.score} נק'</div>
+      </div>`;
+    podium.appendChild(div);
+  });
+
+  showScreen('final-screen');
+  launchConfetti();
+}
+
+function launchConfetti() {
+  const cols = ['#c9a84c','#4caf50','#2196f3','#e91e63','#ff9800','#ab47bc'];
+  for (let i = 0; i < 100; i++) {
+    setTimeout(() => {
+      const c = document.createElement('div'); c.className = 'confetti-piece';
+      c.style.cssText = `left:${Math.random()*100}vw;top:-10px;background:${cols[Math.floor(Math.random()*cols.length)]};animation-duration:${2.5+Math.random()*3}s;animation-delay:${Math.random()*1.5}s;width:${5+Math.random()*8}px;height:${5+Math.random()*8}px;`;
+      document.body.appendChild(c); setTimeout(() => c.remove(), 7000);
+    }, i * 25);
+  }
+}
+
+// ═══════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function createStars() {
+  const c = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div'); s.className = 'star';
+    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*5}s;animation-delay:${Math.random()*5}s`;
+    c.appendChild(s);
+  }
+}
+
+// ═══════════════════════════════════════════
+// URL-BASED ROUTING
+// teacher: ?teacher  (or ?teacher=1234 for password)
+// team:    ?team=ALFA
+// ═══════════════════════════════════════════
+function initFromURL() {
+  createStars();
+  const params = new URLSearchParams(window.location.search);
+
+  if (params.has('teacher')) {
+    // ── TEACHER MODE ──
+    // Show setup screen as normal
+    renderTeamInputs();
+    return;
+  }
+
+  const teamCode = params.get('team');
+  if (teamCode) {
+    // ── STUDENT MODE: auto-login with team code ──
+    // Hide setup screen completely, go straight to login attempt
+    document.getElementById('setup-screen').style.display = 'none';
+    // Try to load state immediately
+    if (loadSharedState()) {
+      const idx = teams.findIndex(t => t.code === teamCode.toUpperCase());
+      if (idx !== -1) {
+        selfplayTeamIdx = idx;
+        gameMode = 'selfplay';
+        renderLeaderboard();
+        document.getElementById('leaderboard-bar').style.display = 'flex';
+        let si = 0;
+        for (let s = 0; s < STATIONS.length; s++) {
+          if (!stationDone[idx]?.[s]) { si = s; break; }
+          if (s === STATIONS.length - 1) si = STATIONS.length;
+        }
+        if (si >= STATIONS.length) { showFinalScreen(); return; }
+        showMapTransition(si > 0 ? si - 1 : null, si, () => startTeamOnStation(idx, si));
+        return;
+      }
+    }
+    // Game not started yet – show waiting screen
+    showWaitingScreen(teamCode.toUpperCase());
+    return;
+  }
+
+  // No params – show setup (fallback, shouldn't happen in production)
+  renderTeamInputs();
+}
+
+function showWaitingScreen(code) {
+  document.getElementById('setup-screen').style.display = 'none';
+  const ws = document.createElement('div');
+  ws.className = 'screen active';
+  ws.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem';
+  ws.innerHTML = `
+    <div style="font-size:4rem;margin-bottom:1rem">⏳</div>
+    <h1 style="font-family:'Cinzel',serif;font-size:1.8rem;color:var(--gold);margin-bottom:0.5rem">ממתינים להתחלה...</h1>
+    <p style="color:rgba(245,230,200,0.6);margin-bottom:1.5rem">הצוות שלכם: <strong style="color:var(--gold);font-family:'Cinzel',serif">${code}</strong></p>
+    <p style="font-size:0.85rem;color:rgba(245,230,200,0.4);margin-bottom:2rem">המורה עוד לא הפעיל את המשחק.<br>הדף יתחיל אוטומטית כשהמשחק מתחיל.</p>
+    <div id="waiting-dots" style="font-size:2rem">●○○</div>
+  `;
+  document.body.appendChild(ws);
+
+  // Poll every 3 seconds until teacher starts
+  let dot = 0;
+  const dots = ['●○○','○●○','○○●'];
+  const poll = setInterval(() => {
+    document.getElementById('waiting-dots').textContent = dots[dot++ % 3];
+    if (loadSharedState()) {
+      const idx = teams.findIndex(t => t.code === code);
+      if (idx !== -1) {
+        clearInterval(poll);
+        ws.remove();
+        selfplayTeamIdx = idx;
+        gameMode = 'selfplay';
+        renderLeaderboard();
+        document.getElementById('leaderboard-bar').style.display = 'flex';
+        showMapTransition(null, 0, () => startTeamOnStation(idx, 0));
+      }
+    }
+  }, 3000);
+}
+
+// INIT
+initFromURL();
+
+</script>
+</body>
+</html>

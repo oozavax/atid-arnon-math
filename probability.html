@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>הסתברות — מתמטיקה 4 יח"ל</title>
+<link rel="stylesheet" href="style.css">
+<style>
+:root{
+  --yellow:#FFE135;--yellow-pale:#FFFBE0;--yellow-dark:#F5C800;
+  --ink:#1A1A1A;--ink-soft:#4B4B4B;--bg:#FFFDF0;
+}
+:root{
+  --blue:#1d4ed8;--blue-light:#eff6ff;--blue-border:#bfdbfe;
+  --green:#166534;--green-light:#dcfce7;--green-border:#bbf7d0;
+  --purple:#5b21b6;--purple-light:#ede9fe;--purple-border:#c4b5fd;
+  --orange:#c2410c;--orange-light:#fff7ed;
+  --gray:#78716c;--shadow:0 2px 12px rgba(0,0,0,0.08);
+  --bg:#f8f7f4;--white:#fff;--border:#e4e0d8;--text:#1c1917;
+}
+.main-nav{display:flex;justify-content:center;max-width:700px;margin:22px auto 0;background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.2);border-radius:14px;overflow:hidden;}
+.main-btn{flex:1;padding:12px 6px;border:none;background:transparent;font-family:'Nunito',sans-serif;font-size:0.83rem;font-weight:800;cursor:pointer;color:rgba(255,255,255,0.6);transition:all 0.2s;border-left:1px solid rgba(255,255,255,0.15);}
+.main-btn:last-child{border-left:none;}
+.main-btn.active{background:rgba(255,255,255,0.2);color:#fff;}
+.main-btn:hover:not(.active){background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.9);}
+main{max-width:700px;margin:0 auto;padding:28px 14px 90px;}
+.panel{display:none;}.panel.active{display:flex;flex-direction:column;align-items:center;gap:10px;}
+.section-title{width:100%;font-family:'Fredoka One',cursive;font-size:1.1rem;font-weight:700;color:var(--blue);padding:14px 0 8px;border-bottom:2px solid var(--blue-border);margin-bottom:4px;}
+.node{width:100%;border-radius:14px;padding:15px 20px;font-size:0.95rem;font-weight:700;line-height:1.5;border:1.5px solid var(--border);background:var(--white);box-shadow:var(--shadow);}
+.node.formula{background:var(--blue-light);border:2px solid var(--blue-border);text-align:center;font-size:1.05rem;padding:18px;}
+.node.step{border:2px solid;display:flex;align-items:flex-start;gap:12px;}
+.node.step .num{font-size:1.4rem;min-width:28px;line-height:1;margin-top:2px;}
+.node.step .content .title{font-size:1rem;font-weight:800;margin-bottom:3px;}
+.node.step .content .detail{font-size:0.87rem;font-weight:600;color:var(--gray);line-height:1.5;}
+.node.blue{border-color:var(--blue);}.node.blue .num{color:var(--blue);}
+.node.green{border-color:var(--green);}.node.green .num{color:var(--green);}
+.node.warn{background:#fefce8;border:2px solid #fde047;color:#713f12;}
+.arrow{display:flex;justify-content:center;padding:3px 0;}
+.tip{width:100%;background:#fefce8;border:1.5px solid #fde047;border-radius:14px;padding:12px 16px;font-size:0.85rem;font-weight:700;color:#713f12;line-height:1.5;}
+.rule-box{width:100%;border-radius:14px;overflow:hidden;box-shadow:var(--shadow);border:1.5px solid var(--border);}
+.rb-title{padding:10px 16px;font-size:0.88rem;font-weight:800;background:var(--blue-light);color:var(--blue);border-bottom:1px solid var(--blue-border);}
+.rule-item{padding:10px 16px;font-size:0.87rem;font-weight:600;border-bottom:1px solid var(--border);background:var(--white);line-height:1.5;}
+.rule-item:last-child{border-bottom:none;}
+.rname{font-weight:800;display:block;margin-bottom:2px;color:var(--blue);}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 3px;font-size:0.9em;}
+.frac .num{border-bottom:1.5px solid currentColor;padding:0 3px;line-height:1.3;}
+.frac .den{padding:0 3px;line-height:1.3;}
+.ex-card{background:var(--white);border-radius:14px;border:1.5px solid var(--border);overflow:hidden;box-shadow:var(--shadow);width:100%;}
+.ex-header{padding:13px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:0.9rem;}
+.ex-toggle{font-size:0.75rem;color:var(--gray);transition:transform 0.2s;}
+.ex-toggle.open{transform:rotate(180deg);}
+.ex-body{display:none;padding:14px 16px;border-top:1px solid var(--border);background:#f8f7f4;font-size:0.87rem;font-weight:600;line-height:1.7;}
+.ex-body.open{display:block;}
+.sol-step{padding:8px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);margin-bottom:6px;}
+.sol-step .s-num{font-size:0.75rem;font-weight:800;color:var(--blue);margin-bottom:2px;}
+/* prob table */
+.prob-table{width:100%;border-collapse:collapse;background:var(--white);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);}
+.prob-table th{background:var(--blue);color:#fff;padding:10px 14px;font-size:0.88rem;font-weight:800;text-align:center;}
+.prob-table td{padding:10px 14px;border:1px solid var(--border);text-align:center;font-size:0.87rem;font-weight:600;}
+.prob-table .total{background:var(--blue-light);font-weight:800;color:var(--blue);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="topbar-logo">
+    <div class="logo-mark">∫</div>
+    <span class="logo-text">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge">פרק א׳ · סטטיסטיקה</span>
+    <a href="index.html" class="topbar-home">← בית</a>
+  </div>
+</div>
+    <span class="logo-text">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge">📊 פרק א׳ · סטטיסטיקה</span>
+    <a href="index.html" class="topbar-home">← בית</a>
+  </div>
+</div>
+    <span class="logo-text" style="color:var(--ink,#1a1a1a);font-family:'Fredoka One',cursive;">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge" style="background:var(--ink,#1a1a1a);color:var(--yellow,#FFE135);font-family:'Fredoka One',cursive;">פרק א׳ · סטטיסטיקה</span>
+    <a href="index.html" class="topbar-home" style="border:2.5px solid var(--ink,#1a1a1a);color:var(--ink,#1a1a1a);font-family:'Fredoka One',cursive;background:#fff;border-radius:999px;padding:5px 14px;text-decoration:none;font-size:0.82rem;">← דף הבית</a>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-breadcrumb">פרק א׳ · סטטיסטיקה והסתברות</div>
+  <h1>🎲 הסתברות</h1>
+  <p class="hero-sub">טבלת הסתברות · הסתברות מותנית · שאלות בגרות</p>
+  <div class="main-nav">
+    <button class="main-btn active" onclick="showPanel('theory',this)">📖 תיאוריה</button>
+    <button class="main-btn" onclick="showPanel('table',this)">📊 טבלת הסתברות</button>
+    <button class="main-btn" onclick="showPanel('conditional',this)">🔗 מותנית</button>
+    <button class="main-btn" onclick="showPanel('practice',this)">✏️ תרגול</button>
+  </div>
+</div>
+
+<main>
+
+<!-- ═══ תיאוריה ═══ -->
+<div class="panel active" id="panel-theory">
+  <div class="section-title">מושגי יסוד</div>
+
+  <div class="rule-box">
+    <div class="rb-title">הגדרות בסיסיות</div>
+    <div class="rule-item"><span class="rname">הסתברות</span>מספר בין 0 ל-1. P=0 → בלתי אפשרי. P=1 → וודאי.</div>
+    <div class="rule-item"><span class="rname">מרחב מדגם</span>כל התוצאות האפשריות של הניסוי</div>
+    <div class="rule-item"><span class="rname">אירוע</span>תת-קבוצה של מרחב המדגם</div>
+    <div class="rule-item"><span class="rname">אירועים מנוגדים</span>P(A) + P(Ā) = 1 → P(Ā) = 1 − P(A)</div>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">חוקי הסתברות חשובים</div>
+    <div class="rule-item"><span class="rname">חיבור (איחוד)</span>P(A או B) = P(A) + P(B) − P(A וגם B)</div>
+    <div class="rule-item"><span class="rname">כפל — אירועים בלתי תלויים</span>P(A וגם B) = P(A) × P(B)</div>
+    <div class="rule-item"><span class="rname">כפל — אירועים תלויים</span>P(A וגם B) = P(A) × P(B|A)</div>
+    <div class="rule-item"><span class="rname">הסתברות מותנית</span>P(B|A) = P(A וגם B) ÷ P(A)</div>
+  </div>
+
+  <div class="tip">💡 <strong>טיפ לבגרות:</strong> ברוב שאלות ההסתברות בבגרות — בנה טבלה! היא עוזרת לארגן את כל המידע ולמצוא את הנתונים החסרים בקלות.</div>
+</div>
+
+<!-- ═══ טבלת הסתברות ═══ -->
+<div class="panel" id="panel-table">
+  <div class="section-title">טבלת הסתברות — כלי הכי חשוב</div>
+
+  <div class="node warn">📌 כמעט כל שאלת הסתברות בבגרות פותרים עם טבלה. תמיד התחל מלבנות טבלה!</div>
+
+  <table class="prob-table">
+    <tr><th></th><th>מאפיין B</th><th>לא B</th><th>סה"כ</th></tr>
+    <tr><td><strong>מאפיין A</strong></td><td>P(A וB)</td><td>P(A ולא B)</td><td class="total">P(A)</td></tr>
+    <tr><td><strong>לא A</strong></td><td>P(לא A וB)</td><td>P(לא A ולא B)</td><td class="total">P(לא A)</td></tr>
+    <tr><td class="total"><strong>סה"כ</strong></td><td class="total">P(B)</td><td class="total">P(לא B)</td><td class="total">1</td></tr>
+  </table>
+
+  <div class="section-title">שלבי בניית הטבלה</div>
+
+  <div class="node step blue">
+    <div class="num">1️⃣</div>
+    <div class="content">
+      <div class="title">זהה את שני המאפיינים</div>
+      <div class="detail">למשל: ממחזרות/לא ממחזרות · מתנדבות/לא מתנדבות</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+  <div class="node step blue">
+    <div class="num">2️⃣</div>
+    <div class="content">
+      <div class="title">מלא את הנתונים הישירים</div>
+      <div class="detail">הכנס את כל ההסתברויות הנתונות בשאלה</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+  <div class="node step blue">
+    <div class="num">3️⃣</div>
+    <div class="content">
+      <div class="title">השלם שורות ועמודות</div>
+      <div class="detail">כל שורה מסתכמת ל-P(A). כל עמודה מסתכמת ל-P(B). הכל מסתכם ל-1.</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+  <div class="node step green">
+    <div class="num">4️⃣</div>
+    <div class="content">
+      <div class="title">ענה על השאלה</div>
+      <div class="detail">קרא ישירות מהטבלה את ההסתברות המבוקשת</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ מותנית ═══ -->
+<div class="panel" id="panel-conditional">
+  <div class="section-title">הסתברות מותנית</div>
+
+  <div class="node formula">
+    P(B|A) = <span class="frac"><span class="num">P(A וגם B)</span><span class="den">P(A)</span></span>
+    <br><br>
+    <small>"הסתברות ש-B יקרה, <strong>בהינתן</strong> ש-A כבר קרה"</small>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">איך לזהות הסתברות מותנית בשאלה?</div>
+    <div class="rule-item"><span class="rname">מילות מפתח</span>"ידוע ש...", "בהינתן ש...", "בוחרים מתוך המתנדבים..."</div>
+    <div class="rule-item"><span class="rname">דוגמה</span>"בחרו משפחה מתנדבת — מה ההסתברות שהיא גם ממחזרת?"<br>= P(ממחזרת | מתנדבת) = P(ממחזרת וגם מתנדבת) ÷ P(מתנדבת)</div>
+    <div class="rule-item"><span class="rname">שימוש בטבלה</span>מסתכלים רק על השורה/עמודה של האירוע הנתון, ומחלקים ב"סה"כ" שלה</div>
+  </div>
+
+  <div class="tip">💡 <strong>טיפ:</strong> כשיש "ידוע ש..." — מצמצמים את מרחב המדגם לאירוע הנתון בלבד!</div>
+</div>
+
+<!-- ═══ תרגול ═══ -->
+<div class="panel" id="panel-practice">
+
+  <div class="section-title">תרגילים מבגרויות אמיתיות</div>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🟢 קיץ תשפ"ה 2025 מועד א׳ — בנים ובנות מתנדבים</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <strong>נתון:</strong> 75% מתנדבים. 3/5 מהמתנדבים הן בנות. מספר הבנות המתנדבות גדול פי 3 ממספר הבנות שאינן מתנדבות.<br><br>
+      <strong>א. מה ההסתברות לבחור בת מתנדבת?</strong>
+      <div class="sol-step"><div class="s-num">P(בת ומתנדבת)</div>3/5 × 0.75 = <strong>0.45</strong></div>
+      <br><strong>ב. מצאו אחוז הבנים.</strong>
+      <div class="sol-step"><div class="s-num">P(בת ולא מתנדבת)</div>0.45 ÷ 3 = 0.15</div>
+      <div class="sol-step"><div class="s-num">P(בנות)</div>0.45 + 0.15 = 0.60 → P(בנים) = <strong>40%</strong></div>
+      <br><strong>ג. בחרו תלמיד — ידוע שהוא בן. מה ההסתברות שמתנדב?</strong>
+      <div class="sol-step"><div class="s-num">P(בן ומתנדב)</div>0.75 − 0.45 = 0.30</div>
+      <div class="sol-step"><div class="s-num">P(מתנדב|בן)</div>0.30 ÷ 0.40 = <strong>0.75</strong></div>
+      <br><strong>ד. האם אחוז המתנדבות מבין הבנות גדול מאחוז המתנדבים מבין הבנים?</strong>
+      <div class="sol-step"><div class="s-num">מבין הבנות</div>P(מתנדבת|בת) = 0.45÷0.60 = 0.75 = 75%</div>
+      <div class="sol-step"><div class="s-num">מבין הבנים</div>P(מתנדב|בן) = 0.75</div>
+      <div class="sol-step"><div class="s-num">מסקנה</div>75% = 75% → <strong>לא, האחוזים שווים</strong></div>
+    </div>
+  </div>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🟠 חורף תשפ"ו 2026 — ממחזרות ומתנדבות (בינוני)</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <strong>נתון:</strong> P(ממחזרת) − P(לא ממחזרת) = 0.26. 2/3 מהממחזרות מתנדבות. P(ממחזרת וגם מתנדבת) = 6 × P(לא ממחזרת ולא מתנדבת).<br><br>
+      <strong>א. מצאו P(ממחזרת) ו-P(ממחזרת וגם מתנדבת).</strong>
+      <div class="sol-step"><div class="s-num">P(ממחזרת)</div>p − (1−p) = 0.26 → 2p = 1.26 → p = <strong>0.63</strong></div>
+      <div class="sol-step"><div class="s-num">P(ממחזרת ומתנדבת)</div>2/3 × 0.63 = <strong>0.42</strong></div>
+      <br><strong>ב. מה ההסתברות שמשפחה מתנדבת?</strong>
+      <div class="sol-step"><div class="s-num">P(לא ממחזרת ולא מתנדבת)</div>0.42 = 6x → x = 0.07</div>
+      <div class="sol-step"><div class="s-num">P(לא ממחזרת ומתנדבת)</div>0.37 − 0.07 = 0.30</div>
+      <div class="sol-step"><div class="s-num">P(מתנדבת)</div>0.42 + 0.30 = <strong>0.72</strong></div>
+      <br><strong>ג. בחרו משפחה מתנדבת. מה ההסתברות שאינה ממחזרת?</strong>
+      <div class="sol-step"><div class="s-num">P(לא ממחזרת | מתנדבת)</div>0.30 ÷ 0.72 = <strong>5/12 ≈ 0.417</strong></div>
+      <br><strong>ד. ביישוב 600 משפחות. כמה ממחזרות או מתנדבות?</strong>
+      <div class="sol-step"><div class="s-num">נוסחת חיבור</div>0.63 + 0.72 − 0.42 = 0.93</div>
+      <div class="sol-step"><div class="s-num">מספר</div>0.93 × 600 = <strong>558 משפחות</strong></div>
+    </div>
+  </div>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🔴 חורף תשפ"ה 2025 — בנים, רישיון נהיגה (קשה)</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <strong>נתון:</strong> 25% הם בנים ללא רישיון. 1/3 מהבנים יש רישיון.<br><br>
+      <strong>א. מצאו אחוז הבנים.</strong>
+      <div class="sol-step"><div class="s-num">הגדרה</div>P(בן) = p. P(בן ללא רישיון) = 2/3 × p = 0.25 → p = <strong>37.5%</strong></div>
+      <br><strong>ב. P(בן ורישיון) = P(בת ורישיון). בחרו תלמיד ללא רישיון — מה ההסתברות שהוא בן?</strong>
+      <div class="sol-step"><div class="s-num">P(בן ורישיון)</div>1/3 × 0.375 = 0.125. גם P(בת ורישיון) = 0.125</div>
+      <div class="sol-step"><div class="s-num">P(ללא רישיון)</div>1 − 0.125 − 0.125 = 0.75</div>
+      <div class="sol-step"><div class="s-num">P(בן|ללא רישיון)</div>0.25 ÷ 0.75 = <strong>1/3</strong></div>
+    </div>
+  </div>
+
+  <div class="tip">💡 <strong>מה לזכור:</strong> תמיד בנה טבלה עם כל ארבעת הריבועים ו"סה"כ". כשאתה יודע שלוש מתוך ארבע — את הרביעית מחשבים בחיסור.</div>
+
+</div>
+</main>
+<script>
+function showPanel(type,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.main-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+type).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleEx(header){
+  const body=header.nextElementSibling;
+  const toggle=header.querySelector('.ex-toggle');
+  body.classList.toggle('open');
+  toggle.classList.toggle('open');
+}
+</script>
+</body>
+</html>

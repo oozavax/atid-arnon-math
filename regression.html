@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>רגרסיה וקורלציה — מתמטיקה 4 יח"ל</title>
+<link rel="stylesheet" href="style.css">
+<style>
+:root{
+  --yellow:#FFE135;--yellow-pale:#FFFBE0;--yellow-dark:#F5C800;
+  --ink:#1A1A1A;--ink-soft:#4B4B4B;--bg:#FFFDF0;
+}
+:root{
+  --blue:#1d4ed8;--blue-light:#eff6ff;--blue-border:#bfdbfe;
+  --green:#166534;--green-light:#dcfce7;--green-border:#bbf7d0;
+  --purple:#5b21b6;--purple-light:#ede9fe;--purple-border:#c4b5fd;
+  --orange:#c2410c;--orange-light:#fff7ed;
+  --red:#b91c1c;--red-light:#fee2e2;
+  --gray:#78716c;--shadow:0 2px 12px rgba(0,0,0,0.08);
+  --bg:#f8f7f4;--white:#fff;--border:#e4e0d8;--text:#1c1917;
+}
+.main-nav{display:flex;justify-content:center;max-width:700px;margin:22px auto 0;background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.2);border-radius:14px;overflow:hidden;}
+.main-btn{flex:1;padding:12px 6px;border:none;background:transparent;font-family:'Nunito',sans-serif;font-size:0.83rem;font-weight:800;cursor:pointer;color:rgba(255,255,255,0.6);transition:all 0.2s;border-left:1px solid rgba(255,255,255,0.15);}
+.main-btn:last-child{border-left:none;}
+.main-btn.active{background:rgba(255,255,255,0.2);color:#fff;}
+.main-btn:hover:not(.active){background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.9);}
+main{max-width:700px;margin:0 auto;padding:28px 14px 90px;}
+.panel{display:none;}.panel.active{display:flex;flex-direction:column;align-items:center;gap:10px;}
+.section-title{width:100%;font-family:'Fredoka One',cursive;font-size:1.1rem;font-weight:700;color:var(--blue);padding:14px 0 8px;border-bottom:2px solid var(--blue-border);margin-bottom:4px;}
+.node{width:100%;border-radius:14px;padding:15px 20px;font-size:0.95rem;font-weight:700;line-height:1.5;border:1.5px solid var(--border);background:var(--white);box-shadow:var(--shadow);}
+.node.formula{background:var(--blue-light);border:2px solid var(--blue-border);text-align:center;font-size:1.05rem;padding:18px;}
+.node.step{border:2px solid;display:flex;align-items:flex-start;gap:12px;}
+.node.step .num{font-size:1.4rem;min-width:28px;line-height:1;margin-top:2px;}
+.node.step .content .title{font-size:1rem;font-weight:800;margin-bottom:3px;}
+.node.step .content .detail{font-size:0.87rem;font-weight:600;color:var(--gray);line-height:1.5;}
+.node.blue{border-color:var(--blue);}.node.blue .num{color:var(--blue);}
+.node.green{border-color:var(--green);}.node.green .num{color:var(--green);}
+.node.warn{background:#fefce8;border:2px solid #fde047;color:#713f12;}
+.arrow{display:flex;justify-content:center;padding:3px 0;}
+.tip{width:100%;background:#fefce8;border:1.5px solid #fde047;border-radius:14px;padding:12px 16px;font-size:0.85rem;font-weight:700;color:#713f12;line-height:1.5;}
+.rule-box{width:100%;border-radius:14px;overflow:hidden;box-shadow:var(--shadow);border:1.5px solid var(--border);}
+.rb-title{padding:10px 16px;font-size:0.88rem;font-weight:800;background:var(--blue-light);color:var(--blue);border-bottom:1px solid var(--blue-border);}
+.rule-item{padding:10px 16px;font-size:0.87rem;font-weight:600;border-bottom:1px solid var(--border);background:var(--white);line-height:1.5;}
+.rule-item:last-child{border-bottom:none;}
+.rname{font-weight:800;display:block;margin-bottom:2px;color:var(--blue);}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 3px;font-size:0.9em;}
+.frac .num{border-bottom:1.5px solid currentColor;padding:0 3px;line-height:1.3;}
+.frac .den{padding:0 3px;line-height:1.3;}
+.ex-card{background:var(--white);border-radius:14px;border:1.5px solid var(--border);overflow:hidden;box-shadow:var(--shadow);width:100%;}
+.ex-header{padding:13px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:0.9rem;}
+.ex-toggle{font-size:0.75rem;color:var(--gray);transition:transform 0.2s;}
+.ex-toggle.open{transform:rotate(180deg);}
+.ex-body{display:none;padding:14px 16px;border-top:1px solid var(--border);background:#f8f7f4;font-size:0.87rem;font-weight:600;line-height:1.7;}
+.ex-body.open{display:block;}
+.sol-step{padding:8px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);margin-bottom:6px;}
+.sol-step .s-num{font-size:0.75rem;font-weight:800;color:var(--blue);margin-bottom:2px;}
+/* r-bar */
+.r-bar{width:100%;background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:18px;box-shadow:var(--shadow);}
+.r-scale{height:28px;border-radius:20px;background:linear-gradient(to left,#166534,#dcfce7,#f5f5f4,#fee2e2,#b91c1c);position:relative;margin:12px 0;}
+.r-labels{display:flex;justify-content:space-between;font-size:0.78rem;font-weight:700;}
+.r-marker{position:absolute;top:-8px;width:4px;height:44px;background:#1c1917;border-radius:2px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="topbar-logo">
+    <div class="logo-mark">∫</div>
+    <span class="logo-text">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge">פרק א׳ · סטטיסטיקה</span>
+    <a href="index.html" class="topbar-home">← בית</a>
+  </div>
+</div>
+    <span class="logo-text">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge">📊 פרק א׳ · סטטיסטיקה</span>
+    <a href="index.html" class="topbar-home">← בית</a>
+  </div>
+</div>
+    <span class="logo-text" style="color:var(--ink,#1a1a1a);font-family:'Fredoka One',cursive;">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge" style="background:var(--ink,#1a1a1a);color:var(--yellow,#FFE135);font-family:'Fredoka One',cursive;">פרק א׳ · סטטיסטיקה</span>
+    <a href="index.html" class="topbar-home" style="border:2.5px solid var(--ink,#1a1a1a);color:var(--ink,#1a1a1a);font-family:'Fredoka One',cursive;background:#fff;border-radius:999px;padding:5px 14px;text-decoration:none;font-size:0.82rem;">← דף הבית</a>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-breadcrumb">פרק א׳ · סטטיסטיקה והסתברות</div>
+  <h1>📏 רגרסיה וקורלציה</h1>
+  <p class="hero-sub">מקדם מתאם · ישר רגרסיה · ניבוי</p>
+  <div class="main-nav">
+    <button class="main-btn active" onclick="showPanel('theory',this)">📖 תיאוריה</button>
+    <button class="main-btn" onclick="showPanel('formulas',this)">🔢 נוסחאות</button>
+    <button class="main-btn" onclick="showPanel('changes',this)">🔄 שינויים</button>
+    <button class="main-btn" onclick="showPanel('practice',this)">✏️ תרגול</button>
+  </div>
+</div>
+
+<main>
+
+<!-- ═══ תיאוריה ═══ -->
+<div class="panel active" id="panel-theory">
+  <div class="section-title">מה זו קורלציה?</div>
+  <div class="node warn">קורלציה מודדת את <strong>עוצמת הקשר הלינארי</strong> בין שני משתנים x ו-y.</div>
+
+  <div class="r-bar">
+    <div style="font-size:0.88rem;font-weight:800;margin-bottom:8px;color:var(--blue);">סרגל מקדם המתאם r</div>
+    <div class="r-scale" id="rScale"></div>
+    <div class="r-labels">
+      <span style="color:var(--blue);">−1<br>קורלציה שלילית מושלמת</span>
+      <span style="color:var(--gray);">0<br>אין קשר</span>
+      <span style="color:var(--green);">+1<br>קורלציה חיובית מושלמת</span>
+    </div>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">פרשנות מקדם המתאם r</div>
+    <div class="rule-item"><span class="rname">r קרוב ל-+1</span>קשר לינארי חיובי חזק — כש-x עולה, y עולה</div>
+    <div class="rule-item"><span class="rname">r קרוב ל-−1</span>קשר לינארי שלילי חזק — כש-x עולה, y יורד</div>
+    <div class="rule-item"><span class="rname">r קרוב ל-0</span>אין קשר לינארי בין המשתנים</div>
+    <div class="rule-item"><span class="rname">|r| &gt; 0.8</span>קשר חזק · |r| 0.5–0.8 = קשר בינוני · |r| &lt; 0.5 = קשר חלש</div>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">מה r לא אומר</div>
+    <div class="rule-item"><span class="rname">קורלציה ≠ סיבתיות</span>קשר חזק בין שני משתנים לא אומר שאחד גורם לשני</div>
+    <div class="rule-item"><span class="rname">r מודד רק קשר לינארי</span>יכול להיות קשר חזק לא-לינארי עם r=0</div>
+  </div>
+
+  <div class="tip">💡 <strong>טיפ לבגרות:</strong> בשאלות "קבע איזה מספר הוא r" — תסתכל על כיוון הנקודות בדיאגרמת הפיזור (חיובי/שלילי) ועל עוצמת הקשר (קרוב ל-1 או ל-0).</div>
+</div>
+
+<!-- ═══ נוסחאות ═══ -->
+<div class="panel" id="panel-formulas">
+  <div class="section-title">נוסחאות — ישר הרגרסיה</div>
+
+  <div class="node formula">
+    ישר הרגרסיה לניבוי y על פי x:<br><br>
+    <strong>ŷ = b·x + a</strong><br><br>
+    שיפוע: b = r · <span class="frac"><span class="num">S<sub>y</sub></span><span class="den">S<sub>x</sub></span></span>
+    &nbsp;&nbsp;&nbsp;
+    חותך: a = ȳ − b·x̄
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">הסבר המשתנים</div>
+    <div class="rule-item"><span class="rname">r</span>מקדם המתאם בין x ל-y</div>
+    <div class="rule-item"><span class="rname">Sₓ , S_y</span>סטיית התקן של x ושל y</div>
+    <div class="rule-item"><span class="rname">x̄ , ȳ</span>ממוצע x וממוצע y</div>
+    <div class="rule-item"><span class="rname">b</span>שיפוע ישר הרגרסיה — כמה y משתנה לכל יחידה של x</div>
+    <div class="rule-item"><span class="rname">a</span>חותך ציר y של הישר</div>
+  </div>
+
+  <div class="section-title">שלבי פתרון — ישר רגרסיה</div>
+
+  <div class="node step blue">
+    <div class="num">1️⃣</div>
+    <div class="content">
+      <div class="title">מצא r (אם לא נתון)</div>
+      <div class="detail">לרוב נתון בבגרות — אם לא, מחשבים מהנוסחה או מהמחשבון</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+  <div class="node step blue">
+    <div class="num">2️⃣</div>
+    <div class="content">
+      <div class="title">חשב את השיפוע b</div>
+      <div class="detail">b = r · (S_y ÷ S_x)</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+  <div class="node step blue">
+    <div class="num">3️⃣</div>
+    <div class="content">
+      <div class="title">חשב את החותך a</div>
+      <div class="detail">a = ȳ − b · x̄</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+  <div class="node step green">
+    <div class="num">4️⃣</div>
+    <div class="content">
+      <div class="title">כתוב את משוואת הישר</div>
+      <div class="detail">ŷ = b·x + a — זו המשוואה. לניבוי: הצב ערך x ומצא ŷ</div>
+    </div>
+  </div>
+
+  <div class="tip">💡 <strong>חשוב:</strong> ישר הרגרסיה תמיד עובר בנקודה (x̄, ȳ). אפשר לבדוק את התשובה בכך!</div>
+</div>
+
+<!-- ═══ שינויים ═══ -->
+<div class="panel" id="panel-changes">
+  <div class="section-title">מה קורה כשמשנים את הנתונים?</div>
+  <div class="node warn">⚠️ שאלות "מה קורה אם..." הן <strong>מאוד נפוצות בבגרות</strong> — לפחות סעיף אחד בכל שאלת רגרסיה!</div>
+
+  <div class="rule-box">
+    <div class="rb-title">הוספת קבוע לכל ערכי y (למשל: כל מחיר עולה ב-0.2)</div>
+    <div class="rule-item"><span class="rname">ממוצע ȳ</span>גדל בקבוע — ȳ_חדש = ȳ + קבוע</div>
+    <div class="rule-item"><span class="rname">סטיית תקן S_y</span>לא משתנה! פיזור הנתונים נשמר</div>
+    <div class="rule-item"><span class="rname">מקדם מתאם r</span>לא משתנה! הקשר הלינארי נשמר</div>
+    <div class="rule-item"><span class="rname">שיפוע b</span>לא משתנה! (כי b = r·S_y/S_x ו-S_y לא השתנה)</div>
+    <div class="rule-item"><span class="rname">חותך a</span>משתנה! (כי a = ȳ − b·x̄ וȳ השתנה)</div>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">כפל כל ערכי y בקבוע k (למשל: הכפל פי 3)</div>
+    <div class="rule-item"><span class="rname">ממוצע ȳ</span>מוכפל ב-k</div>
+    <div class="rule-item"><span class="rname">סטיית תקן S_y</span>מוכפלת ב-k</div>
+    <div class="rule-item"><span class="rname">מקדם מתאם r</span>לא משתנה!</div>
+    <div class="rule-item"><span class="rname">שיפוע b</span>מוכפל ב-k (כי S_y הוכפלה ב-k)</div>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">הוספת קבוע לכל ערכי x</div>
+    <div class="rule-item"><span class="rname">ממוצע x̄</span>גדל בקבוע</div>
+    <div class="rule-item"><span class="rname">סטיית תקן S_x</span>לא משתנה</div>
+    <div class="rule-item"><span class="rname">מקדם מתאם r</span>לא משתנה</div>
+    <div class="rule-item"><span class="rname">שיפוע b</span>לא משתנה</div>
+    <div class="rule-item"><span class="rname">חותך a</span>משתנה</div>
+  </div>
+
+  <div class="tip">💡 <strong>כלל אצבע:</strong> הוספת קבוע לא משנה פיזור (סטיית תקן) ולא משנה קשר (r). כפל משנה פיזור וגם שיפוע — אבל לא משנה את r!</div>
+</div>
+
+<!-- ═══ תרגול ═══ -->
+<div class="panel" id="panel-practice">
+
+  <div class="section-title">תרגילים מבגרויות אמיתיות</div>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🟢 חורף תשפ"ה 2025 — בית מרקחת</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <strong>נתון:</strong> 5 חודשים, ימי גשם (x): 6,10,20,14,10. הכנסה (y). x̄=12, Sₓ=4.47, ȳ=71, S_y=8.46. r=0.959<br><br>
+      <strong>א. מצאו ממוצע וסטיית תקן של x.</strong>
+      <div class="sol-step"><div class="s-num">ממוצע</div>(6+10+20+14+10)÷5 = 60÷5 = <strong>12 ימים</strong></div>
+      <div class="sol-step"><div class="s-num">סטיית תקן</div>נתונה: Sₓ = <strong>4.47</strong></div>
+      <br><strong>ב. מצאו שיפוע וחותך ישר הרגרסיה.</strong>
+      <div class="sol-step"><div class="s-num">שיפוע b</div>b = 0.959 × (8.46÷4.47) = 0.959 × 1.892 ≈ <strong>1.815</strong></div>
+      <div class="sol-step"><div class="s-num">חותך a</div>a = 71 − 1.815×12 = 71 − 21.78 ≈ <strong>49.22</strong></div>
+      <div class="sol-step"><div class="s-num">משוואה</div>ŷ = 1.815x + 49.22</div>
+      <br><strong>ג. ניבוי הכנסה בחודש עם 15 ימי גשם?</strong>
+      <div class="sol-step"><div class="s-num">הצב x=15</div>ŷ = 1.815×15 + 49.22 = 27.23 + 49.22 ≈ <strong>76.45 אלף ש"ח</strong></div>
+      <br><strong>ד. בית מרקחת ב׳ — כל חודש הכנסה קטנה ב-10 אלף. משוואת ישר הרגרסיה שלו?</strong>
+      <div class="sol-step"><div class="s-num">שיפוע</div>לא משתנה (הוספת קבוע) → b = <strong>1.815</strong></div>
+      <div class="sol-step"><div class="s-num">חותך חדש</div>a_חדש = 49.22 − 10 = <strong>39.22</strong></div>
+      <div class="sol-step"><div class="s-num">משוואה</div>ŷ = 1.815x + 39.22</div>
+    </div>
+  </div>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🟢 קיץ תשפ"ה 2025 מועד א׳ — דירות</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <strong>נתון:</strong> 5 דירות, שטח x, מחיר y (מיליוני ש"ח). x̄=100, Sₓ=13.4, ȳ=2.7, S_y=1.249, r=0.98<br><br>
+      <strong>א. מצאו משוואת ישר רגרסיה.</strong>
+      <div class="sol-step"><div class="s-num">שיפוע b</div>b = 0.98 × (1.249÷13.4) = 0.98 × 0.0932 ≈ <strong>0.0913</strong></div>
+      <div class="sol-step"><div class="s-num">חותך a</div>a = 2.7 − 0.0913×100 = 2.7 − 9.13 = <strong>−6.43</strong></div>
+      <div class="sol-step"><div class="s-num">משוואה</div>ŷ = 0.0913x − 6.43</div>
+      <br><strong>ב. ניבוי מחיר דירה של 95 מ"ר?</strong>
+      <div class="sol-step"><div class="s-num">הצב x=95</div>ŷ = 0.0913×95 − 6.43 = 8.67 − 6.43 ≈ <strong>2.24 מיליון ש"ח</strong></div>
+      <br><strong>ג. המחיר של כל דירה עלה ב-0.2 מיליון. S_y ו-r — גדלו, קטנו, לא השתנו?</strong>
+      <div class="sol-step"><div class="s-num">S_y</div>הוספת קבוע לכל נתוני y — הפיזור נשמר → <strong>לא השתנתה</strong></div>
+      <div class="sol-step"><div class="s-num">r</div>הוספת קבוע לא משנה את הקשר → <strong>לא השתנה</strong></div>
+    </div>
+  </div>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🟠 חורף תשפ"ו 2026 — מים וטמפרטורה (בינוני)</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <strong>נתון:</strong> 6 ימים, טמפרטורה x (20,22,24,26,28,30), צריכת מים y. x̄=25, Sₓ=3.742, ȳ=2.5, S_y=0.566, r=0.98<br><br>
+      <strong>א. מצאו משוואת ישר הרגרסיה.</strong>
+      <div class="sol-step"><div class="s-num">שיפוע b</div>b = 0.98 × (0.566÷3.742) = 0.98 × 0.1513 ≈ <strong>0.148</strong></div>
+      <div class="sol-step"><div class="s-num">חותך a</div>a = 2.5 − 0.148×25 = 2.5 − 3.7 = <strong>−1.2</strong></div>
+      <div class="sol-step"><div class="s-num">משוואה</div>ŷ = 0.148x − 1.2</div>
+      <br><strong>ב. הוכפלה כל צריכת מים (y) פי 3 לייצג משפחה. מה קורה לממוצע y? לסטיית תקן? לשיפוע?</strong>
+      <div class="sol-step"><div class="s-num">ממוצע ȳ</div>גדל פי 3: ȳ_חדש = 2.5×3 = <strong>7.5</strong></div>
+      <div class="sol-step"><div class="s-num">סטיית תקן S_y</div>גדלה פי 3: S_y_חדשה = 0.566×3 = <strong>1.698</strong></div>
+      <div class="sol-step"><div class="s-num">r</div><strong>לא השתנה</strong> — כפל קבוע לא משנה קשר לינארי</div>
+      <div class="sol-step"><div class="s-num">שיפוע חדש</div>b_חדש = r × (S_y_חדש÷Sₓ) = 3×b_ישן = 3×0.148 = <strong>0.444</strong></div>
+    </div>
+  </div>
+
+  <div class="tip">💡 <strong>מה לזכור:</strong> הוספת קבוע → r ו-S לא משתנים, רק ממוצע וחותך. כפל בקבוע → S וב גדלים פי אותו קבוע, r לא משתנה.</div>
+
+</div>
+</main>
+<script>
+function showPanel(type,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.main-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+type).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleEx(header){
+  const body=header.nextElementSibling;
+  const toggle=header.querySelector('.ex-toggle');
+  body.classList.toggle('open');
+  toggle.classList.toggle('open');
+}
+</script>
+</body>
+</html>

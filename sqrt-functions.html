@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>חקירת פונקציית שורש — כיתה י׳ 4 יח"ל</title>
+<link rel="stylesheet" href="style.css">
+<style>
+:root{
+  --yellow:#FFE135;--yellow-pale:#FFFBE0;--yellow-dark:#F5C800;
+  --ink:#1A1A1A;--ink-soft:#4B4B4B;--bg:#FFFDF0;
+}
+/* page-specific overrides for sqrt-functions */
+:root {
+  --purple:#5b21b6; --purple-light:#ede9fe; --purple-border:#c4b5fd;
+  --teal:#0f766e; --teal-light:#ccfbf1;
+  --orange:#c2410c; --orange-light:#fff7ed;
+  --red:#b91c1c; --red-light:#fee2e2;
+  --green:#166534; --green-light:#dcfce7;
+  --blue:#1d4ed8; --blue-light:#eff6ff;
+  --pink:#9d174d; --pink-light:#fce7f3;
+  --indigo:#3730a3; --indigo-light:#e0e7ff;
+  --gray:#78716c;
+  --shadow:0 2px 12px rgba(0,0,0,0.08);
+  --bg:#f8f7f4; --white:#fff; --border:#e4e0d8; --text:#1c1917;
+}
+
+.main-nav{display:flex;justify-content:center;max-width:700px;margin:22px auto 0;background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.2);border-radius:14px;overflow:hidden;}
+.main-btn{flex:1;padding:12px 4px;border:none;background:transparent;font-family:'Nunito',sans-serif;font-size:0.83rem;font-weight:800;cursor:pointer;color:rgba(255,255,255,0.6);transition:all 0.2s;border-left:1px solid rgba(255,255,255,0.15);}
+.main-btn:last-child{border-left:none;}
+.main-btn.active{background:rgba(255,255,255,0.2);color:#fff;}
+.main-btn:hover:not(.active){background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.9);}
+.main-btn:disabled{color:rgba(255,255,255,0.3);cursor:default;}
+
+main{max-width:700px;margin:0 auto;padding:28px 14px 80px;}
+.panel{display:none;}
+.panel.active{display:flex;flex-direction:column;align-items:center;gap:0;}
+.section-title{width:100%;font-family:'Fredoka One',cursive;font-size:1.1rem;font-weight:700;color:var(--purple);padding:16px 0 10px;border-bottom:2px solid var(--purple-border);margin-bottom:4px;}
+
+/* NODES */
+.node{width:100%;border-radius:14px;padding:16px 22px;font-size:0.95rem;font-weight:700;line-height:1.5;}
+.node.start{background:linear-gradient(135deg,#3b0764,#5b21b6 60%,#9d174d);color:#fff;text-align:center;font-size:1.1rem;font-weight:900;border-radius:50px;padding:14px 36px;box-shadow:0 6px 20px rgba(91,33,182,.3);}
+.node.end{background:var(--green);color:#fff;text-align:center;font-size:1.05rem;font-weight:900;border-radius:50px;padding:14px 36px;box-shadow:0 6px 20px rgba(22,101,52,.3);}
+.node.step{border:2px solid;display:flex;align-items:flex-start;gap:12px;background:var(--white);box-shadow:var(--shadow);}
+.node.step .num{font-size:1.4rem;min-width:30px;line-height:1;margin-top:2px;}
+.node.step .content .title{font-size:1rem;font-weight:800;margin-bottom:3px;}
+.node.step .content .detail{font-size:0.87rem;font-weight:600;color:var(--gray);line-height:1.5;}
+.node.decision{background:var(--white);border:2.5px solid;border-radius:14px;box-shadow:var(--shadow);}
+.node.decision .q{font-size:0.95rem;font-weight:800;margin-bottom:8px;}
+.node.decision .opts{display:flex;gap:8px;flex-wrap:wrap;}
+.node.decision .opt{padding:4px 14px;border-radius:20px;font-size:0.82rem;font-weight:700;}
+.node.warn{background:#fefce8;border:2px solid #fde047;color:#713f12;}
+.node.purple{border-color:var(--purple);} .node.purple .num{color:var(--purple);} .node.purple .opt{background:var(--purple-light);color:var(--purple);}
+.node.teal{border-color:var(--teal);} .node.teal .num{color:var(--teal);} .node.teal .opt{background:var(--teal-light);color:var(--teal);}
+.node.orange{border-color:var(--orange);} .node.orange .num{color:var(--orange);} .node.orange .opt{background:var(--orange-light);color:var(--orange);}
+.node.red{border-color:var(--red);} .node.red .num{color:var(--red);} .node.red .opt{background:var(--red-light);color:var(--red);}
+.node.green{border-color:var(--green);} .node.green .num{color:var(--green);} .node.green .opt{background:var(--green-light);color:var(--green);}
+.node.blue{border-color:var(--blue);} .node.blue .num{color:var(--blue);} .node.blue .opt{background:var(--blue-light);color:var(--blue);}
+.node.pink{border-color:var(--pink);} .node.pink .num{color:var(--pink);} .node.pink .opt{background:var(--pink-light);color:var(--pink);}
+.node.indigo{border-color:var(--indigo);} .node.indigo .num{color:var(--indigo);} .node.indigo .opt{background:var(--indigo-light);color:var(--indigo);}
+
+.arrow{display:flex;justify-content:center;padding:4px 0;}
+.spacer{height:12px;}
+
+/* CHECKLIST TABLE */
+.check-table{width:100%;border-collapse:collapse;background:var(--white);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);}
+.check-table th{background:var(--purple);color:#fff;padding:10px 14px;font-size:0.88rem;font-weight:800;text-align:right;}
+.check-table td{padding:9px 14px;border-bottom:1px solid var(--border);font-size:0.87rem;font-weight:600;}
+.check-table tr:last-child td{border-bottom:none;}
+.check-table tr:nth-child(even) td{background:#faf9f7;}
+
+/* RULE BOX */
+.rule-box{width:100%;border-radius:14px;overflow:hidden;box-shadow:var(--shadow);margin-bottom:10px;border:1.5px solid var(--border);}
+.rb-title{padding:9px 16px;font-size:0.87rem;font-weight:800;}
+.rule-item{padding:9px 16px;font-size:0.86rem;font-weight:600;border-bottom:1px solid var(--border);background:var(--white);line-height:1.5;}
+.rule-item:last-child{border-bottom:none;}
+.rname{font-weight:800;display:block;margin-bottom:1px;}
+.rule-box.purple .rb-title{background:var(--purple-light);color:var(--purple);border-bottom:1px solid var(--purple-border);}
+.rule-box.purple .rname{color:var(--purple);}
+.rule-box.teal .rb-title{background:var(--teal-light);color:var(--teal);border-bottom:1px solid var(--teal);}
+.rule-box.teal .rname{color:var(--teal);}
+.rule-box.orange .rb-title{background:var(--orange-light);color:var(--orange);border-bottom:1px solid var(--orange);}
+.rule-box.orange .rname{color:var(--orange);}
+.rule-box.green .rb-title{background:var(--green-light);color:var(--green);border-bottom:1px solid var(--green);}
+.rule-box.green .rname{color:var(--green);}
+.rule-box.red .rb-title{background:var(--red-light);color:var(--red);border-bottom:1px solid var(--red);}
+.rule-box.red .rname{color:var(--red);}
+.rule-box.blue .rb-title{background:var(--blue-light);color:var(--blue);border-bottom:1px solid var(--blue);}
+.rule-box.blue .rname{color:var(--blue);}
+.rule-box.pink .rb-title{background:var(--pink-light);color:var(--pink);border-bottom:1px solid var(--pink);}
+.rule-box.pink .rname{color:var(--pink);}
+.rule-box.indigo .rb-title{background:var(--indigo-light);color:var(--indigo);border-bottom:1px solid var(--indigo);}
+.rule-box.indigo .rname{color:var(--indigo);}
+.rule-box.indigo .rule-item.indigo{background:var(--indigo-light);}
+.pink-border{border-right:3px solid var(--pink);}
+
+/* FRAC */
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 2px;font-size:0.9em;}
+.frac .num{border-bottom:1.5px solid currentColor;padding:0 3px;line-height:1.3;}
+.frac .den{padding:0 3px;line-height:1.3;}
+
+/* EXAMPLES */
+.example{width:100%;background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow);margin-bottom:4px;}
+.e-title{font-size:0.88rem;font-weight:800;color:var(--purple);margin-bottom:10px;}
+.example table{box-shadow:none;border-radius:0;}
+.example td{padding:6px 10px;font-size:0.86rem;}
+
+/* EXERCISE */
+.diff-bar{display:flex;gap:8px;margin-bottom:14px;}
+.diff-btn{padding:6px 16px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);font-family:'Nunito',sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;color:var(--gray);transition:all 0.15s;}
+.diff-btn.active{background:var(--purple);color:#fff;border-color:var(--purple);}
+.ex-group{display:none;}
+.ex-group.active{display:flex;flex-direction:column;gap:10px;}
+.ex-card{background:var(--white);border-radius:14px;border:1.5px solid var(--border);overflow:hidden;box-shadow:var(--shadow);width:100%;}
+.ex-header{padding:13px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:0.9rem;}
+.ex-toggle{font-size:0.75rem;color:var(--gray);transition:transform 0.2s;}
+.ex-toggle.open{transform:rotate(180deg);}
+.ex-body{display:none;padding:14px 16px;border-top:1px solid var(--border);background:#faf9f7;font-size:0.87rem;font-weight:600;line-height:1.7;}
+.ex-body.open{display:block;}
+.step-solution{display:flex;flex-direction:column;gap:8px;}
+.sol-step{padding:8px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);}
+.sol-step .s-num{font-size:0.75rem;font-weight:800;color:var(--purple);margin-bottom:2px;}
+.sol-step .s-text{font-size:0.86rem;font-weight:600;line-height:1.5;}
+
+/* GENERATOR */
+.gen-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+.gen-label{font-size:0.85rem;font-weight:700;color:var(--gray);}
+.gen-func-display{background:var(--white);border:2px solid var(--purple-border);border-radius:14px;padding:16px 20px;text-align:center;font-size:1.4rem;font-weight:900;color:var(--purple);font-family:'Fredoka One',cursive;box-shadow:var(--shadow);min-height:60px;display:flex;align-items:center;justify-content:center;width:100%;}
+.gen-checklist{list-style:none;display:flex;flex-direction:column;gap:0;}
+.gen-checklist li{display:flex;align-items:center;gap:10px;font-size:0.88rem;font-weight:700;cursor:pointer;padding:9px 0;border-bottom:1px solid var(--border);}
+.gen-checklist li:last-child{border-bottom:none;}
+.gen-checklist li.done{color:var(--green);text-decoration:line-through;}
+.gen-check-box{width:20px;height:20px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;font-size:12px;}
+.gen-checklist li.done .gen-check-box{background:var(--green);border-color:var(--green);color:#fff;}
+canvas{border-radius:14px;border:1.5px solid var(--border);width:100%;max-width:100%;}
+.gen-summary-table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+.gen-summary-table td{padding:6px 10px;border-bottom:1px solid var(--border);}
+.gen-summary-table td:first-child{font-weight:800;color:var(--purple);width:40%;}
+.gen-summary-table tr:last-child td{border-bottom:none;}
+.btn-graph{padding:9px 20px;border-radius:10px;border:none;font-family:'Nunito',sans-serif;font-size:0.88rem;font-weight:800;cursor:pointer;transition:all 0.18s;background:linear-gradient(135deg,var(--purple),#9d174d);color:#fff;width:100%;}
+.btn-graph:hover{opacity:0.9;}
+.btn-graph.revealed{background:var(--green);}
+.btn-new{padding:9px 20px;border-radius:10px;border:2px solid var(--purple-border);font-family:'Nunito',sans-serif;font-size:0.88rem;font-weight:800;cursor:pointer;transition:all 0.18s;background:var(--white);color:var(--purple);width:100%;}
+.btn-new:hover{background:var(--purple-light);}
+.tip{width:100%;background:#fefce8;border:1.5px solid #fde047;border-radius:14px;padding:12px 16px;font-size:0.85rem;font-weight:700;color:#713f12;line-height:1.5;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="topbar-logo">
+    <div class="logo-mark">∫</div>
+    <span class="logo-text">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge">פרק ג׳ · חדו"א</span>
+    <a href="index.html" class="topbar-home">← בית</a>
+  </div>
+</div>
+    <span class="logo-text">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge">∫ פרק ג׳ · חדו"א</span>
+    <a href="index.html" class="topbar-home">← בית</a>
+  </div>
+</div>
+    <span class="logo-text" style="color:var(--ink,#1a1a1a);font-family:'Fredoka One',cursive;">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge" style="background:var(--ink,#1a1a1a);color:var(--yellow,#FFE135);font-family:'Fredoka One',cursive;">פרק ג׳ · חדו"א</span>
+    <a href="index.html" class="topbar-home" style="border:2.5px solid var(--ink,#1a1a1a);color:var(--ink,#1a1a1a);font-family:'Fredoka One',cursive;background:#fff;border-radius:999px;padding:5px 14px;text-decoration:none;font-size:0.82rem;">← דף הבית</a>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-breadcrumb">פרק ג׳ · חדו"א</div>
+  <h1>√ פונקציית שורש</h1>
+  <p class="hero-sub">חקירה · נגזרות · טרנספורמציות · שאלות ישר · מחולל</p>
+  <div class="main-nav">
+    <button class="main-btn active" onclick="showPanel('flow',this)">📋 חקירה</button>
+    <button class="main-btn" onclick="showPanel('deriv',this)">∂ נגזרות</button>
+    <button class="main-btn" onclick="showPanel('transform',this)">🔄 טרנספורמציות</button>
+    <button class="main-btn" onclick="showPanel('lines',this)">📏 שאלות ישר</button>
+    <button class="main-btn" onclick="showPanel('generator',this)">🎲 מחולל</button>
+    <button class="main-btn" style="color:rgba(255,235,80,0.25);cursor:default;" disabled>🔒 שלב ב׳</button>
+  </div>
+</div>
+
+<main>
+
+<!-- ═══════════════════ PANEL 1 — חקירה ═══════════════════ -->
+<div class="panel active" id="panel-flow">
+
+  <div class="node start">√ קיבלנו פונקציית שורש לחקור</div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="node step purple">
+    <div class="num">1️⃣</div>
+    <div class="content">
+      <div class="title">תחום הגדרה — תמיד ראשון!</div>
+      <div class="detail">מה שבתוך השורש חייב להיות <strong>אפס או יותר</strong><br>פתור: ביטוי בתוך השורש ≥ 0<br><em>כתוב: "כל x שמקיים x ≥ ..."</em></div>
+      <div class="math">√(2x−4): 2x−4≥0 → x≥2</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="node warn">⚠️ <strong>כל שאר השלבים — רק עבור x שנמצא בתחום!</strong> לפני כל נקודה — בדוק שהיא בתחום.</div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="node step orange">
+    <div class="num">2️⃣</div>
+    <div class="content">
+      <div class="title">נקודות חיתוך עם הצירים</div>
+      <div class="detail">
+        <strong>עם ציר x (y=0):</strong> הצב y=0, פתור, בדוק שבתחום<br>
+        <strong>עם ציר y (x=0):</strong> רק אם 0 נמצא בתחום ההגדרה!
+      </div>
+      <div class="math">אם 0 לא בתחום → "אין חיתוך עם ציר y"</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="node step indigo">
+    <div class="num">3️⃣</div>
+    <div class="content">
+      <div class="title">נגזרת → נקודות קיצון + נקודות קצה</div>
+      <div class="detail">
+        <strong>שלב א:</strong> חשב f′(x)<br>
+        <strong>שלב ב:</strong> פתור f′(x) = 0 → נקודות חשודות לקיצון<br>
+        <strong>שלב ג:</strong> בנה טבלת עלייה/ירידה (ראה פאנל "נגזרות")<br>
+        <strong>שלב ד:</strong> בדוק <em>נקודת קצה</em> = הנקודה בקצה תחום ההגדרה
+      </div>
+      <div class="math">f′=0 → קיצון פנימי · קצה תחום → נקודת קצה</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="node step teal">
+    <div class="num">4️⃣</div>
+    <div class="content">
+      <div class="title">תחום עלייה וירידה</div>
+      <div class="detail">
+        מטבלת הנגזרת:<br>
+        f′(x) > 0 → <strong>עולה</strong> · f′(x) < 0 → <strong>יורדת</strong><br>
+        <em>פונקציית שורש פשוטה לרוב עולה או יורדת לאורך כל התחום</em>
+      </div>
+      <div class="math">√(x+3): עולה בכל התחום · √(−x+5): יורדת</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="node step blue">
+    <div class="num">5️⃣</div>
+    <div class="content">
+      <div class="title">תחום חיוביות ושליליות</div>
+      <div class="detail">
+        <strong>אם הפונקציה היא רק שורש:</strong> תמיד חיובית או אפס<br>
+        <strong>אם יש איברים נוספים</strong> (כמו √x − 3): הפונקציה <em>יכולה להיות שלילית!</em><br>
+        מצא היכן f(x)=0, הצב נקודת בדיקה בכל תחום
+      </div>
+      <div class="math">√x − 3 = 0 → x=9 · שלילית ב-0≤x&lt;9, חיובית ב-x&gt;9</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="node step pink">
+    <div class="num">6️⃣</div>
+    <div class="content">
+      <div class="title">שרטוט הגרף</div>
+      <div class="detail">
+        <strong>1.</strong> סמן נקודות חיתוך עם הצירים<br>
+        <strong>2.</strong> סמן נקודות קיצון ונקודות קצה<br>
+        <strong>3.</strong> ציין כיוון — עולה או יורדת<br>
+        <strong>4.</strong> הגרף מתחיל תמיד מנקודת הקצה!
+      </div>
+      <div class="math">תמיד התחל מנקודת הקצה של תחום ההגדרה</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="node end">🎉 סיימנו את החקירה!</div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="summary">
+    <div class="s-title">📋 רשימת בדיקות — מה לכתוב בחקירה</div>
+    <table>
+      <tr><th>נושא</th><th>מה לעשות</th></tr>
+      <tr><td>תחום הגדרה</td><td>בתוך השורש ≥ 0 → פתור → כתוב "כל x שמקיים..."</td></tr>
+      <tr><td>חיתוך עם x</td><td>y=0 → פתור → בדוק שבתחום</td></tr>
+      <tr><td>חיתוך עם y</td><td>x=0 → רק אם 0 בתחום</td></tr>
+      <tr><td>קיצון וקצה</td><td>f′=0 → קיצון · קצה תחום → נקודת קצה</td></tr>
+      <tr><td>עלייה / ירידה</td><td>טבלת נגזרת: f′>0 עולה, f′&lt;0 יורדת</td></tr>
+      <tr><td>חיוביות / שליליות</td><td>מצא f(x)=0, בדוק בכל תחום</td></tr>
+      <tr><td>שרטוט</td><td>נקודות + כיוון + מתחיל מנקודת קצה</td></tr>
+    </table>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+  <div class="tip">💡 <strong>כלל הזהב:</strong> תחום הגדרה קודם לכל!</div>
+</div>
+
+<!-- ═══════════════════ PANEL 2 — נגזרות ═══════════════════ -->
+<div class="panel" id="panel-deriv">
+  <div class="section-title">∂ כללי נגזרת לפונקציות שורש</div>
+
+  <!-- כלל שרשרת -->
+  <div class="rule-box indigo">
+    <div class="rb-title">⛓️ כלל השרשרת — [f(g(x))]′ = f′(g(x)) · g′(x)</div>
+    <div class="rule-item indigo">
+      <span class="rname">הרעיון</span>
+      נגזרת "הפונקציה החיצונית" כפול נגזרת "הפונקציה הפנימית"
+    </div>
+    <div class="rule-item indigo">
+      <span class="rname">שורש בסיסי</span>
+      <span class="rmath">(√x)′ = <span class="frac"><span class="num">1</span><span class="den">2√x</span></span></span>
+    </div>
+    <div class="rule-item indigo">
+      <span class="rname">שורש של ביטוי — כלל השרשרת</span>
+      <span class="rmath">(√(g(x)))′ = <span class="frac"><span class="num">g′(x)</span><span class="den">2√(g(x))</span></span></span>
+      <div style="font-size:0.83rem;margin-top:6px;color:var(--gray);">= נגזרת מה שבפנים, חלקי 2√(מה שבפנים)</div>
+    </div>
+    <div class="rule-item indigo">
+      <span class="rname">דוגמה: (√(3x²+1))′</span>
+      <div style="font-size:0.87rem;margin-top:4px;line-height:1.7;">
+        g(x) = 3x²+1 → g′(x) = 6x<br>
+        <span class="rmath">(√(3x²+1))′ = <span class="frac"><span class="num">6x</span><span class="den">2√(3x²+1)</span></span> = <span class="frac"><span class="num">3x</span><span class="den">√(3x²+1)</span></span></span>
+      </div>
+    </div>
+    <div class="rule-item indigo">
+      <span class="rname">דוגמה: (√(x²−4x))′</span>
+      <div style="font-size:0.87rem;margin-top:4px;line-height:1.7;">
+        g(x) = x²−4x → g′(x) = 2x−4<br>
+        <span class="rmath">(√(x²−4x))′ = <span class="frac"><span class="num">2x−4</span><span class="den">2√(x²−4x)</span></span></span>
+      </div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <!-- כלל מכפלה -->
+  <div class="rule-box pink">
+    <div class="rb-title">✖️ כלל המכפלה — (u·v)′ = u′v + uv′</div>
+    <div class="rule-item pink pink-border">
+      <span class="rname">הנוסחה</span>
+      <span class="rmath pink-bg">(u·v)′ = u′·v + u·v′</span>
+      <div style="font-size:0.83rem;margin-top:5px;color:var(--gray);">נגזרת הראשון כפול השני, ועוד הראשון כפול נגזרת השני</div>
+    </div>
+    <div class="rule-item pink pink-border">
+      <span class="rname">דוגמה: f(x) = x²·√x</span>
+      <div style="font-size:0.87rem;margin-top:4px;line-height:1.7;">
+        u=x², u′=2x · v=√x, v′=<span class="frac"><span class="num">1</span><span class="den">2√x</span></span><br>
+        f′ = 2x·√x + x²·<span class="frac"><span class="num">1</span><span class="den">2√x</span></span><br>
+        <span class="rmath pink-bg">= 2x√x + <span class="frac"><span class="num">x²</span><span class="den">2√x</span></span> = <span class="frac"><span class="num">5x</span><span class="den">2</span></span>·√x</span>
+      </div>
+    </div>
+    <div class="rule-item pink pink-border">
+      <span class="rname">דוגמה: f(x) = (x+1)·√(x−2) — מכפלה + שרשרת</span>
+      <div style="font-size:0.87rem;margin-top:4px;line-height:1.7;">
+        u=x+1, u′=1 · v=√(x−2), v′=<span class="frac"><span class="num">1</span><span class="den">2√(x−2)</span></span> <em>(שרשרת!)</em><br>
+        <span class="rmath pink-bg">f′ = √(x−2) + <span class="frac"><span class="num">x+1</span><span class="den">2√(x−2)</span></span></span>
+      </div>
+    </div>
+    <div class="rule-item pink pink-border">
+      <span class="rname">דוגמה: f(x) = x·√(x²+1) — מכפלה + שרשרת</span>
+      <div style="font-size:0.87rem;margin-top:4px;line-height:1.7;">
+        u=x, u′=1 · v=√(x²+1), v′=<span class="frac"><span class="num">x</span><span class="den">√(x²+1)</span></span> <em>(שרשרת: g′=2x)</em><br>
+        <span class="rmath pink-bg">f′ = √(x²+1) + <span class="frac"><span class="num">x²</span><span class="den">√(x²+1)</span></span></span>
+      </div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <!-- טבלת עלייה -->
+  <div class="inc-table">
+    <div class="t-title">📊 איך בונים טבלת עלייה/ירידה</div>
+    <div style="font-size:0.87rem;font-weight:600;margin-bottom:12px;line-height:1.7;color:var(--text);">
+      <strong>שלב 1:</strong> חשב f′(x)<br>
+      <strong>שלב 2:</strong> מצא כל x שבו f′(x)=0 (ואת קצוות התחום)<br>
+      <strong>שלב 3:</strong> חלק את התחום לקטעים<br>
+      <strong>שלב 4:</strong> הצב נקודת בדיקה בכל קטע, בדוק סימן f′
+    </div>
+    <table>
+      <tr><th>x</th><th>קצה שמאל</th><th>קטע א</th><th>נקודת קיצון</th><th>קטע ב</th><th>קצה ימין</th></tr>
+      <tr><td><strong>f′(x)</strong></td><td>—</td><td class="up">+</td><td class="zt">0</td><td class="dn">−</td><td>—</td></tr>
+      <tr><td><strong>f(x)</strong></td><td>ערך קצה</td><td class="up">↗ עולה</td><td><strong>מקסימום</strong></td><td class="dn">↘ יורדת</td><td>ערך קצה</td></tr>
+    </table>
+    <div style="font-size:0.83rem;font-weight:700;color:var(--gray);margin-top:10px;">
+      f′ עובר מ+ ל− → <strong>מקסימום</strong> · f′ עובר מ− ל+ → <strong>מינימום</strong>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="example">
+    <div class="e-title">📝 דוגמה מלאה: f(x) = x·√(−x+4) — מכפלה + שרשרת</div>
+    <table>
+      <tr><td>תחום:</td><td>−x+4≥0 → x≤4</td></tr>
+      <tr><td>u=x, v=√(−x+4):</td><td>u′=1 · v′= −<span class="frac"><span class="num">1</span><span class="den">2√(−x+4)</span></span> <em>(שרשרת: g′=−1)</em></td></tr>
+      <tr><td>f′:</td><td>√(−x+4) + x·(−<span class="frac"><span class="num">1</span><span class="den">2√(−x+4)</span></span>)<br>= <span class="frac"><span class="num">2(−x+4)−x</span><span class="den">2√(−x+4)</span></span><br>= <span class="frac"><span class="num">−3x+8</span><span class="den">2√(−x+4)</span></span></td></tr>
+      <tr><td>f′=0:</td><td>−3x+8=0 → x=<span class="frac"><span class="num">8</span><span class="den">3</span></span> ✓ בתחום</td></tr>
+      <tr><td>טבלה:</td><td>עולה ב-x&lt;<span class="frac"><span class="num">8</span><span class="den">3</span></span> · יורדת ב-<span class="frac"><span class="num">8</span><span class="den">3</span></span>&lt;x≤4</td></tr>
+      <tr><td>מקסימום:</td><td>x=<span class="frac"><span class="num">8</span><span class="den">3</span></span> · f(<span class="frac"><span class="num">8</span><span class="den">3</span></span>)=(<span class="frac"><span class="num">8</span><span class="den">3</span></span>)·√(<span class="frac"><span class="num">4</span><span class="den">3</span></span>) ≈ 3.08</td></tr>
+      <tr><td>נקודות קצה:</td><td>f(0)=0 · f(4)=0</td></tr>
+    </table>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+  <div class="tip">💡 <strong>זכור:</strong> המכנה 2√... לא יכול להיות אפס — נקודת הקצה עצמה לא בתחום הנגזרת, אבל בודקים אותה בנפרד כנקודת קצה!</div>
+</div>
+
+<!-- ═══════════════════ PANEL 3 — טרנספורמציות ═══════════════════ -->
+<div class="panel" id="panel-transform">
+  <div class="section-title">🔄 טרנספורמציות של פונקציית השורש</div>
+  <div style="width:100%;font-size:0.88rem;font-weight:700;color:var(--gray);margin-bottom:12px;">הפונקציה הבסיסית: f(x)=√x — מתחילה ב-(0,0), עולה ימינה, תחום: x≥0</div>
+
+  <div class="tx-box">
+    <div class="tx-title">📐 הזזות</div>
+    <div class="tx-row"><div class="tx-f">√(x − a)</div><div class="tx-d">הזזה <strong>ימינה</strong> ב-a · תחום חדש: x≥a · נקודת קצה: (a, 0)</div></div>
+    <div class="tx-row"><div class="tx-f">√(x + a)</div><div class="tx-d">הזזה <strong>שמאלה</strong> ב-a · תחום חדש: x≥−a · נקודת קצה: (−a, 0)</div></div>
+    <div class="tx-row"><div class="tx-f">√x + b</div><div class="tx-d">הזזה <strong>למעלה</strong> ב-b · תחום לא משתנה · נקודת קצה: (0, b) · מינימום: b</div></div>
+    <div class="tx-row"><div class="tx-f">√x − b</div><div class="tx-d">הזזה <strong>למטה</strong> ב-b · הפונקציה <em>יכולה להיות שלילית!</em> · מינימום: −b</div></div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="tx-box">
+    <div class="tx-title">🔁 שיקופים ומתיחות</div>
+    <div class="tx-row"><div class="tx-f">−√x</div><div class="tx-d">שיקוף סביב ציר x → <strong>יורדת</strong> · טווח: y≤0 · תמיד שלילית!</div></div>
+    <div class="tx-row"><div class="tx-f">√(−x)</div><div class="tx-d">שיקוף סביב ציר y → פונה <strong>שמאלה</strong> · תחום: x≤0</div></div>
+    <div class="tx-row"><div class="tx-f">c·√x</div><div class="tx-d">c&gt;1: גרף "תלול" · 0&lt;c&lt;1: גרף שטוח · c&lt;0: גם שיקוף למטה</div></div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="tx-box">
+    <div class="tx-title">🧩 צורה כללית: a·√(x−h) + k</div>
+    <div class="tx-row"><div class="tx-f">h</div><div class="tx-d">הזזה ימין/שמאל · תחום: x≥h (אם a חיובי)</div></div>
+    <div class="tx-row"><div class="tx-f">k</div><div class="tx-d">הזזה למעלה/מטה · נקודת קצה: (h, k)</div></div>
+    <div class="tx-row"><div class="tx-f">a חיובי</div><div class="tx-d">הגרף <strong>עולה</strong> · מינימום בנקודת הקצה · טווח: y≥k</div></div>
+    <div class="tx-row"><div class="tx-f">a שלילי</div><div class="tx-d">הגרף <strong>יורד</strong> · מקסימום בנקודת הקצה · טווח: y≤k</div></div>
+    <div class="tx-row">
+      <div class="tx-f">דוגמה:<br>−2√(x−3)+4</div>
+      <div class="tx-d">תחום: x≥3 · נקודת קצה: (3,4) = מקסימום<br>a=−2 → יורדת · טווח: y≤4</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+  <div class="tip">💡 <strong>טיפ:</strong> תמיד התחל מנקודת הקצה (h,k) — משם קל לשרטט לפי כיוון ועוצמה.</div>
+</div>
+
+<!-- ═══════════════════ PANEL 4 — שאלות ישר ═══════════════════ -->
+<div class="panel" id="panel-lines">
+  <div class="section-title">📏 שאלות על ישר y=k החותך את הפונקציה</div>
+  <div style="width:100%;font-size:0.87rem;font-weight:700;color:var(--gray);margin-bottom:12px;">הישר y=k הוא קו אופקי (שיפוע אפס). השאלה: בכמה נקודות הוא חותך את הגרף?</div>
+
+  <div class="line-box">
+    <div class="l-title">📌 שלושה צעדים לכל שאלה</div>
+    <div class="lcase">
+      <div class="lq">צעד 1: מה הטווח של הפונקציה?</div>
+      <div class="la">מצא מינימום ומקסימום (מנקודות קיצון ונקודות קצה — מהחקירה!)</div>
+    </div>
+    <div class="lcase">
+      <div class="lq">צעד 2: האם k בטווח?</div>
+      <div class="la">k מחוץ לטווח → 0 חיתוכים · k שווה לקיצון → 1 חיתוך · k בתוך → צעד 3</div>
+    </div>
+    <div class="lcase">
+      <div class="lq">צעד 3: בדוק עלייה/ירידה</div>
+      <div class="la">
+        רק עולה / רק יורדת → <strong>חיתוך אחד לכל היותר</strong><br>
+        עולה ואז יורדת (יש מקסימום פנימי) → יכול להיות <strong>שני חיתוכים</strong>
+        <div class="lmath">הצב y=k → מספר פתרונות = מספר חיתוכים</div>
+      </div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="line-box">
+    <div class="l-title">📊 טבלת מספר חיתוכים לפי סוג הפונקציה</div>
+    <div class="lcase">
+      <div class="lq">פונקציה שרק עולה (למשל √x, √(x−3)+2)</div>
+      <div class="la">
+        k &lt; מינימום → 0 חיתוכים<br>
+        k = מינימום → 1 חיתוך (נקודת הקצה)<br>
+        k &gt; מינימום → 1 חיתוך בדיוק
+      </div>
+    </div>
+    <div class="lcase">
+      <div class="lq">פונקציה שרק יורדת (למשל −√x, √(−x))</div>
+      <div class="la">
+        k &gt; מקסימום → 0 חיתוכים<br>
+        k = מקסימום → 1 חיתוך (נקודת הקצה)<br>
+        k &lt; מקסימום → 1 חיתוך בדיוק
+      </div>
+    </div>
+    <div class="lcase">
+      <div class="lq">פונקציה עם מקסימום פנימי (למשל x·√(−x+4))</div>
+      <div class="la">
+        k &gt; מקסימום → 0 חיתוכים<br>
+        k = מקסימום → 1 חיתוך (בנקודת המקסימום)<br>
+        מינימום &lt; k &lt; מקסימום → <strong>2 חיתוכים</strong><br>
+        k = מינימום → 1 או 2 — בדוק בכל מקרה לגופו
+      </div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <!-- שאלות מילוליות -->
+  <div class="verbal-box">
+    <div class="v-title">💬 שאלות מילוליות מורכבות — איך מתמודדים</div>
+
+    <div class="vq">
+      <div class="vq-q">❓ "עבור אילו ערכי m המשוואה √x = mx + 1 היא ללא פתרון?"</div>
+      <div class="vq-steps">
+        <strong>פירוש:</strong> mx+1 הוא ישר עם שיפוע m. מתי הישר לא חותך את √x?<br>
+        <strong>צעד 1:</strong> שרטט את √x<br>
+        <strong>צעד 2:</strong> חשוב: מתי ישר לא חותך גרף שעולה מ-(0,0)?<br>
+        <strong>צעד 3:</strong> הישר חייב להיות מתחת לגרף בכל נקודה, או להיות מקביל ולא לחתוך<br>
+        <div class="vq-ans">גישה: הצב, פתור, בדוק מתי אין פתרון ממשי (דיסקרימיננטה &lt; 0 אם יוצאת משוואה ריבועית)</div>
+      </div>
+    </div>
+
+    <div class="vq">
+      <div class="vq-q">❓ "מצא את מספר נקודות החיתוך של f(x) = x·√(−x+4) עם הישר y = k עבור k=1"</div>
+      <div class="vq-steps">
+        <strong>צעד 1:</strong> מהחקירה — מינימום f(0)=f(4)=0, מקסימום ≈3.08 ב-x=<span class="frac"><span class="num">8</span><span class="den">3</span></span><br>
+        <strong>צעד 2:</strong> k=1 נמצא בין 0 ל-3.08 → 2 חיתוכים<br>
+        <strong>אימות:</strong> x·√(−x+4)=1 → פתרון ידני מורכב, אבל מהגרף ברור שיש 2 פתרונות
+        <div class="vq-ans">תשובה: 2 נקודות חיתוך</div>
+      </div>
+    </div>
+
+    <div class="vq">
+      <div class="vq-q">❓ "עבור אילו ערכי k הישר y=k חותך את f פעמיים?"</div>
+      <div class="vq-steps">
+        <strong>גישה שיטתית:</strong><br>
+        1. מצא את טווח הפונקציה (מינ׳ ומקס׳ מהחקירה)<br>
+        2. בדוק: האם הפונקציה עולה ואז יורדת (יש מקסימום פנימי)?<br>
+        3. אם כן: שני חיתוכים כאשר <em>מינ׳ &lt; k &lt; מקס׳</em><br>
+        4. אם לא (חד-מונוטונית): אי-אפשר לחתוך פעמיים — כתוב "אין ערכי k כאלה"
+        <div class="vq-ans">תמיד בסס על הגרף ועל הטווח!</div>
+      </div>
+    </div>
+
+    <div class="vq">
+      <div class="vq-q">❓ "הישר y=3 חותך את f(x)=−√(x+1)+4. כמה פעמים? מצא את נקודות החיתוך."</div>
+      <div class="vq-steps">
+        <strong>צעד 1:</strong> תחום: x≥−1 · נקודת קצה (מקסימום): (−1, 4)<br>
+        <strong>צעד 2:</strong> הפונקציה יורדת (a=−1&lt;0) · טווח: y≤4<br>
+        <strong>צעד 3:</strong> k=3 &lt; 4 ← בטווח, ויורדת → 1 חיתוך<br>
+        <strong>מצא נקודה:</strong> −√(x+1)+4=3 → √(x+1)=1 → x+1=1 → x=0<br>
+        <div class="vq-ans">נקודת חיתוך: (0, 3)</div>
+      </div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+  <div class="tip">💡 <strong>טיפ:</strong> שרטט תמיד — ויזואלית "הזזת" הישר y=k מעלה ומטה מסביר הכל!</div>
+</div>
+
+<!-- ═══════════════════ PANEL 5 — תרגול ═══════════════════ -->
+
+
+<!-- ═══════════════════ PANEL 6 — מחולל ═══════════════════ -->
+<div class="panel" id="panel-generator">
+
+  <!-- difficulty selector -->
+  <div class="difficulty-nav" style="margin-bottom:16px;">
+    <button class="diff-btn easy active" id="gen-easy"   onclick="setGenDiff('easy',this)">🟢 קל</button>
+    <button class="diff-btn medium"      id="gen-medium" onclick="setGenDiff('medium',this)">🟠 בינוני</button>
+    <button class="diff-btn hard"        id="gen-hard"   onclick="setGenDiff('hard',this)">🔴 קשה</button>
+  </div>
+
+  <button id="gen-btn" onclick="generateFunction()" style="
+    width:100%;padding:16px;border:none;border-radius:14px;
+    background:linear-gradient(135deg,#6a1b9a,#880e4f);color:#fff;
+    font-family:'Nunito',sans-serif;font-size:1.1rem;font-weight:900;
+    cursor:pointer;box-shadow:0 6px 20px rgba(106,27,154,.35);
+    transition:transform 0.15s,box-shadow 0.15s;margin-bottom:0;
+  " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+    🎲 חולל פונקציה חדשה
+  </button>
+
+  <!-- function display -->
+  <div id="func-display" style="display:none;width:100%;margin-top:16px;">
+    <div style="background:var(--white);border:3px solid var(--purple);border-radius:16px;padding:20px 24px;box-shadow:var(--shadow);text-align:center;">
+      <div style="font-size:0.85rem;font-weight:700;color:var(--gray);margin-bottom:6px;">חקור את הפונקציה:</div>
+      <div id="func-text" style="font-size:1.5rem;font-weight:900;color:var(--purple);direction:ltr;unicode-bidi:embed;"></div>
+      <div id="func-domain-hint" style="font-size:0.82rem;font-weight:700;color:var(--gray);margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <!-- checklist -->
+  <div id="checklist" style="display:none;width:100%;margin-top:14px;">
+    <div style="background:var(--white);border:2px solid var(--border);border-radius:14px;padding:16px 20px;box-shadow:var(--shadow);">
+      <div style="font-size:0.95rem;font-weight:800;color:var(--text);margin-bottom:12px;">✅ רשימת צ׳קליסט — חקור בדף ואז סמן:</div>
+      <div id="checklist-items" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+  </div>
+
+  <!-- reveal graph button -->
+  <div id="graph-btn-wrap" style="display:none;width:100%;margin-top:14px;">
+    <button onclick="revealGraph()" style="
+      width:100%;padding:14px;border:none;border-radius:14px;
+      background:var(--teal);color:#fff;
+      font-family:'Nunito',sans-serif;font-size:1rem;font-weight:800;
+      cursor:pointer;box-shadow:0 4px 16px rgba(0,137,123,.3);
+      transition:transform 0.15s;
+    " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+      📈 הצג גרף לבדיקה
+    </button>
+  </div>
+
+  <!-- graph area -->
+  <div id="graph-area" style="display:none;width:100%;margin-top:14px;">
+    <div style="background:var(--white);border:2px solid var(--teal);border-radius:16px;padding:16px;box-shadow:var(--shadow);">
+      <div style="font-size:0.95rem;font-weight:800;color:var(--teal);margin-bottom:12px;text-align:center;">📈 גרף הפונקציה — בדוק שהשרטוט שלך תואם!</div>
+      <canvas id="func-canvas" width="640" height="380" style="width:100%;border-radius:8px;background:#fafafa;border:1px solid var(--border);"></canvas>
+      <div id="graph-summary" style="margin-top:14px;display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+  </div>
+
+  <div style="height:12px;"></div>
+  <div class="tip">💡 <strong>טיפ:</strong> קודם חקור את הפונקציה בכוחות עצמך בדף, ורק אחר כך לחץ "הצג גרף"!</div>
+</div>
+
+<!-- ═══════════════════ PANEL 7 — שלב ב׳ ═══════════════════ -->
+<div class="panel" id="panel-partb">
+
+  <div class="section-title">🔢 פרמטרים — מצא את a</div>
+
+  <!-- intro -->
+  <div class="node warn" style="margin-bottom:16px;">
+    <strong>מה זה פרמטר בבגרות?</strong> נותנים לך פונקציה עם מספר לא ידוע (a) ומידע נוסף — ואתה צריך למצוא את a. המידע יכול להיות: נקודה שהגרף עובר בה, שיפוע משיק בנקודה, או מיקום נקודת קיצון.
+  </div>
+
+  <!-- type 1 -->
+  <div class="rule-box indigo" style="margin-bottom:12px;">
+    <div class="rb-title">סוג 1 — נתון שהגרף עובר בנקודה (x₀, y₀)</div>
+    <div class="rule-item indigo">
+      <span class="rname">שיטה:</span>
+      הצב את x₀ ו-y₀ בפונקציה → פתור את המשוואה עבור a
+    </div>
+    <div class="rule-item indigo" style="background:var(--indigo-light);">
+      <span class="rname">דוגמה מבגרות (חורף תשפ״ה שאלה 6):</span>
+      f(x) = x/(x²+x+a), הגרף עובר ב-(2, 9.5/...)<br>
+      הצב x=2 ואת ה-y הנתון → מצא a
+    </div>
+  </div>
+
+  <!-- type 2 -->
+  <div class="rule-box indigo" style="margin-bottom:12px;">
+    <div class="rb-title">סוג 2 — נתון שיפוע המשיק בנקודה x₀</div>
+    <div class="rule-item indigo">
+      <span class="rname">שיטה:</span>
+      חשב f′(x) (עם a) → הצב x=x₀ → שווה לשיפוע הנתון → פתור
+    </div>
+    <div class="rule-item indigo" style="background:var(--indigo-light);">
+      <span class="rname">דוגמה מבגרות (חורף תשפ״ו שאלה 6):</span>
+      f(x) = a/(x−5), בנקודה x=7 שיפוע המשיק הוא −2<br>
+      f′(x) = −a/(x−5)² → הצב x=7 → −a/4 = −2 → <strong>a = 8</strong>
+    </div>
+  </div>
+
+  <!-- type 3 -->
+  <div class="rule-box indigo" style="margin-bottom:12px;">
+    <div class="rb-title">סוג 3 — נתון שיש קיצון בנקודה x₀</div>
+    <div class="rule-item indigo">
+      <span class="rname">שיטה:</span>
+      חשב f′(x) (עם a) → הצב x=x₀ → שווה ל-0 → פתור
+    </div>
+    <div class="rule-item indigo" style="background:var(--indigo-light);">
+      <span class="rname">דוגמה מבגרות (קיץ תשפ״ה שאלה 7):</span>
+      g(x) = f(x) + a, לפונקציה g יש מקסימום פנימי בנקודה x = 5/2<br>
+      g′(x) = f′(x) → הצב x=5/2, שווה 0 → מצא a
+    </div>
+  </div>
+
+  <!-- flowchart -->
+  <div class="node step teal" style="margin-bottom:16px;">
+    <div class="num">🗺️</div>
+    <div class="content">
+      <div class="title">תרשים זרימה — איך מתחילים שאלת פרמטר</div>
+      <div class="detail">
+        קיבלת f(x) עם a ומידע נוסף?<br>
+        ↓<br>
+        המידע הוא <strong>נקודה (x,y)</strong>? → הצב ישירות בפונקציה<br>
+        המידע הוא <strong>שיפוע משיק</strong>? → גזור קודם, אז הצב<br>
+        המידע הוא <strong>קיצון ב-x₀</strong>? → גזור קודם, הצב x₀, שווה 0
+      </div>
+    </div>
+  </div>
+
+  <div style="height:8px;"></div>
+  <div class="section-title">📈 גרף הנגזרת — איזה גרף מתאר את f′?</div>
+
+  <!-- intro -->
+  <div class="node warn" style="margin-bottom:16px;">
+    <strong>מה שואלים בבגרות?</strong> נותנים 4 גרפים (I–IV) ושואלים "איזה מתאר את f′(x)?". צריך לדעת לקרוא מה f′ אומרת על f ולהפך.
+  </div>
+
+  <!-- rules -->
+  <div class="rule-box pink" style="margin-bottom:12px;">
+    <div class="rb-title">הכלל הבסיסי — קשר בין f ל-f′</div>
+    <div class="rule-item pink-border" style="background:var(--pink-light);">
+      <span class="rname" style="color:var(--pink);">f עולה ←→ f′ חיובית</span>
+      אם הגרף של f עולה באזור מסוים → f′ מעל לציר x באותו אזור
+    </div>
+    <div class="rule-item pink-border" style="background:var(--pink-light);">
+      <span class="rname" style="color:var(--pink);">f יורדת ←→ f′ שלילית</span>
+      אם הגרף של f יורד באזור מסוים → f′ מתחת לציר x באותו אזור
+    </div>
+    <div class="rule-item pink-border" style="background:var(--pink-light);">
+      <span class="rname" style="color:var(--pink);">קיצון של f ←→ אפס של f′</span>
+      בנקודת מקסימום או מינימום של f → f′ חוצה את ציר x (f′=0)
+    </div>
+    <div class="rule-item pink-border" style="background:var(--pink-light);">
+      <span class="rname" style="color:var(--pink);">נקודת קצה ←→ f′ לא מוגדרת שם</span>
+      בקצה התחום — f′ לא קיימת (הנגזרת לא מוגדרת בקצה)
+    </div>
+  </div>
+
+  <!-- strategy -->
+  <div class="rule-box pink" style="margin-bottom:12px;">
+    <div class="rb-title">אסטרטגיה — איך בוחרים את הגרף הנכון</div>
+    <div class="rule-item pink-border">
+      <span class="rname" style="color:var(--pink);">שלב 1 — בדוק תחום</span>
+      f′ מוגדרת רק בתוך התחום הפתוח (לא בקצוות) → פסול גרפים עם ערכים מחוץ לתחום
+    </div>
+    <div class="rule-item pink-border">
+      <span class="rname" style="color:var(--pink);">שלב 2 — בדוק סימן</span>
+      היכן f עולה? שם f′ חייבת להיות מעל ציר x → פסול גרפים שלא עומדים בזה
+    </div>
+    <div class="rule-item pink-border">
+      <span class="rname" style="color:var(--pink);">שלב 3 — בדוק אפסים</span>
+      מספר האפסים של f′ = מספר הקיצונות הפנימיים של f
+    </div>
+    <div class="rule-item pink-border">
+      <span class="rname" style="color:var(--pink);">שלב 4 — בדוק גבולות</span>
+      פונקציית שורש: f′ מתקרבת לאינסוף ליד נקודת הקצה (המכנה שואף ל-0)
+    </div>
+  </div>
+
+  <!-- example -->
+  <div class="example" style="margin-bottom:12px;">
+    <div class="e-title">📝 דוגמה — f(x) = x·√(−x+4), תחום x≤4</div>
+    <table>
+      <tr><td>f עולה ב:</td><td>−√2 &lt; x &lt; √2 → f′ חיובית שם</td></tr>
+      <tr><td>f יורדת ב:</td><td>x &lt; −√2 ו-x &gt; √2 → f′ שלילית שם</td></tr>
+      <tr><td>קיצונות:</td><td>x=√2 (מקסימום) ו-x=−√2 (מינימום) → f′=0 בשתי נקודות</td></tr>
+      <tr><td>ליד x=4:</td><td>f′ = <span class="frac"><span class="num">−2x+4</span><span class="den">√(−x+4)</span></span> → המכנה → 0 → f′ → ∞</td></tr>
+      <tr><td>מסקנה:</td><td>גרף f′ חייב: שני אפסים, חיובי בין −√2 ל-√2, עולה לאינסוף ליד x=4</td></tr>
+    </table>
+  </div>
+
+  <div class="tip">💡 <strong>טיפ לבגרות:</strong> תמיד התחל מהתחום — גרף שיוצא מחוץ לתחום נפסל מיד. זה לבד מאפשר לרוב לפסול 2-3 גרפים!</div>
+
+</div>
+
+</main>
+
+<script>
+// ── existing functions ──
+function showPanel(type,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.main-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+type).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function askPartBCode(btn){
+  const code = prompt('🔒 הזן קוד גישה:');
+  if(code === '1984'){
+    btn.style.color='';
+    btn.style.background='';
+    btn.removeAttribute('onclick');
+    btn.setAttribute('onclick',"showPanel('partb',this)");
+    showPanel('partb', btn);
+  } else if(code !== null){
+    alert('קוד שגוי ❌');
+  }
+}
+function showDiff(level,btn){
+  document.querySelectorAll('.ex-group').forEach(g=>g.classList.remove('active'));
+  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('diff-'+level).classList.add('active');
+  btn.classList.add('active');
+}
+function toggleEx(header){
+  const body=header.nextElementSibling;
+  const toggle=header.querySelector('.ex-toggle');
+  const isOpen=body.classList.contains('open');
+  body.classList.toggle('open',!isOpen);
+  toggle.classList.toggle('open',!isOpen);
+}
+
+// ── generator ──
+let currentDiff = 'easy';
+let currentFunc = null;
+
+function setGenDiff(level, btn) {
+  currentDiff = level;
+  document.querySelectorAll('#panel-generator .diff-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// Function templates by difficulty
+// ── helpers for quadratic domain ──
+// roots of ax²+bx+c, returns sorted [r1,r2] or [] if no real roots
+function quadRoots(a,b,c){
+  const D=b*b-4*a*c;
+  if(D<0) return [];
+  const sq=Math.sqrt(D);
+  return [(-b-sq)/(2*a),(-b+sq)/(2*a)].sort((x,y)=>x-y);
+}
+// sign of ax²+bx+c at a test point between / outside roots
+function quadSign(a,b,c,x){ return a*x*x+b*x+c; }
+
+// build tex for ax²+bx with sign-aware formatting
+function quadTex(a,b){
+  let s = a===1?'x²':(a===-1?'−x²':`${a}x²`);
+  if(b>0)  s += ` + ${b}x`;
+  if(b<0)  s += ` − ${Math.abs(b)}x`;
+  return s;
+}
+// build tex for linear ax+b inside sqrt (x-term first)
+function linTex(a,b){
+  let s = a===1?'x':(a===-1?'−x':`${a}x`);
+  if(b>0)  s += ` + ${b}`;
+  if(b<0)  s += ` − ${Math.abs(b)}`;
+  return s;
+}
+
+const templates = {
+  easy: [
+    // f(x) = √(x + b)  ± k
+    () => {
+      const b = pick([0,1,2,3,4,5,9,16]);
+      const sign = pick([1,-1]);
+      const k = sign===1 ? pick([0,1,2,3]) : pick([1,2,3]);
+      if(k===0) return {
+        tex: b===0 ? 'f(x) = √x' : `f(x) = √(x + ${b})`,
+        fn: x => x+b >= 0 ? Math.sqrt(x+b) : NaN,
+        domainMin: -b, domainMax: Infinity,
+      };
+      return {
+        tex: `f(x) = √(x + ${b}) ${sign>0?'+ '+k:'− '+k}`,
+        fn: x => x+b >= 0 ? Math.sqrt(x+b)+sign*k : NaN,
+        domainMin: -b, domainMax: Infinity,
+      };
+    },
+    // f(x) = √(x − b)
+    () => {
+      const b = pick([1,2,3,4,5,9]);
+      return {
+        tex: `f(x) = √(x − ${b})`,
+        fn: x => x-b >= 0 ? Math.sqrt(x-b) : NaN,
+        domainMin: b, domainMax: Infinity,
+      };
+    },
+    // f(x) = √(ax + b)
+    () => {
+      const a = pick([2,3,4]);
+      const b = pick([-4,-3,-2,2,4,6]);
+      return {
+        tex: `f(x) = √(${linTex(a,b)})`,
+        fn: x => a*x+b >= 0 ? Math.sqrt(a*x+b) : NaN,
+        domainMin: -b/a, domainMax: Infinity,
+      };
+    },
+    // f(x) = √(x² − c)  — simple quadratic inside sqrt, domain x≤-√c or x≥√c
+    () => {
+      const c = pick([1,4,9]);
+      const sqc = Math.sqrt(c);
+      // two separate branches; show the right branch (x≥√c)
+      return {
+        tex: `f(x) = √(x² − ${c})`,
+        fn: x => x*x-c >= 0 ? Math.sqrt(x*x-c) : NaN,
+        domainMin: sqc, domainMax: Infinity,   // right branch for display
+        domainNote: `x ≥ ${sqc} או x ≤ −${sqc}`,
+      };
+    },
+  ],
+  medium: [
+    // f(x) = −√(x+b) + k
+    () => {
+      const b = pick([0,1,2,3,4]);
+      const k = pick([1,2,3,4,5]);
+      return {
+        tex: `f(x) = −√(x ${b>0?'+ '+b:''}) + ${k}`.replace('x )','x)'),
+        fn: x => x+b >= 0 ? -Math.sqrt(x+b)+k : NaN,
+        domainMin: -b, domainMax: Infinity,
+      };
+    },
+    // f(x) = √(−x + b)
+    () => {
+      const b = pick([1,2,3,4,5,6,9]);
+      return {
+        tex: `f(x) = √(−x + ${b})`,
+        fn: x => -x+b >= 0 ? Math.sqrt(-x+b) : NaN,
+        domainMin: -Infinity, domainMax: b,
+      };
+    },
+    // f(x) = a√(x+b) + k
+    () => {
+      const a = pick([2,3]);
+      const b = pick([0,1,4,9]);
+      const k = pick([-3,-2,-1,0,1,2,3]);
+      const kStr = k===0?'':(k>0?` + ${k}`:` − ${Math.abs(k)}`);
+      return {
+        tex: `f(x) = ${a}√(x ${b>0?'+ '+b:''}) ${kStr}`.replace('x )','x)').trim(),
+        fn: x => x+b >= 0 ? a*Math.sqrt(x+b)+k : NaN,
+        domainMin: -b, domainMax: Infinity,
+      };
+    },
+    // f(x) = √(−x + b) + k
+    () => {
+      const b = pick([1,2,3,4,5]);
+      const k = pick([-2,-1,0,1,2]);
+      const kStr = k===0?'':(k>0?` + ${k}`:` − ${Math.abs(k)}`);
+      return {
+        tex: `f(x) = √(−x + ${b})${kStr}`,
+        fn: x => -x+b >= 0 ? Math.sqrt(-x+b)+k : NaN,
+        domainMin: -Infinity, domainMax: b,
+      };
+    },
+    // f(x) = √(x² + bx)  — quadratic inside sqrt, domain outside roots
+    // x²+bx = x(x+b), roots at 0 and -b
+    () => {
+      const b = pick([-6,-4,-3,3,4,6]);  // b≠0
+      const r1 = Math.min(0,-b), r2 = Math.max(0,-b);
+      return {
+        tex: `f(x) = √(x² ${b>=0?'+ '+b:'− '+Math.abs(b)}x)`,
+        fn: x => x*x+b*x >= 0 ? Math.sqrt(x*x+b*x) : NaN,
+        domainMin: r2, domainMax: Infinity,   // right branch
+        domainNote: `x ≥ ${r2} או x ≤ ${r1}`,
+      };
+    },
+  ],
+  hard: [
+    // f(x) = (x+a)·√(x+b)  — linear outside, linear inside
+    () => {
+      const a = pick([-4,-3,-2,-1,1,2]);
+      const b = pick([0,1,4]);
+      const aStr = a>=0?`+ ${a}`:` − ${Math.abs(a)}`;
+      return {
+        tex: b===0
+          ? `f(x) = (x ${aStr})·√x`
+          : `f(x) = (x ${aStr})·√(x + ${b})`,
+        fn: x => x+b >= 0 ? (x+a)*Math.sqrt(x+b) : NaN,
+        domainMin: -b, domainMax: Infinity,
+      };
+    },
+    // f(x) = x·√(ax+b)  — linear outside, linear inside
+    () => {
+      const a = pick([1,2]);
+      const b = pick([-4,-2,2,4]);
+      return {
+        tex: `f(x) = x·√(${linTex(a,b)})`,
+        fn: x => a*x+b >= 0 ? x*Math.sqrt(a*x+b) : NaN,
+        domainMin: -b/a, domainMax: Infinity,
+      };
+    },
+    // f(x) = −a·√(−x+b) + k
+    () => {
+      const a = pick([1,2]);
+      const b = pick([2,3,4,5,6]);
+      const k = pick([-2,-1,1,2,3,4]);
+      return {
+        tex: a===1
+          ? `f(x) = −√(−x + ${b}) + ${k}`
+          : `f(x) = −${a}√(−x + ${b}) + ${k}`,
+        fn: x => -x+b >= 0 ? -a*Math.sqrt(-x+b)+k : NaN,
+        domainMin: -Infinity, domainMax: b,
+      };
+    },
+    // f(x) = (x²+bx)·√(x+c)  — quadratic outside, linear inside
+    () => {
+      const b = pick([-3,-2,-1,1,2,3]);
+      const c = pick([0,1,4]);
+      return {
+        tex: `f(x) = (${quadTex(1,b)})·√(x ${c>0?'+ '+c:c<0?'− '+Math.abs(c):''})`.replace('x )','x)'),
+        fn: x => x+c >= 0 ? (x*x+b*x)*Math.sqrt(x+c) : NaN,
+        domainMin: -c, domainMax: Infinity,
+      };
+    },
+    // f(x) = (x²+bx+c)·√x  — quadratic outside, √x inside
+    () => {
+      // choose b,c so quadratic has nice roots (factored form: (x-r1)(x-r2))
+      const r1 = pick([0,1,2,3]);
+      const r2 = pick([1,2,3,4]);
+      const b = -(r1+r2), c = r1*r2;
+      const bStr = b>=0?`+ ${b}`:` − ${Math.abs(b)}`;
+      const cStr = c===0?'':(c>0?` + ${c}`:` − ${Math.abs(c)}`);
+      return {
+        tex: `f(x) = (x² ${bStr}x${cStr})·√x`,
+        fn: x => x >= 0 ? (x*x+b*x+c)*Math.sqrt(x) : NaN,
+        domainMin: 0, domainMax: Infinity,
+      };
+    },
+    // f(x) = x²·√(−x+b)  — quadratic outside, bounded inside
+    () => {
+      const b = pick([2,3,4,5,6]);
+      return {
+        tex: `f(x) = x²·√(−x + ${b})`,
+        fn: x => -x+b >= 0 ? x*x*Math.sqrt(-x+b) : NaN,
+        domainMin: -Infinity, domainMax: b,
+      };
+    },
+  ]
+};
+
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function generateFunction(){
+  // hide old graph
+  document.getElementById('graph-area').style.display='none';
+  document.getElementById('graph-btn-wrap').style.display='none';
+
+  const pool = templates[currentDiff];
+  currentFunc = pool[Math.floor(Math.random()*pool.length)]();
+
+  // clean up tex
+  let tex = currentFunc.tex
+    .replace(/\+ \-/g,'− ')
+    .replace(/\- \-/g,'+ ')
+    .replace(/\+ 0\b/g,'')
+    .replace(/\s+/g,' ').trim();
+  currentFunc.tex = tex;
+
+  document.getElementById('func-text').textContent = tex;
+
+  // domain note (for two-branch functions like √(x²−c))
+  const note = currentFunc.domainNote || '';
+  document.getElementById('func-domain-hint').textContent = note ? `⚠️ שני ענפים: ${note}` : '';
+  document.getElementById('func-display').style.display='block';
+
+  // build checklist
+  buildChecklist();
+  document.getElementById('checklist').style.display='block';
+  document.getElementById('graph-btn-wrap').style.display='block';
+
+  // scroll to function display
+  document.getElementById('func-display').scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function fmt(n){
+  if(!isFinite(n)) return '∞';
+  const r = Math.round(n*100)/100;
+  return r===Math.round(r) ? String(Math.round(r)) : r.toFixed(2);
+}
+
+const checklistSteps = [
+  {id:'domain',  label:'1️⃣  תחום הגדרה — מצאתי את כל x שמקיים את האי-שוויון'},
+  {id:'cx',      label:'2️⃣  חיתוך עם ציר x — הצבתי y=0 ובדקתי שהפתרון בתחום'},
+  {id:'cy',      label:'3️⃣  חיתוך עם ציר y — בדקתי אם x=0 בתחום'},
+  {id:'deriv',   label:'4️⃣  נגזרת — חישבתי f′(x) (כולל כלל שרשרת / מכפלה אם צריך)'},
+  {id:'extreme', label:'5️⃣  נקודות קיצון — פתרתי f′=0 + בדקתי נקודות קצה'},
+  {id:'incr',    label:'6️⃣  עלייה/ירידה — בניתי טבלת נגזרת'},
+  {id:'sign',    label:'7️⃣  חיוביות/שליליות — מצאתי היכן f(x)≥0 ו-f(x)≤0'},
+  {id:'sketch',  label:'8️⃣  שרטוט — ציירתי את הגרף בדף (כולל נקודות מסומנות)'},
+];
+
+function buildChecklist(){
+  const container = document.getElementById('checklist-items');
+  container.innerHTML = '';
+  checklistSteps.forEach(step=>{
+    const row = document.createElement('label');
+    row.style.cssText='display:flex;align-items:center;gap:10px;background:#f8f9fa;border-radius:10px;padding:10px 14px;cursor:pointer;font-size:0.9rem;font-weight:700;transition:background 0.2s;';
+    row.innerHTML=`<input type="checkbox" id="chk-${step.id}" style="width:18px;height:18px;cursor:pointer;accent-color:var(--purple);" onchange="onCheck(this)"> <span>${step.label}</span>`;
+    container.appendChild(row);
+  });
+}
+
+function onCheck(cb){
+  const label = cb.parentElement;
+  if(cb.checked){
+    label.style.background='var(--green-light)';
+    label.style.color='var(--green)';
+    label.querySelector('span').style.textDecoration='line-through';
+  } else {
+    label.style.background='#f8f9fa';
+    label.style.color='';
+    label.querySelector('span').style.textDecoration='';
+  }
+  // check if sketch is done → pulse the reveal button
+  const sketchDone = document.getElementById('chk-sketch')?.checked;
+  const btn = document.querySelector('#graph-btn-wrap button');
+  if(sketchDone){
+    btn.style.background='var(--green)';
+    btn.textContent='✅ הצג גרף לבדיקה';
+  } else {
+    btn.style.background='var(--teal)';
+    btn.textContent='📈 הצג גרף לבדיקה';
+  }
+}
+
+function revealGraph(){
+  if(!currentFunc) return;
+  document.getElementById('graph-area').style.display='block';
+  document.getElementById('graph-area').scrollIntoView({behavior:'smooth',block:'start'});
+  setTimeout(()=>drawGraph(currentFunc), 100);
+}
+
+function drawGraph(func){
+  const canvas = document.getElementById('func-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // ── Step 1: true domain edges ──
+  const domMin = func.domainMin; // may be -Infinity
+  const domMax = func.domainMax; // may be +Infinity
+
+  // ── Step 2: find all interesting x values (zeros of f, extrema) numerically ──
+  // We first do a coarse pass over a wide range to detect features,
+  // then use those features to define the viewport.
+
+  // Coarse search range: start at domain edge(s), go out far enough
+  const SEARCH_SPAN = 60; // search up to 60 units from domain edge(s)
+  const searchMin = isFinite(domMin) ? domMin : (isFinite(domMax) ? domMax - SEARCH_SPAN : -SEARCH_SPAN);
+  const searchMax = isFinite(domMax) ? domMax : (isFinite(domMin) ? domMin + SEARCH_SPAN : SEARCH_SPAN);
+  const N = 2000;
+  const searchStep = (searchMax - searchMin) / N;
+
+  // Collect sign-change zeros and derivative sign-change extrema
+  const interestingX = [];
+  if (isFinite(domMin)) interestingX.push(domMin);
+  if (isFinite(domMax)) interestingX.push(domMax);
+
+  let prevY = func.fn(searchMin);
+  let prevDy = NaN;
+  for (let i = 1; i <= N; i++) {
+    const x = searchMin + i * searchStep;
+    const y = func.fn(x);
+    if (isFinite(prevY) && isFinite(y)) {
+      // zero crossing
+      if (prevY * y < 0) {
+        let lo = x - searchStep, hi = x;
+        for (let k = 0; k < 25; k++) { const m=(lo+hi)/2; func.fn(m)*prevY<0 ? hi=m : lo=m; }
+        interestingX.push((lo+hi)/2);
+      }
+      // extremum (derivative sign change)
+      const dy = (y - prevY) / searchStep;
+      if (isFinite(prevDy) && prevDy * dy < 0) interestingX.push(x - searchStep/2);
+      prevDy = dy;
+    } else {
+      prevDy = NaN;
+    }
+    prevY = y;
+  }
+
+  // ── Step 3: build viewport from interesting points ──
+  // Show: all interesting x values + reasonable padding
+  const validX = interestingX.filter(x => isFinite(x) && isFinite(func.fn(x)));
+
+  let vxMin, vxMax;
+  if (validX.length === 0) { vxMin = -5; vxMax = 5; }
+  else {
+    const xSpread = Math.max(...validX) - Math.min(...validX);
+    // For open domains (infinite), add extra "runway" proportional to the spread
+    const runway = Math.max(2, xSpread * 0.6);
+    vxMin = Math.min(...validX) - (isFinite(domMin) ? xSpread * 0.08 : runway);
+    vxMax = Math.max(...validX) + (isFinite(domMax) ? xSpread * 0.08 : runway);
+    // Minimum viewport width of 4 units
+    if (vxMax - vxMin < 4) { const c=(vxMin+vxMax)/2; vxMin=c-2; vxMax=c+2; }
+  }
+
+  // ── Step 4: sample y over viewport ──
+  const sStep = (vxMax - vxMin) / 800;
+  let yMin=Infinity, yMax=-Infinity;
+  for (let x = vxMin; x <= vxMax; x += sStep) {
+    const y = func.fn(x);
+    if (isFinite(y)) { yMin = Math.min(yMin, y); yMax = Math.max(yMax, y); }
+  }
+  if (!isFinite(yMin)) { yMin = -2; yMax = 2; }
+
+  // Ensure y=0 line is visible if close
+  if (yMin > 0 && yMin < 0.5) yMin = -0.3;
+  if (yMax < 0 && yMax > -0.5) yMax = 0.3;
+
+  const yRange = yMax - yMin || 2;
+  yMin -= yRange * 0.15;
+  yMax += yRange * 0.15;
+
+  const xMin2 = vxMin, xMax2 = vxMax;
+  // dMin/dMax = actual domain (for drawing curve and key points)
+  const dMin = isFinite(domMin) ? domMin : vxMin;
+  const dMax = isFinite(domMax) ? domMax : vxMax;
+
+  // to canvas coords
+  function toX(x){ return (x-xMin2)/(xMax2-xMin2)*W; }
+  function toY(y){ return H-(y-yMin)/(yMax-yMin)*H; }
+
+  // background
+  ctx.fillStyle='#fafafa'; ctx.fillRect(0,0,W,H);
+
+  // grid
+  ctx.strokeStyle='#e8eaf0'; ctx.lineWidth=1;
+  const gridXStep = niceStep((xMax2-xMin2)/8);
+  const gridYStep = niceStep((yMax-yMin)/6);
+  for(let gx=Math.ceil(xMin2/gridXStep)*gridXStep; gx<=xMax2; gx+=gridXStep){
+    ctx.beginPath(); ctx.moveTo(toX(gx),0); ctx.lineTo(toX(gx),H); ctx.stroke();
+  }
+  for(let gy=Math.ceil(yMin/gridYStep)*gridYStep; gy<=yMax; gy+=gridYStep){
+    ctx.beginPath(); ctx.moveTo(0,toY(gy)); ctx.lineTo(W,toY(gy)); ctx.stroke();
+  }
+
+  // axes
+  ctx.strokeStyle='#9e9e9e'; ctx.lineWidth=1.5;
+  if(yMin<=0 && yMax>=0){ ctx.beginPath(); ctx.moveTo(0,toY(0)); ctx.lineTo(W,toY(0)); ctx.stroke(); }
+  if(xMin2<=0 && xMax2>=0){ ctx.beginPath(); ctx.moveTo(toX(0),0); ctx.lineTo(toX(0),H); ctx.stroke(); }
+
+  // axis labels
+  ctx.fillStyle='#757575'; ctx.font='bold 11px Heebo,sans-serif'; ctx.textAlign='center';
+  for(let gx=Math.ceil(xMin2/gridXStep)*gridXStep; gx<=xMax2; gx+=gridXStep){
+    if(Math.abs(gx)<0.01) continue;
+    const ty = yMin<=0&&yMax>=0 ? toY(0)+14 : H-4;
+    ctx.fillText(fmt(gx), toX(gx), ty);
+  }
+  ctx.textAlign='left';
+  for(let gy=Math.ceil(yMin/gridYStep)*gridYStep; gy<=yMax; gy+=gridYStep){
+    if(Math.abs(gy)<0.01) continue;
+    const tx = xMin2<=0&&xMax2>=0 ? toX(0)+4 : 4;
+    ctx.fillText(fmt(gy), tx, toY(gy)-3);
+  }
+
+  // function curve
+  ctx.strokeStyle='#6a1b9a'; ctx.lineWidth=3;
+  ctx.lineJoin='round'; ctx.lineCap='round';
+  ctx.beginPath();
+  let penDown=false;
+  const drawStep=(dMax-dMin)/600;
+  for(let x=dMin; x<=dMax; x+=drawStep){
+    const y=func.fn(x);
+    if(!isFinite(y)||isNaN(y)){ penDown=false; continue; }
+    const cx2=toX(x), cy2=toY(y);
+    if(!penDown){ ctx.moveTo(cx2,cy2); penDown=true; } else { ctx.lineTo(cx2,cy2); }
+  }
+  ctx.stroke();
+
+  // key points
+  const keyPoints = computeKeyPoints(func, dMin, dMax);
+  keyPoints.forEach(pt=>{
+    const px=toX(pt.x), py=toY(pt.y);
+    ctx.beginPath();
+    ctx.arc(px,py,5,0,2*Math.PI);
+    ctx.fillStyle = pt.type==='zero'?'#e65100': pt.type==='max'?'#2e7d32': pt.type==='min'?'#c62828':'#1565c0';
+    ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=2;
+    ctx.stroke();
+    // label
+    ctx.fillStyle=pt.type==='zero'?'#e65100': pt.type==='max'?'#2e7d32': pt.type==='min'?'#c62828':'#1565c0';
+    ctx.font='bold 11px Heebo,sans-serif'; ctx.textAlign='center';
+    const label=`(${fmt(pt.x)}, ${fmt(pt.y)})`;
+    const labelY = py > H/2 ? py-10 : py+18;
+    ctx.fillText(label, Math.max(40,Math.min(W-40,px)), labelY);
+  });
+
+  // build summary
+  buildGraphSummary(func, keyPoints, dMin, dMax);
+}
+
+function niceStep(rough){
+  const pow=Math.pow(10,Math.floor(Math.log10(rough)));
+  const frac=rough/pow;
+  if(frac<1.5) return pow;
+  if(frac<3.5) return 2*pow;
+  if(frac<7.5) return 5*pow;
+  return 10*pow;
+}
+
+function computeKeyPoints(func, dMin, dMax){
+  const pts=[];
+  const step=(dMax-dMin)/2000;
+
+  // zeros of f
+  let prev=func.fn(dMin);
+  for(let x=dMin+step; x<=dMax; x+=step){
+    const cur=func.fn(x);
+    if(isFinite(prev)&&isFinite(cur)&&prev*cur<0){
+      let lo=x-step, hi=x;
+      for(let k=0;k<25;k++){ const m=(lo+hi)/2; (func.fn(m)*func.fn(lo)<0?hi=m:lo=m); }
+      const xz=(lo+hi)/2;
+      pts.push({x:Math.round(xz*100)/100, y:0, type:'zero', label:'חיתוך עם x'});
+    }
+    prev=cur;
+  }
+  // domain endpoints (use true domain, not truncated view)
+  const trueDomMin = func.domainMin;
+  const trueDomMax = func.domainMax;
+  if(isFinite(trueDomMin)){ const y=func.fn(trueDomMin); if(isFinite(y)) pts.push({x:Math.round(trueDomMin*100)/100,y:Math.round(y*100)/100,type:'edge',label:'נקודת קצה'}); }
+  if(isFinite(trueDomMax)){ const y=func.fn(trueDomMax); if(isFinite(y)) pts.push({x:Math.round(trueDomMax*100)/100,y:Math.round(y*100)/100,type:'edge',label:'נקודת קצה'}); }
+
+  // local extrema via numerical derivative
+  const h=step*2;
+  let prevD=(func.fn(dMin+h)-func.fn(dMin))/h;
+  for(let x=dMin+h; x<=dMax-h; x+=step){
+    const curD=(func.fn(x+h)-func.fn(x))/h;
+    if(isFinite(prevD)&&isFinite(curD)&&prevD*curD<0){
+      let lo=x-step,hi=x;
+      for(let k=0;k<25;k++){ const m=(lo+hi)/2; const dm=(func.fn(m+h)-func.fn(m))/h; (dm*prevD<0?hi=m:lo=m); }
+      const xe=(lo+hi)/2, ye=func.fn(xe);
+      if(isFinite(ye)){
+        const type=prevD>0?'max':'min';
+        pts.push({x:Math.round(xe*100)/100, y:Math.round(ye*100)/100, type, label:type==='max'?'מקסימום':'מינימום'});
+      }
+    }
+    prevD=curD;
+  }
+  return pts;
+}
+
+function buildGraphSummary(func, keyPoints, dMin, dMax){
+  const container=document.getElementById('graph-summary');
+  container.innerHTML='';
+  const colors={zero:'#e65100',max:'#2e7d32',min:'#c62828',edge:'#1565c0'};
+
+  // Use true domain
+  const trueDomMin = func.domainMin;
+  const trueDomMax = func.domainMax;
+  let domTxt='';
+  if (func.domainNote) {
+    domTxt = func.domainNote;
+  } else if(isFinite(trueDomMin)&&!isFinite(trueDomMax)) domTxt=`x ≥ ${fmt(trueDomMin)}`;
+  else if(!isFinite(trueDomMin)&&isFinite(trueDomMax)) domTxt=`x ≤ ${fmt(trueDomMax)}`;
+  else if(isFinite(trueDomMin)&&isFinite(trueDomMax)) domTxt=`${fmt(trueDomMin)} ≤ x ≤ ${fmt(trueDomMax)}`;
+  else domTxt='כל המספרים הממשיים';
+  addSummaryRow(container,'#6a1b9a','תחום הגדרה',domTxt);
+
+  keyPoints.forEach(pt=>{
+    addSummaryRow(container,colors[pt.type],pt.label,`(${fmt(pt.x)}, ${fmt(pt.y)})`);
+  });
+
+  // Range: compute from key points + domain edge values
+  const yVals = keyPoints.map(p=>p.y).filter(isFinite);
+  if(yVals.length > 0){
+    const ylo = Math.min(...yVals);
+    const yhi = Math.max(...yVals);
+    let rng;
+    if(isFinite(trueDomMin)&&isFinite(trueDomMax)){
+      rng=`${fmt(ylo)} ≤ y ≤ ${fmt(yhi)}`;
+    } else if(isFinite(trueDomMin)){
+      // open on right → range goes to ∞ (or from min up)
+      rng=`y ≥ ${fmt(ylo)}`;
+    } else if(isFinite(trueDomMax)){
+      rng=`y ≥ ${fmt(ylo)}`;
+    } else {
+      rng=`${fmt(ylo)} ≤ y ≤ ${fmt(yhi)}`;
+    }
+    addSummaryRow(container,'#00897b','טווח ערכים',rng);
+  }
+}
+
+function addSummaryRow(container,color,label,value){
+  const div=document.createElement('div');
+  div.style.cssText=`display:flex;align-items:baseline;gap:10px;background:#f8f9fa;border-radius:9px;padding:9px 14px;border-right:4px solid ${color};font-size:0.88rem;`;
+  div.innerHTML=`<span style="font-weight:800;color:${color};min-width:90px;">${label}</span><span style="font-weight:700;">${value}</span>`;
+  container.appendChild(div);
+}
+</script>
+</body>
+</html>

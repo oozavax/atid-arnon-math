@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>פולינומים — מתמטיקה 4 יח"ל</title>
+<link rel="stylesheet" href="style.css">
+<style>
+:root{
+  --yellow:#FFE135;--yellow-pale:#FFFBE0;--yellow-dark:#F5C800;
+  --ink:#1A1A1A;--ink-soft:#4B4B4B;--bg:#FFFDF0;
+}
+:root{
+  --purple:#5b21b6;--purple-light:#ede9fe;--purple-border:#c4b5fd;
+  --green:#166534;--green-light:#dcfce7;--green-border:#bbf7d0;
+  --blue:#1d4ed8;--blue-light:#eff6ff;--blue-border:#bfdbfe;
+  --orange:#c2410c;--orange-light:#fff7ed;
+  --red:#b91c1c;--red-light:#fee2e2;
+  --teal:#0f766e;--teal-light:#ccfbf1;
+  --gray:#78716c;--shadow:0 2px 12px rgba(0,0,0,0.08);
+  --bg:#f8f7f4;--white:#fff;--border:#e4e0d8;--text:#1c1917;
+}
+.main-nav{display:flex;justify-content:center;max-width:700px;margin:22px auto 0;background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.2);border-radius:14px;overflow:hidden;}
+.main-btn{flex:1;padding:11px 4px;border:none;background:transparent;font-family:'Nunito',sans-serif;font-size:0.8rem;font-weight:800;cursor:pointer;color:rgba(255,255,255,0.6);transition:all 0.2s;border-left:1px solid rgba(255,255,255,0.15);}
+.main-btn:last-child{border-left:none;}
+.main-btn.active{background:rgba(255,255,255,0.2);color:#fff;}
+.main-btn:hover:not(.active){background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.9);}
+.main-btn:disabled{color:rgba(255,255,255,0.25);cursor:default;}
+
+main{max-width:700px;margin:0 auto;padding:28px 14px 90px;}
+.panel{display:none;}.panel.active{display:flex;flex-direction:column;align-items:center;gap:10px;}
+.section-title{width:100%;font-family:'Fredoka One',cursive;font-size:1.1rem;font-weight:700;color:var(--purple);padding:14px 0 8px;border-bottom:2px solid var(--purple-border);margin-bottom:4px;}
+
+.node{width:100%;border-radius:14px;padding:15px 20px;font-size:0.95rem;font-weight:700;line-height:1.5;border:1.5px solid var(--border);background:var(--white);box-shadow:var(--shadow);}
+.node.start{background:linear-gradient(135deg,#3b0764,#5b21b6 60%,#9d174d);color:#fff;text-align:center;font-size:1.1rem;font-weight:900;border-radius:50px;padding:14px 36px;box-shadow:0 6px 20px rgba(91,33,182,.3);border:none;}
+.node.end{background:var(--green);color:#fff;text-align:center;border-radius:50px;padding:14px 36px;box-shadow:0 6px 20px rgba(22,101,52,.3);border:none;}
+.node.step{border:2px solid;display:flex;align-items:flex-start;gap:12px;}
+.node.step .num{font-size:1.4rem;min-width:28px;line-height:1;margin-top:2px;}
+.node.step .content .title{font-size:1rem;font-weight:800;margin-bottom:3px;}
+.node.step .content .detail{font-size:0.87rem;font-weight:600;color:var(--gray);line-height:1.5;}
+.node.formula{background:var(--purple-light);border:2px solid var(--purple-border);text-align:center;font-size:1.05rem;padding:18px;}
+.node.warn{background:#fefce8;border:2px solid #fde047;color:#713f12;}
+.node.purple{border-color:var(--purple);}.node.purple .num{color:var(--purple);}
+.node.teal{border-color:var(--teal);}.node.teal .num{color:var(--teal);}
+.node.green{border-color:var(--green);}.node.green .num{color:var(--green);}
+.node.orange{border-color:var(--orange);}.node.orange .num{color:var(--orange);}
+.node.blue{border-color:var(--blue);}.node.blue .num{color:var(--blue);}
+.node.red{border-color:var(--red);}.node.red .num{color:var(--red);}
+
+.arrow{display:flex;justify-content:center;padding:3px 0;}
+.tip{width:100%;background:#fefce8;border:1.5px solid #fde047;border-radius:14px;padding:12px 16px;font-size:0.85rem;font-weight:700;color:#713f12;line-height:1.5;}
+
+.rule-box{width:100%;border-radius:14px;overflow:hidden;box-shadow:var(--shadow);border:1.5px solid var(--border);}
+.rb-title{padding:10px 16px;font-size:0.88rem;font-weight:800;background:var(--purple-light);color:var(--purple);border-bottom:1px solid var(--purple-border);}
+.rule-item{padding:10px 16px;font-size:0.87rem;font-weight:600;border-bottom:1px solid var(--border);background:var(--white);line-height:1.5;}
+.rule-item:last-child{border-bottom:none;}
+.rname{font-weight:800;display:block;margin-bottom:2px;color:var(--purple);}
+
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 3px;font-size:0.9em;}
+.frac .num{border-bottom:1.5px solid currentColor;padding:0 3px;line-height:1.3;}
+.frac .den{padding:0 3px;line-height:1.3;}
+
+.ex-card{background:var(--white);border-radius:14px;border:1.5px solid var(--border);overflow:hidden;box-shadow:var(--shadow);width:100%;}
+.ex-header{padding:13px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:0.9rem;}
+.ex-toggle{font-size:0.75rem;color:var(--gray);transition:transform 0.2s;}
+.ex-toggle.open{transform:rotate(180deg);}
+.ex-body{display:none;padding:14px 16px;border-top:1px solid var(--border);background:#f8f7f4;font-size:0.87rem;font-weight:600;line-height:1.7;}
+.ex-body.open{display:block;}
+.sol-step{padding:8px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);margin-bottom:6px;}
+.sol-step .s-num{font-size:0.75rem;font-weight:800;color:var(--purple);margin-bottom:2px;}
+
+/* sign chart */
+.sign-chart{width:100%;background:var(--white);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);}
+.sign-row{display:grid;grid-template-columns:100px 1fr 1fr 1fr;border-bottom:1px solid var(--border);font-size:0.85rem;font-weight:700;}
+.sign-row:last-child{border-bottom:none;}
+.sign-cell{padding:9px 12px;text-align:center;border-left:1px solid var(--border);}
+.sign-cell:first-child{border-left:none;text-align:right;background:var(--purple-light);color:var(--purple);}
+.sign-plus{color:var(--green);font-size:1.1rem;}
+.sign-minus{color:var(--red);font-size:1.1rem;}
+.sign-zero{color:var(--gray);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="topbar-logo">
+    <div class="logo-mark">∫</div>
+    <span class="logo-text">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge">פרק ג׳ · חדו"א</span>
+    <a href="index.html" class="topbar-home">← בית</a>
+  </div>
+</div>
+    <span class="logo-text">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge">∫ פרק ג׳ · חדו"א</span>
+    <a href="index.html" class="topbar-home">← בית</a>
+  </div>
+</div>
+    <span class="logo-text" style="color:var(--ink,#1a1a1a);font-family:'Fredoka One',cursive;">מתמטיקה</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="topbar-badge" style="background:var(--ink,#1a1a1a);color:var(--yellow,#FFE135);font-family:'Fredoka One',cursive;">פרק ג׳ · חדו"א</span>
+    <a href="index.html" class="topbar-home" style="border:2.5px solid var(--ink,#1a1a1a);color:var(--ink,#1a1a1a);font-family:'Fredoka One',cursive;background:#fff;border-radius:999px;padding:5px 14px;text-decoration:none;font-size:0.82rem;">← דף הבית</a>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-breadcrumb">פרק ג׳ · חשבון דיפרנציאלי</div>
+  <h1>³ פולינומים</h1>
+  <p class="hero-sub">חקירה · נגזרת · קיצון · פרמטרים</p>
+  <div class="main-nav">
+    <button class="main-btn active" onclick="showPanel('flow',this)">📋 חקירה</button>
+    <button class="main-btn" onclick="showPanel('deriv',this)">∂ נגזרות</button>
+    <button class="main-btn" onclick="showPanel('extrema',this)">📍 קיצון</button>
+    <button class="main-btn" onclick="showPanel('param',this)">🔢 פרמטרים</button>
+    <button class="main-btn" onclick="showPanel('practice',this)">✏️ תרגול</button>
+    <button class="main-btn" style="color:rgba(255,255,255,0.3);cursor:default;" disabled>🔒 שלב ב׳</button>
+  </div>
+</div>
+
+<main>
+
+<!-- ══════════ חקירה ══════════ -->
+<div class="panel active" id="panel-flow">
+  <div class="node start">³ קיבלנו פולינום לחקור</div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="node step purple">
+    <div class="num">1️⃣</div>
+    <div class="content">
+      <div class="title">תחום הגדרה</div>
+      <div class="detail">פולינום — מוגדר לכל מספר x (אין מגבלות!)<br>פולינום עם שורש — x ≥ 0 תחת השורש</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="node step teal">
+    <div class="num">2️⃣</div>
+    <div class="content">
+      <div class="title">נקודות חיתוך עם הצירים</div>
+      <div class="detail">
+        עם ציר x: הצב f(x)=0 → פתור (הוצא גורם משותף!)<br>
+        עם ציר y: הצב x=0 → חשב f(0)
+      </div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="node step blue">
+    <div class="num">3️⃣</div>
+    <div class="content">
+      <div class="title">נגזרת f′(x)</div>
+      <div class="detail">גזור כל איבר · ax^n → n·ax^(n-1)</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="node step orange">
+    <div class="num">4️⃣</div>
+    <div class="content">
+      <div class="title">נקודות קיצון</div>
+      <div class="detail">
+        פתור f′(x)=0 → מצא x<br>
+        הצב בטבלת סימנים → קבע מקסימום/מינימום<br>
+        הצב בחזרה ב-f(x) → מצא y
+      </div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="node step green">
+    <div class="num">5️⃣</div>
+    <div class="content">
+      <div class="title">תחומי עלייה וירידה</div>
+      <div class="detail">f′ > 0 → פונקציה עולה · f′ < 0 → פונקציה יורדת</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="node step red">
+    <div class="num">6️⃣</div>
+    <div class="content">
+      <div class="title">סקיצה</div>
+      <div class="detail">סמן חיתוכים + קיצונות על הצירים · חבר בעיקול חלק</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+
+  <div class="node end">✓ חקירה הושלמה</div>
+
+  <div class="section-title" style="margin-top:8px;">טבלת סיכום חקירה</div>
+  <table style="width:100%;border-collapse:collapse;background:var(--white);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);font-size:0.87rem;">
+    <tr style="background:var(--purple);color:#fff;"><th style="padding:9px 14px;text-align:right;font-weight:800;">שלב</th><th style="padding:9px 14px;text-align:right;font-weight:800;">מה עושים</th><th style="padding:9px 14px;text-align:right;font-weight:800;">מה מקבלים</th></tr>
+    <tr><td style="padding:9px 14px;border-bottom:1px solid var(--border);font-weight:800;color:var(--purple);">תחום</td><td style="padding:9px 14px;border-bottom:1px solid var(--border);">כל מספר x (פולינום רגיל)</td><td style="padding:9px 14px;border-bottom:1px solid var(--border);">כל המספרים</td></tr>
+    <tr style="background:#faf9f7;"><td style="padding:9px 14px;border-bottom:1px solid var(--border);font-weight:800;color:var(--purple);">חיתוך x</td><td style="padding:9px 14px;border-bottom:1px solid var(--border);">f(x)=0, הוצא גורם משותף</td><td style="padding:9px 14px;border-bottom:1px solid var(--border);">נקודות (x,0)</td></tr>
+    <tr><td style="padding:9px 14px;border-bottom:1px solid var(--border);font-weight:800;color:var(--purple);">חיתוך y</td><td style="padding:9px 14px;border-bottom:1px solid var(--border);">הצב x=0</td><td style="padding:9px 14px;border-bottom:1px solid var(--border);">נקודה (0,f(0))</td></tr>
+    <tr style="background:#faf9f7;"><td style="padding:9px 14px;border-bottom:1px solid var(--border);font-weight:800;color:var(--purple);">נגזרת</td><td style="padding:9px 14px;border-bottom:1px solid var(--border);">גזור כל איבר</td><td style="padding:9px 14px;border-bottom:1px solid var(--border);">f′(x)</td></tr>
+    <tr><td style="padding:9px 14px;border-bottom:1px solid var(--border);font-weight:800;color:var(--purple);">קיצון</td><td style="padding:9px 14px;border-bottom:1px solid var(--border);">f′(x)=0, טבלת סימנים</td><td style="padding:9px 14px;border-bottom:1px solid var(--border);">מקסימום / מינימום</td></tr>
+    <tr style="background:#faf9f7;"><td style="padding:9px 14px;font-weight:800;color:var(--purple);">עלייה/ירידה</td><td style="padding:9px 14px;">סימן f′</td><td style="padding:9px 14px;">תחומי עלייה וירידה</td></tr>
+  </table>
+</div>
+
+<!-- ══════════ נגזרות ══════════ -->
+<div class="panel" id="panel-deriv">
+  <div class="section-title">כללי גזירה לפולינומים</div>
+
+  <div class="rule-box">
+    <div class="rb-title">כלל החזקה — הכי חשוב!</div>
+    <div class="rule-item"><span class="rname">(xⁿ)′ = n·xⁿ⁻¹</span>מכפילים במעריך ומורידים את המעריך ב-1</div>
+    <div class="rule-item"><span class="rname">דוגמאות</span>
+      (x³)′ = 3x² &nbsp;·&nbsp; (x²)′ = 2x &nbsp;·&nbsp; (x)′ = 1 &nbsp;·&nbsp; (5)′ = 0
+    </div>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">כלל הסכום וההפרש</div>
+    <div class="rule-item"><span class="rname">(f ± g)′ = f′ ± g′</span>גוזרים כל איבר בנפרד</div>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">כלל המכפלה — לפולינום עם שורש</div>
+    <div class="rule-item"><span class="rname">(f·g)′ = f′·g + f·g′</span>נדרש לסוג f(x) = x·√(ax+b)</div>
+    <div class="rule-item"><span class="rname">דוגמה: f(x) = x·√(x+3)</span>
+      f′ = 1·√(x+3) + x·<span class="frac"><span class="num">1</span><span class="den">2√(x+3)</span></span>
+      = √(x+3) + <span class="frac"><span class="num">x</span><span class="den">2√(x+3)</span></span>
+    </div>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">כלל השרשרת — לשורש מורכב</div>
+    <div class="rule-item"><span class="rname">(√u)′ = <span class="frac"><span class="num">u′</span><span class="den">2√u</span></span></span>גוזרים את u ומחלקים ב-2√u</div>
+    <div class="rule-item"><span class="rname">דוגמה: f(x) = √(3x²+1)</span>
+      f′ = <span class="frac"><span class="num">6x</span><span class="den">2√(3x²+1)</span></span> = <span class="frac"><span class="num">3x</span><span class="den">√(3x²+1)</span></span>
+    </div>
+  </div>
+
+  <div class="tip">💡 <strong>טיפ:</strong> בפולינום רגיל (בלי שורש) — גזור איבר איבר. כלל המכפלה רק כשיש מכפלה של שתי פונקציות שונות!</div>
+</div>
+
+<!-- ══════════ קיצון ══════════ -->
+<div class="panel" id="panel-extrema">
+  <div class="section-title">טבלת סימנים — איך עושים?</div>
+
+  <div class="node step purple">
+    <div class="num">1️⃣</div>
+    <div class="content">
+      <div class="title">מצא את נקודות האפס של f′</div>
+      <div class="detail">פתור f′(x) = 0 → קבל x₁, x₂, ...</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+  <div class="node step purple">
+    <div class="num">2️⃣</div>
+    <div class="content">
+      <div class="title">בנה טבלת סימנים</div>
+      <div class="detail">ציר x מחולק לתחומים לפי נקודות האפס · בדוק סימן f′ בכל תחום</div>
+    </div>
+  </div>
+  <div class="arrow"><svg width="24" height="34" viewBox="0 0 24 34"><line x1="12" y1="0" x2="12" y2="26" stroke="#aaa" stroke-width="2.5"/><polygon points="12,34 5,20 19,20" fill="#aaa"/></svg></div>
+  <div class="node step purple">
+    <div class="num">3️⃣</div>
+    <div class="content">
+      <div class="title">קבע סוג קיצון</div>
+      <div class="detail">
+        f′ עובר מ+ ל− → מקסימום מקומי<br>
+        f′ עובר מ− ל+ → מינימום מקומי<br>
+        f′ לא מחליף סימן → אין קיצון (נקודת פיתול)
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:8px;">דוגמה — f(x) = x³ − 3x</div>
+
+  <div class="sign-chart">
+    <div class="sign-row" style="background:var(--purple-light);font-weight:800;">
+      <div class="sign-cell">x</div>
+      <div class="sign-cell">x &lt; −1</div>
+      <div class="sign-cell">x = −1</div>
+      <div class="sign-cell">−1 &lt; x &lt; 1</div>
+    </div>
+    <div class="sign-row">
+      <div class="sign-cell">f′(x) = 3x²−3</div>
+      <div class="sign-cell"><span class="sign-plus">+</span></div>
+      <div class="sign-cell"><span class="sign-zero">0</span></div>
+      <div class="sign-cell"><span class="sign-minus">−</span></div>
+    </div>
+    <div class="sign-row" style="background:#faf9f7;">
+      <div class="sign-cell">f(x)</div>
+      <div class="sign-cell">↗ עולה</div>
+      <div class="sign-cell">מקסימום (−1,2)</div>
+      <div class="sign-cell">↘ יורדת</div>
+    </div>
+  </div>
+
+  <div class="sign-chart" style="margin-top:8px;">
+    <div class="sign-row" style="background:var(--purple-light);font-weight:800;">
+      <div class="sign-cell">x</div>
+      <div class="sign-cell">x = 1</div>
+      <div class="sign-cell">x &gt; 1</div>
+      <div class="sign-cell"></div>
+    </div>
+    <div class="sign-row">
+      <div class="sign-cell">f′(x)</div>
+      <div class="sign-cell"><span class="sign-zero">0</span></div>
+      <div class="sign-cell"><span class="sign-plus">+</span></div>
+      <div class="sign-cell"></div>
+    </div>
+    <div class="sign-row" style="background:#faf9f7;">
+      <div class="sign-cell">f(x)</div>
+      <div class="sign-cell">מינימום (1,−2)</div>
+      <div class="sign-cell">↗ עולה</div>
+      <div class="sign-cell"></div>
+    </div>
+  </div>
+
+  <div class="tip">💡 <strong>קיצון חיצוני:</strong> בגרות לפעמים שואלת על קיצון בקצה התחום — שם בודקים את ערך f, לא את f′!</div>
+</div>
+
+<!-- ══════════ פרמטרים ══════════ -->
+<div class="panel" id="panel-param">
+  <div class="section-title">שאלות פרמטר — סוגים מהבגרות</div>
+  <div class="node warn">⚠️ שאלת פרמטר = נותנים f(x) עם מספר לא ידוע a, ומידע נוסף. צריך למצוא את a.</div>
+
+  <div class="rule-box">
+    <div class="rb-title">סוג 1 — נתון שיש קיצון ב-x₀</div>
+    <div class="rule-item"><span class="rname">שיטה</span>גזור → הצב x₀ → שווה 0 → פתור לa</div>
+    <div class="rule-item" style="background:var(--purple-light);">
+      <span class="rname">דוגמה (קיץ תשפ"ה שאלה 7)</span>
+      g(x) = f(x) + a, קיצון פנימי ב-x = 5/2<br>
+      g′(x) = f′(x) → הצב x=5/2, שווה 0 → מצא a
+    </div>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">סוג 2 — נתון שהגרף עובר בנקודה (x₀, y₀)</div>
+    <div class="rule-item"><span class="rname">שיטה</span>הצב x₀ ו-y₀ ישירות בf(x) → פתור לa</div>
+    <div class="rule-item" style="background:var(--purple-light);">
+      <span class="rname">דוגמה</span>
+      f(x) = x³ + ax, הגרף עובר ב-(2, 2)<br>
+      2 = 8 + 2a → 2a = −6 → a = −3
+    </div>
+  </div>
+
+  <div class="rule-box">
+    <div class="rb-title">סוג 3 — נתון שיפוע משיק ב-x₀</div>
+    <div class="rule-item"><span class="rname">שיטה</span>גזור → הצב x₀ → שווה לשיפוע הנתון → פתור לa</div>
+    <div class="rule-item" style="background:var(--purple-light);">
+      <span class="rname">דוגמה</span>
+      f(x) = x³ − ax, שיפוע המשיק ב-x=1 הוא 0<br>
+      f′(x) = 3x² − a → f′(1) = 3 − a = 0 → a = 3
+    </div>
+  </div>
+
+  <div class="tip">💡 <strong>תרשים זרימה:</strong> קיבלת מידע על קיצון → גזור ואפס. מידע על נקודה → הצב ישירות. מידע על שיפוע → גזור והשווה לשיפוע.</div>
+</div>
+
+<!-- ══════════ תרגול ══════════ -->
+<div class="panel" id="panel-practice">
+
+  <div class="section-title">תרגילים מבגרויות אמיתיות</div>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🟢 חורף תשפ"ה 2025 — f(x) = x²√(x+5) (קל-בינוני)</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <strong>שאלה 7 חורף תשפ"ה:</strong> f(x) = x²√(x+5), מוגדרת בתחום x ≥ −5<br><br>
+      <strong>א. תחום הגדרה.</strong>
+      <div class="sol-step"><div class="s-num">תחום</div>x+5 ≥ 0 → <strong>x ≥ −5</strong></div>
+      <br><strong>ב. נקודות חיתוך עם הצירים.</strong>
+      <div class="sol-step"><div class="s-num">ציר x: f(x)=0</div>x²√(x+5) = 0 → x²=0 או √(x+5)=0 → <strong>x=0 ו-x=−5</strong></div>
+      <div class="sol-step"><div class="s-num">ציר y: f(0)</div>f(0) = 0·√5 = <strong>(0,0)</strong></div>
+      <br><strong>ג. מצאו נגזרת.</strong>
+      <div class="sol-step"><div class="s-num">כלל המכפלה</div>f′ = 2x·√(x+5) + x²· <span style="display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-size:0.85em;"><span style="border-bottom:1.5px solid currentColor;padding:0 2px;">1</span><span style="padding:0 2px;">2√(x+5)</span></span></div>
+      <div class="sol-step"><div class="s-num">פישוט (× 2√(x+5))</div>f′ = <span style="display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-size:0.85em;"><span style="border-bottom:1.5px solid currentColor;padding:0 2px;">4x(x+5) + x²</span><span style="padding:0 2px;">2√(x+5)</span></span> = <span style="display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-size:0.85em;"><span style="border-bottom:1.5px solid currentColor;padding:0 2px;">5x²+20x</span><span style="padding:0 2px;">2√(x+5)</span></span> = <span style="display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-size:0.85em;"><span style="border-bottom:1.5px solid currentColor;padding:0 2px;">5x(x+4)</span><span style="padding:0 2px;">2√(x+5)</span></span></div>
+      <br><strong>ד. נקודות קיצון.</strong>
+      <div class="sol-step"><div class="s-num">f′=0: מונה=0</div>5x(x+4)=0 → x=0 או x=−4</div>
+      <div class="sol-step"><div class="s-num">f(0)</div>0 → נקודה (0,0) מינימום</div>
+      <div class="sol-step"><div class="s-num">f(−4)</div>(−4)²√1 = 16 → נקודה (−4,16) מקסימום</div>
+    </div>
+  </div>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🟠 קיץ תשפ"ה 2025 מועד א׳ — f(x) = (x−1)√(4x−6x²) (בינוני)</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <strong>שאלה 7 קיץ תשפ"ה מועד א׳.</strong><br><br>
+      <strong>א. תחום הגדרה.</strong>
+      <div class="sol-step"><div class="s-num">תנאי לשורש</div>4x−6x² ≥ 0 → 2x(2−3x) ≥ 0 → <strong>0 ≤ x ≤ 2/3</strong></div>
+      <br><strong>ב. נקודות חיתוך.</strong>
+      <div class="sol-step"><div class="s-num">ציר x</div>(x−1)=0 → x=1 (מחוץ לתחום!) · √(4x−6x²)=0 → x=0 או x=2/3<br>חיתוכים: <strong>(0,0) ו-(2/3,0)</strong></div>
+      <br><strong>ג. מצאו נגזרת ונקודות קיצון (עד מציאת f′=0).</strong>
+      <div class="sol-step"><div class="s-num">כלל המכפלה</div>f′ = 1·√(4x−6x²) + (x−1)·<span style="display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-size:0.85em;"><span style="border-bottom:1.5px solid currentColor;padding:0 2px;">4−12x</span><span style="padding:0 2px;">2√(4x−6x²)</span></span></div>
+      <div class="sol-step"><div class="s-num">f′=0 (מונה=0)</div>2(4x−6x²) + (x−1)(4−12x) = 0<br>8x−12x² + 4x−12x²−4+12x = 0<br>−24x²+24x−4 = 0 → 6x²−6x+1 = 0<br>x = (6±√12)÷12 = (3±√3)÷6</div>
+    </div>
+  </div>
+
+  <div class="ex-card">
+    <div class="ex-header" onclick="toggleEx(this)">
+      <span>🔴 חורף תשפ"ו 2026 — f(x) = x√(4−2x) + פרמטר (קשה)</span>
+      <span class="ex-toggle">▼</span>
+    </div>
+    <div class="ex-body">
+      <strong>שאלה 7 חורף תשפ"ו:</strong> f(x) = x√(4−2x), תחום x ≤ 2. g(x) = f(x) + a. לg יש נקודת מקסימום פנימית ב-x = 5/2.<br><br>
+      <strong>א. מצאו תחום f.</strong>
+      <div class="sol-step"><div class="s-num">תנאי</div>4−2x ≥ 0 → x ≤ 2. תחום: <strong>x ≤ 2</strong></div>
+      <br><strong>ב. נגזרת f.</strong>
+      <div class="sol-step"><div class="s-num">כלל המכפלה</div>f′ = √(4−2x) + x· <span style="display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-size:0.85em;"><span style="border-bottom:1.5px solid currentColor;padding:0 2px;">−2</span><span style="padding:0 2px;">2√(4−2x)</span></span> = √(4−2x) − <span style="display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-size:0.85em;"><span style="border-bottom:1.5px solid currentColor;padding:0 2px;">x</span><span style="padding:0 2px;">√(4−2x)</span></span></div>
+      <div class="sol-step"><div class="s-num">פישוט</div>f′ = <span style="display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-size:0.85em;"><span style="border-bottom:1.5px solid currentColor;padding:0 2px;">4−2x−x</span><span style="padding:0 2px;">√(4−2x)</span></span> = <span style="display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-size:0.85em;"><span style="border-bottom:1.5px solid currentColor;padding:0 2px;">4−3x</span><span style="padding:0 2px;">√(4−2x)</span></span></div>
+      <br><strong>ג. g(x) = f(x) + a. מקסימום פנימי ב-x=5/2. מצאו a.</strong>
+      <div class="sol-step"><div class="s-num">תחום g</div>g מוגדרת ב-x ≤ 2. x=5/2 &gt; 2 → מחוץ לתחום f!</div>
+      <div class="sol-step"><div class="s-num">הסבר</div>g′(x) = f′(x) → נקודות קיצון של g הן אותן נקודות של f (אם בתחום). x=5/2 הוא קיצון פנימי → צריך שהתחום יגיע ל-5/2 → תחום g: x ≤ 5/2</div>
+      <div class="sol-step"><div class="s-num">תחום g</div>4−2x+a ≥ 0 → a ≥ 2x−4. עבור x=5/2: a ≥ 1 → בדוק: a=1</div>
+    </div>
+  </div>
+
+  <div class="tip">💡 <strong>נקודת מקסימום פנימית:</strong> "פנימית" = לא בקצה התחום. תמיד בדוק שנקודת הקיצון אכן בתוך תחום ההגדרה!</div>
+
+</div>
+</main>
+<script>
+function showPanel(type,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.main-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+type).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleEx(header){
+  const body=header.nextElementSibling;
+  const toggle=header.querySelector('.ex-toggle');
+  body.classList.toggle('open');
+  toggle.classList.toggle('open');
+}
+</script>
+</body>
+</html>
