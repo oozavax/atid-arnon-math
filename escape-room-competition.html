@@ -324,8 +324,6 @@ h2.sub { font-size:1.1rem; color:rgba(245,230,200,0.6); font-weight:300; margin:
 .progress-cell.todo { background:rgba(255,255,255,0.05); color:rgba(245,230,200,0.3); }
 .team-code-badge { display:inline-block; background:rgba(201,168,76,0.15); border:1px solid rgba(201,168,76,0.4); border-radius:6px; font-family:'Cinzel',serif; font-size:1.1rem; letter-spacing:0.15em; padding:0.2rem 0.6rem; color:var(--gold); margin:0.2rem; }
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 </head>
 <body>
 <div class="stars" id="stars"></div>
@@ -523,67 +521,6 @@ h2.sub { font-size:1.1rem; color:rgba(245,230,200,0.6); font-weight:300; margin:
 </div>
 
 <script>
-// ── FIREBASE INIT ──
-const _fbConfig = {
-  apiKey: "AIzaSyA60BlH7q-HoZyeBT5Ka5_pjvRsiqvyNLo",
-  authDomain: "atid-arnon-mat.firebaseapp.com",
-  databaseURL: "https://atid-arnon-mat-default-rtdb.firebaseio.com",
-  projectId: "atid-arnon-mat"
-};
-if (!firebase.apps.length) firebase.initializeApp(_fbConfig);
-const _db = firebase.database();
-
-// ── URL PARAMS ──
-const _params = new URLSearchParams(location.search);
-const _gameCode = _params.get('code');
-const _teamCode = _params.get('team');
-
-// ── FIREBASE STATE BRIDGE ──
-// Replace localStorage with Firebase realtime reads/writes
-function saveSharedState() {
-  if (!_gameCode) return;
-  try {
-    if (selfplayTeamIdx !== null) {
-      const ti = selfplayTeamIdx;
-      const slot = {
-        score: teams[ti] ? teams[ti].score : 0,
-        stationDone: stationDone[ti] || {},
-        stationAnswers: stationAnswers[ti] || {}
-      };
-      _db.ref('games/' + _gameCode + '/teamState/' + ti).set(slot);
-    } else {
-      const teamList = teams.map(t => ({ name:t.name, emoji:t.emoji, color:t.color, code:t.code }));
-      _db.ref('games/' + _gameCode + '/mma_teams').set(teamList);
-    }
-  } catch(e) { console.error('saveSharedState', e); }
-}
-
-async function loadSharedStateAsync() {
-  if (!_gameCode) return false;
-  try {
-    const snap = await _db.ref('games/' + _gameCode + '/mma_teams').once('value');
-    const teamList = snap.val();
-    if (!teamList || !teamList.length) return false;
-    teams = teamList.map((t, i) => ({ ...t, code: t.code || genCode(i), score: 0, stationTimes: {} }));
-    stationDone = {}; stationAnswers = {};
-    teams.forEach((_, i) => { stationAnswers[i] = {}; stationDone[i] = {}; });
-    // load each team slot
-    for (let i = 0; i < teams.length; i++) {
-      try {
-        const s2 = await _db.ref('games/' + _gameCode + '/teamState/' + i).once('value');
-        const slot = s2.val();
-        if (slot) {
-          teams[i].score = slot.score || 0;
-          stationDone[i] = slot.stationDone || {};
-          stationAnswers[i] = slot.stationAnswers || {};
-        }
-      } catch(e) {}
-    }
-    numTeams = teams.length;
-    return true;
-  } catch(e) { return false; }
-}
-
 // ═══════════════════════════════════════════
 // QUESTION DATA (same 6 stations)
 // ═══════════════════════════════════════════
@@ -793,12 +730,75 @@ let popupShown = []; // kept for compatibility, no longer used
 
 // SELFPLAY: each team saves its own slot: 'mma_team_N'
 // Teacher saves team list under 'mma_teams'
-
-function loadSharedState() {
-  // Sync check - teams already loaded via Firebase async
-  return teams && teams.length > 0;
+function saveSharedState() {
+  try {
+    if (selfplayTeamIdx !== null) {
+      // Team browser: save only this team's data
+      const ti = selfplayTeamIdx;
+      const slot = {
+        score: teams[ti].score,
+        stationDone: stationDone[ti] || {},
+        stationAnswers: stationAnswers[ti] || {}
+      };
+      localStorage.setItem(`mma_team_${ti}`, JSON.stringify(slot));
+    } else {
+      // Teacher browser: save team list (names/emojis/codes)
+      const teamList = teams.map(t => ({ name:t.name, emoji:t.emoji, color:t.color, code:t.code }));
+      localStorage.setItem('mma_teams', JSON.stringify(teamList));
+    }
+  } catch(e) { console.error('saveSharedState', e); }
 }
 
+function loadSharedState() {
+  try {
+    // First try URL params (works across devices)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlData = urlParams.get('data');
+    if (urlData) {
+      try {
+        const teamList = JSON.parse(decodeURIComponent(escape(atob(urlData))));
+        if (teamList && teamList.length) {
+          teams = teamList.map((t, i) => ({ ...t, score: 0, stationTimes: {} }));
+          stationDone = {};
+          stationAnswers = {};
+          teams.forEach((_, i) => { stationAnswers[i] = {}; stationDone[i] = {}; });
+          numTeams = teams.length;
+          // Also save to localStorage for persistence
+          localStorage.setItem('mma_teams', JSON.stringify(teamList));
+          return true;
+        }
+      } catch(e) {}
+    }
+    // Fallback to localStorage
+    const raw = localStorage.getItem('mma_teams');
+    if (!raw) return false;
+    const teamList = JSON.parse(raw);
+    if (!teamList || !teamList.length) return false;
+    // Restore team list
+    teams = teamList.map((t, i) => ({ ...t, code: t.code || genCode(i), score: 0, stationTimes: {} }));
+    stationDone = {};
+    stationAnswers = {};
+    teams.forEach((_, i) => {
+      stationAnswers[i] = {};
+      stationDone[i] = {};
+      // Load each team's individual slot if available
+      try {
+        const slotRaw = localStorage.getItem(`mma_team_${i}`);
+        if (slotRaw) {
+          const slot = JSON.parse(slotRaw);
+          teams[i].score = slot.score || 0;
+          stationDone[i] = slot.stationDone || {};
+          stationAnswers[i] = slot.stationAnswers || {};
+        }
+      } catch(e) {}
+    });
+    return true;
+  } catch(e) { console.error('loadSharedState', e); return false; }
+}
+
+// ═══════════════════════════════════════════
+// SETUP
+// ═══════════════════════════════════════════
 function selectMode(mode) {
   gameMode = mode;
   document.getElementById('mode-projected').classList.toggle('selected', mode==='projected');
@@ -855,7 +855,7 @@ function startCompetition() {
 
   if (gameMode === 'selfplay') {
     const teamList = teams.map(t => ({ name:t.name, emoji:t.emoji, color:t.color, code:t.code }));
-    _db.ref('games/'+(_gameCode||'local')+'/mma_teams').set, JSON.stringify(teamList));
+    localStorage.setItem('mma_teams', JSON.stringify(teamList));
     teams.forEach((_, i) => localStorage.removeItem(`mma_team_${i}`));
 
     // Show teacher a screen with ready-made links per team
@@ -872,7 +872,9 @@ function showTeacherLinks() {
   const base = window.location.href.split('?')[0];
   let linksHtml = '';
   teams.forEach((t, i) => {
-    const url = `${base}?team=${t.code}`;
+    // Encode teams data in URL so students don't need localStorage
+    const teamsData = btoa(unescape(encodeURIComponent(JSON.stringify(teams.map(t=>({name:t.name,emoji:t.emoji,color:t.color,code:t.code}))))));
+    const url = `${base}?team=${t.code}&data=${teamsData}`;
     linksHtml += `
       <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(201,168,76,0.25);border-radius:10px;padding:0.8rem 1rem;margin-bottom:0.6rem;display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap">
         <span style="font-size:1.4rem">${t.emoji}</span>
@@ -1679,105 +1681,47 @@ function createStars() {
 // teacher: ?teacher  (or ?teacher=1234 for password)
 // team:    ?team=ALFA
 // ═══════════════════════════════════════════
-async function initFromURL() {
+function initFromURL() {
   createStars();
   const params = new URLSearchParams(window.location.search);
 
   if (params.has('teacher')) {
+    // ── TEACHER MODE ──
+    // Show setup screen as normal
     renderTeamInputs();
     return;
   }
 
-  const gameCode = params.get('code');
-  const teamIdx  = params.get('teamIdx'); // index in teams array
-
-  // ── STUDENT MODE with Firebase ──
-  if (gameCode && teamIdx !== null) {
+  const teamCode = params.get('team');
+  if (teamCode) {
+    // ── STUDENT MODE: auto-login with team code ──
+    // Hide setup screen completely, go straight to login attempt
     document.getElementById('setup-screen').style.display = 'none';
-    showFirebaseWaiting(gameCode, parseInt(teamIdx));
+    // Try to load state immediately
+    if (loadSharedState()) {
+      const idx = teams.findIndex(t => t.code === teamCode.toUpperCase());
+      if (idx !== -1) {
+        selfplayTeamIdx = idx;
+        gameMode = 'selfplay';
+        renderLeaderboard();
+        document.getElementById('leaderboard-bar').style.display = 'flex';
+        let si = 0;
+        for (let s = 0; s < STATIONS.length; s++) {
+          if (!stationDone[idx]?.[s]) { si = s; break; }
+          if (s === STATIONS.length - 1) si = STATIONS.length;
+        }
+        if (si >= STATIONS.length) { showFinalScreen(); return; }
+        showMapTransition(si > 0 ? si - 1 : null, si, () => startTeamOnStation(idx, si));
+        return;
+      }
+    }
+    // Game not started yet – show waiting screen
+    showWaitingScreen(teamCode.toUpperCase());
     return;
   }
 
-  // No params – show setup
+  // No params – show setup (fallback, shouldn't happen in production)
   renderTeamInputs();
-}
-
-function showFirebaseWaiting(gameCode, teamIdx) {
-  // Create waiting screen
-  const ws = document.createElement('div');
-  ws.id = 'fb-waiting';
-  ws.style.cssText = 'position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;z-index:999;background:#0f0f1a;';
-  ws.innerHTML = `
-    <div style="font-size:3.5rem;margin-bottom:1rem">⏳</div>
-    <h1 style="font-family:'Cinzel',serif;font-size:1.8rem;color:var(--gold);margin-bottom:0.5rem">ממתינים למורה...</h1>
-    <div id="fb-team-tag" style="color:rgba(245,230,200,0.6);margin-bottom:1rem;font-size:1.1rem">טוען...</div>
-    <p style="font-size:0.85rem;color:rgba(245,230,200,0.4);margin-bottom:2rem">הדף יתחיל אוטומטית כשהמורה לוחץ התחל</p>
-    <div id="fb-dots" style="font-size:2rem;letter-spacing:6px">●○○</div>
-  `;
-  document.body.appendChild(ws);
-
-  let dot = 0;
-  const dotFrames = ['●○○','○●○','○○●'];
-  const dotInterval = setInterval(() => {
-    const el = document.getElementById('fb-dots');
-    if (el) el.textContent = dotFrames[dot++ % 3];
-  }, 600);
-
-  // Listen for game status on Firebase
-  if (typeof _db === 'undefined') {
-    console.error('Firebase not initialized');
-    return;
-  }
-
-  const gameRef = _db.ref('games/' + gameCode);
-
-  // First load team info
-  gameRef.once('value').then(snap => {
-    const g = snap.val();
-    if (!g) return;
-    const t = g.teams && g.teams[teamIdx];
-    if (t) {
-      const tag = document.getElementById('fb-team-tag');
-      if (tag) tag.innerHTML = `${t.emoji} <strong>${t.name}</strong>`;
-    }
-  });
-
-  // Listen for status change to 'active'
-  gameRef.on('value', snap => {
-    const g = snap.val();
-    if (!g) return;
-    if (g.status === 'active') {
-      gameRef.off();
-      clearInterval(dotInterval);
-      const wsEl = document.getElementById('fb-waiting');
-      if (wsEl) wsEl.remove();
-      // Load teams from Firebase and start
-      launchTeamGame(g, teamIdx);
-    }
-  });
-}
-
-async function launchTeamGame(g, teamIdx) {
-  // Build teams array from Firebase data
-  const fbTeams = g.teams || [];
-  numTeams = fbTeams.length;
-  teams = fbTeams.map((t, i) => ({
-    name: t.name, emoji: t.emoji, color: t.color,
-    code: 'T' + i, score: 0, stationTimes: {}
-  }));
-  stationDone = {};
-  stationAnswers = {};
-  teams.forEach((_, i) => { stationAnswers[i] = {}; stationDone[i] = {}; });
-
-  // Set global Firebase ref for saving state
-  window._activeGameCode = g.code || '';
-  window._activeGameRef = _db.ref('games/' + (g.code || ''));
-
-  selfplayTeamIdx = teamIdx;
-  gameMode = 'selfplay';
-  renderLeaderboard();
-  document.getElementById('leaderboard-bar').style.display = 'flex';
-  showMapTransition(null, 0, () => startTeamOnStation(teamIdx, 0));
 }
 
 function showWaitingScreen(code) {
@@ -1794,14 +1738,12 @@ function showWaitingScreen(code) {
   `;
   document.body.appendChild(ws);
 
-  // Poll via Firebase every 2 seconds until teacher starts
+  // Poll every 3 seconds until teacher starts
   let dot = 0;
   const dots = ['●○○','○●○','○○●'];
-  const poll = setInterval(async () => {
-    if (document.getElementById('waiting-dots'))
-      document.getElementById('waiting-dots').textContent = dots[dot++ % 3];
-    const ok = await loadSharedStateAsync();
-    if (ok) {
+  const poll = setInterval(() => {
+    document.getElementById('waiting-dots').textContent = dots[dot++ % 3];
+    if (loadSharedState()) {
       const idx = teams.findIndex(t => t.code === code);
       if (idx !== -1) {
         clearInterval(poll);
@@ -1810,4 +1752,14 @@ function showWaitingScreen(code) {
         gameMode = 'selfplay';
         renderLeaderboard();
         document.getElementById('leaderboard-bar').style.display = 'flex';
-        showMapTransition(null, 0, () => startTe
+        showMapTransition(null, 0, () => startTeamOnStation(idx, 0));
+      }
+    }
+  }, 3000);
+}
+
+// INIT
+initFromURL();
+</script>
+</body>
+</html>
