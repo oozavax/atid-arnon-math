@@ -324,6 +324,8 @@ h2.sub { font-size:1.1rem; color:rgba(245,230,200,0.6); font-weight:300; margin:
 .progress-cell.todo { background:rgba(255,255,255,0.05); color:rgba(245,230,200,0.3); }
 .team-code-badge { display:inline-block; background:rgba(201,168,76,0.15); border:1px solid rgba(201,168,76,0.4); border-radius:6px; font-family:'Cinzel',serif; font-size:1.1rem; letter-spacing:0.15em; padding:0.2rem 0.6rem; color:var(--gold); margin:0.2rem; }
 </style>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 </head>
 <body>
 <div class="stars" id="stars"></div>
@@ -526,6 +528,92 @@ h2.sub { font-size:1.1rem; color:rgba(245,230,200,0.6); font-weight:300; margin:
 </div>
 
 <script>
+// ── FIREBASE LOCK SYSTEM ──
+let _fbLockDb = null;
+let _lockGameId = null;
+(function initFbLock() {
+  if (typeof firebase === 'undefined') { setTimeout(initFbLock, 100); return; }
+  if (!firebase.apps.length) {
+    firebase.initializeApp({
+      apiKey:"AIzaSyA60BlH7q-HoZyeBT5Ka5_pjvRsiqvyNLo",
+      authDomain:"atid-arnon-mat.firebaseapp.com",
+      databaseURL:"https://atid-arnon-mat-default-rtdb.firebaseio.com",
+      projectId:"atid-arnon-mat"
+    });
+  }
+  _fbLockDb = firebase.database();
+})();
+
+// Generate a game ID from localStorage or create new one
+function getLockGameId() {
+  if (_lockGameId) return _lockGameId;
+  let id = localStorage.getItem('mma_game_id');
+  if (!id) { id = 'g' + Date.now().toString(36); localStorage.setItem('mma_game_id', id); }
+  _lockGameId = id;
+  return id;
+}
+
+// Teacher: unlock a station
+function unlockStation(si) {
+  if (!_fbLockDb) return;
+  _fbLockDb.ref('locks/' + getLockGameId() + '/station_' + si).set(true);
+}
+
+// Teacher: lock all stations above si
+function lockAllFrom(si) {
+  if (!_fbLockDb) return;
+  const gid = getLockGameId();
+  for (let i = si; i < 10; i++) {
+    _fbLockDb.ref('locks/' + gid + '/station_' + i).set(false);
+  }
+  // Always unlock station 0
+  _fbLockDb.ref('locks/' + gid + '/station_0').set(true);
+}
+
+// Student: check if station is unlocked, retry until it is
+function waitForUnlock(si, callback) {
+  if (!_fbLockDb) { callback(); return; } // fallback if Firebase not ready
+  const gid = getLockGameId();
+  _fbLockDb.ref('locks/' + gid + '/station_' + si).once('value', snap => {
+    const val = snap.val();
+    if (val === true) {
+      callback();
+    } else {
+      // Show waiting screen and poll
+      showLockWaiting(si, callback);
+    }
+  });
+}
+
+let _lockWaitEl = null;
+function showLockWaiting(si, callback) {
+  if (_lockWaitEl) return; // already showing
+  _lockWaitEl = document.createElement('div');
+  _lockWaitEl.style.cssText = 'position:fixed;inset:0;background:rgba(10,10,20,0.97);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;';
+  _lockWaitEl.innerHTML = `
+    <div style="font-size:3rem;margin-bottom:1rem;">⏳</div>
+    <h2 style="font-family:'Cinzel',serif;color:var(--gold);font-size:1.4rem;margin-bottom:0.5rem;">ממתינים למורה...</h2>
+    <p style="color:rgba(245,230,200,0.5);font-size:0.9rem;">המורה עומד לפתוח את התחנה הבאה</p>
+    <div id="lock-dots" style="font-size:2rem;margin-top:1rem;letter-spacing:6px;">●○○</div>
+  `;
+  document.body.appendChild(_lockWaitEl);
+
+  let dot = 0;
+  const dots = ['●○○','○●○','○○●'];
+  const gid = getLockGameId();
+
+  const checkInterval = setInterval(() => {
+    document.getElementById('lock-dots').textContent = dots[dot++ % 3];
+    _fbLockDb.ref('locks/' + gid + '/station_' + si).once('value', snap => {
+      if (snap.val() === true) {
+        clearInterval(checkInterval);
+        if (_lockWaitEl) { _lockWaitEl.remove(); _lockWaitEl = null; }
+        callback();
+      }
+    });
+  }, 2000);
+}
+
 // ═══════════════════════════════════════════
 // QUESTION DATA (same 6 stations)
 // ═══════════════════════════════════════════
@@ -832,6 +920,8 @@ function startCompetition() {
   if (gameMode === 'selfplay') {
     const teamList = teams.map(t => ({ name:t.name, emoji:t.emoji, color:t.color, code:t.code }));
     localStorage.setItem('mma_teams', JSON.stringify(teamList));
+    lockAllFrom(0); // lock all stations
+    unlockStation(0); // unlock only station 0
     teams.forEach((_, i) => localStorage.removeItem(`mma_team_${i}`));
 
     // Show teacher a screen with ready-made links per team
@@ -1232,7 +1322,9 @@ function finishTeamStation(teamIdx, si) {
       // In selfplay: each team goes to next station independently
       const nextSi = si + 1;
       if (nextSi < STATIONS.length) {
-        showMapTransition(si, nextSi, () => startTeamOnStation(teamIdx, nextSi));
+        waitForUnlock(nextSi, () => {
+          showMapTransition(si, nextSi, () => startTeamOnStation(teamIdx, nextSi));
+        });
       } else {
         // This team finished all stations – show personal finish screen
         showTeamFinished(teamIdx);
@@ -1843,8 +1935,8 @@ function reviewNext() {
 }
 
 function reviewRelease() {
-  // Just go back to dashboard — in selfplay mode teams can already proceed
-  // Show a "released" confirmation
+  // Unlock the NEXT station
+  unlockStation(reviewSi + 1);
   const btn = document.getElementById('rv-btn-release');
   btn.innerHTML = '<span>✓ שוחרר!</span>';
   btn.style.background = 'linear-gradient(135deg,#6ee7b7,#059669)';
