@@ -521,9 +521,25 @@ let _lockGameId = null;
 // Generate a game ID from localStorage or create new one
 function getLockGameId() {
   if (_lockGameId) return _lockGameId;
-  let id = localStorage.getItem('mma_game_id');
-  if (!id) { id = 'g' + Date.now().toString(36); localStorage.setItem('mma_game_id', id); }
+  // Use teams data hash from URL so teacher + all students share the same game ID
+  const urlParams = new URLSearchParams(window.location.search);
+  const data = urlParams.get('data');
+  if (data && data.length > 6) {
+    _lockGameId = 'g' + data.substring(0, 8).replace(/[^a-zA-Z0-9]/g, 'x');
+  } else {
+    // Teacher side - use localStorage
+    let id = localStorage.getItem('mma_game_id');
+    if (!id) { id = 'g' + Date.now().toString(36); localStorage.setItem('mma_game_id', id); }
+    _lockGameId = id;
+  }
+  return _lockGameId;
+}
+
+// Teacher must store game ID so students can derive it from the URL data
+function setTeacherGameId(teamsData) {
+  const id = 'g' + teamsData.substring(0, 8).replace(/[^a-zA-Z0-9]/g, 'x');
   _lockGameId = id;
+  localStorage.setItem('mma_game_id', id);
   return id;
 }
 
@@ -906,13 +922,7 @@ function startCompetition() {
   if (gameMode === 'selfplay') {
     const teamList = teams.map(t => ({ name:t.name, emoji:t.emoji, color:t.color, code:t.code }));
     localStorage.setItem('mma_teams', JSON.stringify(teamList));
-    // Wait for Firebase then lock/unlock
-    function applyInitialLock() {
-      if (!_fbLockDb) { setTimeout(applyInitialLock, 200); return; }
-      lockAllFrom(0);
-      unlockStation(0);
-    }
-    applyInitialLock();
+    // Lock will be applied in showTeacherLinks after game ID is set
     teams.forEach((_, i) => localStorage.removeItem(`mma_team_${i}`));
 
     // Show teacher a screen with ready-made links per team
@@ -931,6 +941,15 @@ function showTeacherLinks() {
   teams.forEach((t, i) => {
     // Encode teams data in URL so students don't need localStorage
     const teamsData = btoa(unescape(encodeURIComponent(JSON.stringify(teams.map(t=>({name:t.name,emoji:t.emoji,color:t.color,code:t.code}))))));
+    if (teams.indexOf(t) === 0) {
+      setTeacherGameId(teamsData);
+      // Apply initial lock after Firebase ready
+      (function applyInitialLock() {
+        if (!_fbLockDb) { setTimeout(applyInitialLock, 200); return; }
+        lockAllFrom(0);
+        unlockStation(0);
+      })();
+    }
     const url = `${base}?team=${t.code}&data=${teamsData}`;
     linksHtml += `
       <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(201,168,76,0.25);border-radius:10px;padding:0.8rem 1rem;margin-bottom:0.6rem;display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap">
