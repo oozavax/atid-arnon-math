@@ -1240,7 +1240,7 @@ function renderStation(si, teamIdx) {
   // Nav
   const nav = document.createElement('div');
   nav.className = 'btn-row'; nav.id = 'nav-row';
-  nav.innerHTML = `<button class="btn primary" id="next-btn" disabled onclick="finishTeamStation(${teamIdx},${si})"><span>✅ סיימתי – לוח תוצאות</span></button>`;
+  nav.innerHTML = `<button class="btn primary" id="next-btn" disabled onclick="if(!this.dataset.clicked){this.dataset.clicked='1';this.disabled=true;finishTeamStation(${teamIdx},${si});}"><span>✅ סיימתי – לוח תוצאות</span></button>`;
   con.appendChild(nav);
 }
 
@@ -1310,14 +1310,11 @@ function finishTeamStation(teamIdx, si) {
   setTimeout(() => {
     removeScorePopup();
     if (gameMode === 'selfplay') {
-      // In selfplay: each team goes to next station independently
       const nextSi = si + 1;
       if (nextSi < STATIONS.length) {
-        waitForUnlock(nextSi, () => {
-          showMapTransition(si, nextSi, () => startTeamOnStation(teamIdx, nextSi));
-        });
+        // Show waiting screen immediately, then auto-proceed when unlocked
+        showImmediateWaiting(si, nextSi, teamIdx);
       } else {
-        // This team finished all stations – show personal finish screen
         showTeamFinished(teamIdx);
       }
     } else {
@@ -1958,6 +1955,47 @@ function renderReviewStats() {
 window.addEventListener('load', () => {
   setTimeout(populateReviewSelect, 500);
 });
+
+
+function showImmediateWaiting(si, nextSi, teamIdx) {
+  // Show waiting screen immediately after finishing station
+  if (_lockWaitEl) _lockWaitEl.remove();
+  _lockWaitEl = document.createElement('div');
+  _lockWaitEl.style.cssText = 'position:fixed;inset:0;background:rgba(10,10,20,0.97);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;';
+  _lockWaitEl.innerHTML = `
+    <div style="font-size:3rem;margin-bottom:1rem;">⏳</div>
+    <h2 style="font-family:'Cinzel',serif;color:var(--gold);font-size:1.4rem;margin-bottom:0.5rem;">כל הכבוד! סיימתם תחנה ${si + 1}</h2>
+    <p style="color:rgba(245,230,200,0.5);font-size:0.9rem;margin-bottom:0.5rem;">ממתינים למורה שישחרר את התחנה הבאה...</p>
+    <div id="lock-dots" style="font-size:2rem;margin-top:1rem;letter-spacing:6px;">●○○</div>
+  `;
+  document.body.appendChild(_lockWaitEl);
+
+  let dot = 0;
+  const dots = ['●○○','○●○','○○●'];
+  const gid = getLockGameId();
+
+  function checkUnlock() {
+    if (!_fbLockDb) { setTimeout(checkUnlock, 300); return; }
+    _fbLockDb.ref('locks/' + gid + '/station_' + nextSi).once('value', snap => {
+      if (snap.val() === true) {
+        if (_lockWaitEl) { _lockWaitEl.remove(); _lockWaitEl = null; }
+        // Go directly to map transition
+        showMapTransition(si, nextSi, () => startTeamOnStation(teamIdx, nextSi));
+      } else {
+        setTimeout(checkUnlock, 2000);
+      }
+    });
+  }
+
+  // Animate dots while waiting
+  const dotInterval = setInterval(() => {
+    const el = document.getElementById('lock-dots');
+    if (el) el.textContent = dots[dot++ % 3];
+    else clearInterval(dotInterval);
+  }, 600);
+
+  checkUnlock();
+}
 
 </script>
 
