@@ -339,24 +339,9 @@ h2.sub { font-size:1.1rem; color:rgba(245,230,200,0.6); font-weight:300; margin:
   <div class="setup-content" style="position:relative;z-index:1">
     <div class="compass">🧭</div>
     <h1 class="title">מסע המתמטיקאים</h1>
-    <h2 class="sub">תחרות צוותים – פולינומים, שורש ונגזרות</h2>
+    <h2 class="sub">תחרות צוותים – נגזרות ושורשים</h2>
 
-    <!-- MODE SELECTION -->
-    <p style="color:rgba(245,230,200,0.7);font-size:0.95rem;margin-bottom:1rem">בחרו מצב משחק:</p>
-    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:1.8rem">
-      <div class="mode-card selected" id="mode-projected" onclick="selectMode('projected')">
-        <div style="font-size:2rem">📽️</div>
-        <div class="mode-title">מסך מקרין</div>
-        <div class="mode-desc">המורה מקרין – כל הצוותים<br>עובדים על אותו מסך בתורות</div>
-      </div>
-      <div class="mode-card" id="mode-selfplay" onclick="selectMode('selfplay')">
-        <div style="font-size:2rem">💻</div>
-        <div class="mode-title">מסך עצמאי</div>
-        <div class="mode-desc">כל צוות על המחשב שלו –<br>פותרים במקביל, תחרות אמיתית</div>
-      </div>
-    </div>
-
-    <p style="color:rgba(245,230,200,0.65);font-size:0.95rem;line-height:1.8;margin-bottom:0.5rem">כמה צוותים?</p>
+    <p style="color:rgba(245,230,200,0.65);font-size:0.95rem;margin-bottom:0.5rem">כמה צוותים?</p>
     <div class="team-count-row">
       <button class="count-btn" onclick="changeCount(-1)">−</button>
       <div class="count-display" id="count-display">4</div>
@@ -365,21 +350,10 @@ h2.sub { font-size:1.1rem; color:rgba(245,230,200,0.6); font-weight:300; margin:
 
     <div class="teams-grid" id="teams-grid"></div>
 
-    <!-- SELFPLAY: show team passwords -->
-    <div id="selfplay-links" style="display:none;margin:1rem 0;background:rgba(255,255,255,0.03);border:1px solid rgba(201,168,76,0.2);border-radius:12px;padding:1rem">
-      <p style="font-size:0.82rem;color:rgba(245,230,200,0.55);margin-bottom:0.7rem">📋 כל צוות יפתח את הקובץ הזה ויזין את קוד הצוות שלו:</p>
-      <div id="team-codes"></div>
-    </div>
-
     <div class="btn-row" style="margin-top:1.5rem">
       <button class="btn primary" id="start-btn" onclick="startCompetition()"><span>🏁 התחילו את התחרות!</span></button>
     </div>
 
-    <!-- STUDENT ENTRY - only shown when no ?team= param and no ?teacher param -->
-    <div id="student-entry-btn" style="display:none;margin-top:2rem;padding-top:1.5rem;border-top:1px solid rgba(201,168,76,0.15)">
-      <p style="font-size:0.82rem;color:rgba(245,230,200,0.4);margin-bottom:0.7rem">תלמיד/ה? קיבלתם קוד מהמורה?</p>
-      <button class="btn" onclick="showScreen('selfplay-login-screen')"><span>🔑 כניסה עם קוד צוות</span></button>
-    </div>
   </div>
 </div>
 
@@ -572,20 +546,32 @@ function lockAllFrom(si) {
 
 // Student: check if station is unlocked, retry until it is
 function waitForUnlock(si, callback) {
-  if (!_fbLockDb) { callback(); return; } // fallback if Firebase not ready
+  // Wait up to 3s for Firebase, then fallback
+  let attempts = 0;
+  function tryWait() {
+    if (!_fbLockDb) {
+      attempts++;
+      if (attempts > 15) { callback(); return; } // fallback after 3s
+      setTimeout(tryWait, 200);
+      return;
+    }
+    doWaitForUnlock(si, callback);
+  }
+  tryWait();
+}
+function doWaitForUnlock(si, callback) {
+  if (!_fbLockDb) { callback(); return; }
   const gid = getLockGameId();
   _fbLockDb.ref('locks/' + gid + '/station_' + si).once('value', snap => {
     const val = snap.val();
     if (val === true) {
       callback();
     } else {
-      // Show waiting screen and poll
       showLockWaiting(si, callback);
     }
   });
 }
 
-let _lockWaitEl = null;
 function showLockWaiting(si, callback) {
   if (_lockWaitEl) return; // already showing
   _lockWaitEl = document.createElement('div');
@@ -783,7 +769,7 @@ let teams = [];         // [{name, emoji, color, score, stationTimes}]
 let numTeams = 4;
 let currentStation = 0;
 let currentTeamIdx = null;
-let gameMode = 'projected'; // 'projected' | 'selfplay'
+let gameMode = 'selfplay'; // always selfplay
 let selfplayTeamIdx = null; // which team this browser instance is
 let stationAnswers = {};     // teamIdx -> si -> qi -> bool
 let stationDone = {};        // teamIdx -> si -> bool
@@ -920,8 +906,13 @@ function startCompetition() {
   if (gameMode === 'selfplay') {
     const teamList = teams.map(t => ({ name:t.name, emoji:t.emoji, color:t.color, code:t.code }));
     localStorage.setItem('mma_teams', JSON.stringify(teamList));
-    lockAllFrom(0); // lock all stations
-    unlockStation(0); // unlock only station 0
+    // Wait for Firebase then lock/unlock
+    function applyInitialLock() {
+      if (!_fbLockDb) { setTimeout(applyInitialLock, 200); return; }
+      lockAllFrom(0);
+      unlockStation(0);
+    }
+    applyInitialLock();
     teams.forEach((_, i) => localStorage.removeItem(`mma_team_${i}`));
 
     // Show teacher a screen with ready-made links per team
