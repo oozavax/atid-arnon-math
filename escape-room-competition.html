@@ -596,7 +596,7 @@ function setStationPassword() {
   const pw = document.getElementById('teacher-pw-input').value.trim();
   if (!pw) { alert('הכנס סיסמה'); return; }
   if (!_fbLockDb) { alert('Firebase לא מחובר'); return; }
-  _fbLockDb.ref('passwords/' + getLockGameId()).set(pw, () => {
+  _fbLockDb.ref('global_password').set(pw, () => {
     document.getElementById('pw-current-display').textContent = 'סיסמה נוכחית: ' + pw;
     document.getElementById('teacher-pw-input').value = '';
     const btn = document.querySelector('button[onclick="setStationPassword()"] span');
@@ -607,7 +607,7 @@ function setStationPassword() {
 // Load current password into dashboard display
 function loadCurrentPassword() {
   if (!_fbLockDb) { setTimeout(loadCurrentPassword, 500); return; }
-  _fbLockDb.ref('passwords/' + getLockGameId()).on('value', snap => {
+  _fbLockDb.ref('global_password').on('value', snap => {
     const pw = snap.val();
     const el = document.getElementById('pw-current-display');
     if (el) el.textContent = pw ? 'סיסמה נוכחית: ' + pw : 'אין סיסמה מוגדרת עדיין';
@@ -636,7 +636,7 @@ function checkStationPassword() {
   if (!entered) { document.getElementById('pw-err').textContent = 'הכנס סיסמה'; return; }
   if (!_fbLockDb) { document.getElementById('pw-err').textContent = 'אין חיבור, נסה שוב'; return; }
 
-  _fbLockDb.ref('passwords/' + getLockGameId()).once('value', snap => {
+  _fbLockDb.ref('global_password').once('value', snap => {
     const correct = snap.val();
     if (!correct) {
       // No password set — allow through
