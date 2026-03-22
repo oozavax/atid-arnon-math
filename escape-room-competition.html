@@ -312,6 +312,21 @@ h2.sub { font-size:1.1rem; color:rgba(245,230,200,0.6); font-weight:300; margin:
 .mode-title { font-family:'Cinzel',serif; font-size:1rem; color:var(--gold); margin:0.4rem 0 0.2rem; }
 .mode-desc { font-size:0.78rem; color:rgba(245,230,200,0.5); line-height:1.5; }
 
+/* PASSWORD GATE */
+#password-gate-screen.active { display:flex; min-height:100vh; flex-direction:column; align-items:center; justify-content:center; }
+.pw-card { background:#1a1a2e; border:2px solid rgba(201,168,76,0.4); border-radius:20px; padding:2.5rem; max-width:380px; width:100%; text-align:center; position:relative; z-index:1; box-shadow:0 0 40px rgba(201,168,76,0.1); }
+.pw-icon { font-size:3rem; margin-bottom:0.8rem; animation:pwPulse 2s infinite; }
+@keyframes pwPulse { 0%,100%{transform:scale(1);filter:drop-shadow(0 0 6px var(--gold))} 50%{transform:scale(1.08);filter:drop-shadow(0 0 16px var(--gold))} }
+.pw-title { font-family:'Cinzel',serif; font-size:1.4rem; color:var(--gold); margin-bottom:0.4rem; }
+.pw-sub { font-size:0.85rem; color:rgba(245,230,200,0.5); margin-bottom:1.5rem; line-height:1.6; }
+.pw-input { width:100%; padding:14px; border:2px solid rgba(201,168,76,0.5); border-radius:12px; background:rgba(10,10,22,0.8); color:var(--parchment); font-family:'Cinzel',serif; font-size:1.3rem; text-align:center; letter-spacing:4px; outline:none; margin-bottom:12px; transition:border-color 0.2s; }
+.pw-input:focus { border-color:var(--gold); }
+.pw-input.pw-shake { animation:shake 0.4s; border-color:var(--red); }
+.pw-btn { width:100%; padding:14px; border:none; border-radius:12px; background:linear-gradient(135deg,var(--gold),#a07830); color:#0a0a16; font-family:'Cinzel',serif; font-size:1rem; font-weight:700; cursor:pointer; transition:all 0.2s; letter-spacing:0.05em; }
+.pw-btn:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(201,168,76,0.3); }
+.pw-err { color:var(--red); font-size:0.82rem; min-height:20px; margin-bottom:8px; }
+.pw-station-tag { display:inline-flex; align-items:center; gap:6px; background:rgba(201,168,76,0.1); border:1px solid rgba(201,168,76,0.3); border-radius:20px; padding:5px 14px; font-size:0.82rem; color:rgba(245,230,200,0.7); margin-bottom:1.2rem; }
+
 /* DASHBOARD */
 .dash-table { width:100%; border-collapse:collapse; }
 .dash-table th { font-family:'Cinzel',serif; font-size:0.75rem; color:var(--gold); letter-spacing:0.1em; padding:0.5rem 0.7rem; border-bottom:1px solid rgba(201,168,76,0.2); text-align:right; }
@@ -425,6 +440,19 @@ h2.sub { font-size:1.1rem; color:rgba(245,230,200,0.6); font-weight:300; margin:
   </div>
 </div>
 
+<!-- ════════ PASSWORD GATE (after finishing station) ════════ -->
+<div id="password-gate-screen" class="screen">
+  <div class="pw-card">
+    <div class="pw-icon">🔐</div>
+    <div class="pw-title">סיסמת מעבר</div>
+    <div class="pw-station-tag" id="pw-station-tag">סיימתם תחנה</div>
+    <div class="pw-sub">כל הכבוד על סיום התחנה!<br>הכניסו את הסיסמה שנתן לכם המורה כדי להמשיך</div>
+    <div class="pw-err" id="pw-err"></div>
+    <input class="pw-input" id="pw-input" placeholder="סיסמה" oninput="document.getElementById('pw-err').textContent=''" onkeydown="if(event.key==='Enter') checkStationPassword()">
+    <button class="pw-btn" onclick="checkStationPassword()">🚀 המשך למסע</button>
+  </div>
+</div>
+
 <!-- ════════ TEACHER DASHBOARD (selfplay mode) ════════ -->
 <div id="dashboard-screen" class="screen">
   <div style="position:relative;z-index:1;max-width:800px;width:100%;padding:1.5rem">
@@ -441,6 +469,19 @@ h2.sub { font-size:1.1rem; color:rgba(245,230,200,0.6); font-weight:300; margin:
       </select>
       <button class="btn primary" onclick="startReview()" style="background:linear-gradient(135deg,#7c3aed,#4c1d95);border:none;"><span>📖 סיקור תחנה</span></button>
     </div>
+    <!-- PASSWORD MANAGEMENT -->
+    <div style="background:rgba(201,168,76,0.07);border:1.5px solid rgba(201,168,76,0.35);border-radius:14px;padding:1.2rem 1.5rem;margin-bottom:1.2rem;">
+      <div style="font-family:'Cinzel',serif;font-size:1rem;color:var(--gold);margin-bottom:0.8rem;">🔐 סיסמת מעבר בין תחנות</div>
+      <p style="font-size:0.82rem;color:rgba(245,230,200,0.55);margin-bottom:1rem;line-height:1.6;">הסיסמה הנוכחית שהצוותים צריכים להקליד אחרי כל תחנה. שנה אותה בכל עת.</p>
+      <div style="display:flex;gap:0.7rem;align-items:center;flex-wrap:wrap;">
+        <input id="teacher-pw-input" placeholder="הכנס סיסמה חדשה"
+          style="background:rgba(10,10,22,0.8);border:2px solid rgba(201,168,76,0.5);border-radius:10px;color:var(--parchment);font-family:'Cinzel',serif;font-size:1.1rem;padding:0.5rem 1rem;letter-spacing:3px;outline:none;min-width:180px;flex:1;text-align:center;"
+          onkeydown="if(event.key==='Enter') setStationPassword()">
+        <button class="btn primary" onclick="setStationPassword()" style="white-space:nowrap;"><span>💾 שמור סיסמה</span></button>
+      </div>
+      <div id="pw-current-display" style="margin-top:0.8rem;font-size:0.82rem;color:rgba(245,230,200,0.45);">טוען סיסמה נוכחית...</div>
+    </div>
+
     <div class="btn-row">
       <button class="btn" onclick="refreshDashboard()"><span>🔄 רענן</span></button>
       <button class="btn primary" onclick="showFinalScreen()"><span>🏆 סיימו – תוצאות סופיות</span></button>
@@ -543,7 +584,88 @@ function setTeacherGameId(teamsData) {
   return id;
 }
 
-// Teacher: unlock a station
+// ══════════════════════════════
+// STATION PASSWORD SYSTEM
+// ══════════════════════════════
+let _pendingPasswordCallback = null;
+let _pendingPasswordSi = null;
+let _pendingPasswordTeamIdx = null;
+
+// Teacher: save the password to Firebase
+function setStationPassword() {
+  const pw = document.getElementById('teacher-pw-input').value.trim();
+  if (!pw) { alert('הכנס סיסמה'); return; }
+  if (!_fbLockDb) { alert('Firebase לא מחובר'); return; }
+  _fbLockDb.ref('passwords/' + getLockGameId()).set(pw, () => {
+    document.getElementById('pw-current-display').textContent = 'סיסמה נוכחית: ' + pw;
+    document.getElementById('teacher-pw-input').value = '';
+    const btn = document.querySelector('button[onclick="setStationPassword()"] span');
+    if (btn) { btn.textContent = '✅ נשמר!'; setTimeout(() => btn.textContent = '💾 שמור סיסמה', 2000); }
+  });
+}
+
+// Load current password into dashboard display
+function loadCurrentPassword() {
+  if (!_fbLockDb) { setTimeout(loadCurrentPassword, 500); return; }
+  _fbLockDb.ref('passwords/' + getLockGameId()).on('value', snap => {
+    const pw = snap.val();
+    const el = document.getElementById('pw-current-display');
+    if (el) el.textContent = pw ? 'סיסמה נוכחית: ' + pw : 'אין סיסמה מוגדרת עדיין';
+  });
+}
+
+// Student: show password gate screen
+function showPasswordGate(si, teamIdx, onSuccess) {
+  _pendingPasswordCallback = onSuccess;
+  _pendingPasswordSi = si;
+  _pendingPasswordTeamIdx = teamIdx;
+
+  const stEl = document.getElementById('pw-station-tag');
+  if (stEl) stEl.textContent = '✅ סיימתם תחנה ' + (si + 1) + ' — ' + (STATIONS[si]?.name || '');
+
+  const inp = document.getElementById('pw-input');
+  if (inp) { inp.value = ''; }
+  document.getElementById('pw-err').textContent = '';
+  showScreen('password-gate-screen');
+  setTimeout(() => { if (inp) inp.focus(); }, 300);
+}
+
+// Student: check entered password against Firebase
+function checkStationPassword() {
+  const entered = document.getElementById('pw-input').value.trim();
+  if (!entered) { document.getElementById('pw-err').textContent = 'הכנס סיסמה'; return; }
+  if (!_fbLockDb) { document.getElementById('pw-err').textContent = 'אין חיבור, נסה שוב'; return; }
+
+  _fbLockDb.ref('passwords/' + getLockGameId()).once('value', snap => {
+    const correct = snap.val();
+    if (!correct) {
+      // No password set — allow through
+      proceedAfterPassword();
+      return;
+    }
+    if (entered.toLowerCase() === correct.toLowerCase()) {
+      proceedAfterPassword();
+    } else {
+      const inp = document.getElementById('pw-input');
+      inp.classList.add('pw-shake');
+      setTimeout(() => inp.classList.remove('pw-shake'), 500);
+      inp.value = '';
+      document.getElementById('pw-err').textContent = '❌ סיסמה שגויה — נסו שוב';
+    }
+  });
+}
+
+function proceedAfterPassword() {
+  const cb = _pendingPasswordCallback;
+  const si = _pendingPasswordSi;
+  const teamIdx = _pendingPasswordTeamIdx;
+  _pendingPasswordCallback = null;
+  _pendingPasswordSi = null;
+  _pendingPasswordTeamIdx = null;
+  if (cb) cb(si, teamIdx);
+}
+
+
 function unlockStation(si) {
   if (!_fbLockDb) return;
   _fbLockDb.ref('locks/' + getLockGameId() + '/station_' + si).set(true);
@@ -1043,6 +1165,7 @@ function refreshDashboard() {
   if (gameMode === 'selfplay') loadSharedState();
   renderDashboard();
   renderLeaderboard();
+  loadCurrentPassword();
 }
 
 function renderDashboard() {
@@ -1331,8 +1454,10 @@ function finishTeamStation(teamIdx, si) {
     if (gameMode === 'selfplay') {
       const nextSi = si + 1;
       if (nextSi < STATIONS.length) {
-        // Show waiting screen immediately, then auto-proceed when unlocked
-        showImmediateWaiting(si, nextSi, teamIdx);
+        // Show password gate first, then waiting screen
+        showPasswordGate(si, teamIdx, (finishedSi, ti) => {
+          showImmediateWaiting(finishedSi, nextSi, ti);
+        });
       } else {
         showTeamFinished(teamIdx);
       }
